@@ -8,8 +8,7 @@
       "WebFetch(domain:pnpm.io)",
       "WebFetch(domain:turborepo.dev)",
       "Bash(docker compose:*)",
-      "WebFetch(domain:cheatsheetseries.owasp.org)",
-      "Bash(find /c/Users/sengw/OneDrive/Desktop/jobtopbob -name *docker* -o -name *compose*)"
+      "WebFetch(domain:cheatsheetseries.owasp.org)"
     ]
   }
 }

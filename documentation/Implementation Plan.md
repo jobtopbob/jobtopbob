@@ -335,7 +335,7 @@ Phase 1: Microservice composition
 ├── Add RxResume as a Docker Compose service (app + printer)
 ├── Share PostgreSQL instance (separate database) or use RxResume's own DB
 ├── JobTopBob Go API proxies resume operations via RxResume REST API
-├── Link resume IDs to job applications (existing jobs.resume_id column)
+├── Link resume versions to job applications (jobs.resume_version_id → resume_versions.id)
 └── PDF export calls RxResume's GET /resumes/{id}/pdf endpoint
 
 Phase 2: Deeper integration
@@ -494,8 +494,8 @@ users
   email         text unique not null
   name          text
   avatar_url    text
-  created_at    timestamptz
-  updated_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- Custom stages (supports renameable/reorderable Kanban columns)
 stages
@@ -505,7 +505,9 @@ stages
   position      int not null
   is_terminal   boolean       -- true for "closed" states
   color         text
-  created_at    timestamptz
+  mapped_status text          -- maps to jobs.status state machine value (e.g. "interviewing")
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- User settings
 user_settings
@@ -515,8 +517,8 @@ user_settings
   writing_style text          -- 'professional' | 'conversational' | 'formal'
   weekly_goal   int           -- applications per week target
   task_models   jsonb         -- per-task model routing overrides
-  created_at    timestamptz
-  updated_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- OAuth tokens (Gmail, future integrations — encrypted at rest)
 oauth_tokens
@@ -528,8 +530,8 @@ oauth_tokens
   token_type    text
   scope         text
   expires_at    timestamptz
-  created_at    timestamptz
-  updated_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
   UNIQUE(user_id, provider)
 
 -- Company profiles
@@ -542,7 +544,8 @@ companies
   size          text
   interest      int           -- 1–5 user rating
   notes         text
-  created_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- Contacts (networking CRM)
 contacts
@@ -557,24 +560,27 @@ contacts
   status        text          -- 'to_reach' | 'reached' | 'warm' | 'met'
   notes         text
   last_contact  timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
--- Resumes (metadata — content lives in RxResume)
+-- Resumes (metadata only — content lives in resume_versions)
 resumes
   id            uuid primary key
   user_id       uuid references users
   name          text not null  -- e.g. "v3 — Growth role"
   rxresume_id   text           -- ID in Reactive Resume instance
-  content       jsonb          -- snapshot of RxResume JSON at submission time
   is_base       boolean        -- true for the default template
-  created_at    timestamptz
-  updated_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
--- Resume history (for restore — snapshots from RxResume)
+-- Resume versions (snapshots from RxResume — content lives here, not on resumes)
 resume_versions
   id            uuid primary key
+  user_id       uuid references users
   resume_id     uuid references resumes
   content       jsonb not null
-  created_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- Job applications
 jobs
@@ -592,20 +598,22 @@ jobs
   salary_min    int
   salary_max    int
   salary_market int           -- benchmarked market rate
+  salary_currency text        -- e.g. 'USD', 'GBP', 'EUR'
   interest      int           -- 1–5 user rating
   suitability   int           -- 0–100 AI score
   suitability_reason text
-  resume_id     uuid references resumes  -- version submitted
+  resume_version_id uuid references resume_versions  -- snapshot submitted with application
   jd_raw        text          -- original job description text
   jd_snapshot   jsonb         -- parsed structured JD (archived)
   applied_at    timestamptz
   follow_up_at  timestamptz
-  created_at    timestamptz
-  updated_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- Interview rounds
 interview_rounds
   id            uuid primary key
+  user_id       uuid references users
   job_id        uuid references jobs
   round         int
   type          text          -- phone|technical|system_design|cultural|panel
@@ -614,28 +622,35 @@ interview_rounds
   interviewer_id uuid references contacts
   notes         text
   outcome       text          -- passed|failed|pending
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- AI-generated assets per job
 job_assets
   id            uuid primary key
+  user_id       uuid references users
   job_id        uuid references jobs
   type          text          -- cover_letter|tailored_resume_pdf|interview_prep
   content       text
   storage_key   text          -- S3 key for binary assets
   model_used    text
-  created_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- Ghostwriter conversations
 ghostwriter_messages
   id            uuid primary key
+  user_id       uuid references users
   job_id        uuid references jobs
   role          text          -- 'user' | 'assistant'
   content       text
-  created_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- Offers
 offers
   id            uuid primary key
+  user_id       uuid references users
   job_id        uuid references jobs  unique
   base_salary   int
   currency      text
@@ -645,6 +660,8 @@ offers
   deadline      timestamptz
   accepted      boolean
   negotiation_log jsonb       -- [{date, action, note}]
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- Email tracking events
 email_events
@@ -656,7 +673,8 @@ email_events
   confidence    float
   confirmed     boolean       -- user confirmed the routing
   raw_snippet   text          -- short excerpt shown in Tracking Inbox
-  created_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- Webhooks (user-configured)
 webhooks
@@ -666,6 +684,8 @@ webhooks
   events        text[]        -- ['job.applied', 'job.interviewing', ...]
   secret        text          -- HMAC signing secret
   active        boolean
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
 
 -- Tags (polymorphic labeling)
 tags
@@ -673,16 +693,21 @@ tags
   user_id       uuid references users
   name          text
   color         text
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
   UNIQUE(user_id, name)
 
 -- Tag assignments
 taggings
+  user_id       uuid references users
   tag_id        uuid references tags
   entity_type   text          -- 'job' | 'contact' | 'resume' | 'company'
   entity_id     uuid
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
   PRIMARY KEY (tag_id, entity_type, entity_id)
 
--- Activity log (audit trail for timeline view)
+-- Activity log (audit trail for timeline view — append-only, no update trigger)
 activity_log
   id            uuid primary key
   user_id       uuid references users
@@ -691,7 +716,39 @@ activity_log
   action        text          -- 'created' | 'status_changed' | 'scored' | 'note_added'
   old_value     jsonb
   new_value     jsonb
-  created_at    timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()  -- column present but no auto-update trigger (append-only)
+
+-- Scrape pipeline runs (progress tracking + historical stats)
+scrape_runs
+  id            uuid primary key
+  user_id       uuid references users
+  status        text          -- 'running' | 'completed' | 'failed'
+  sources       text[]        -- job boards included in this run
+  jobs_found    int
+  jobs_new      int
+  started_at    timestamptz
+  completed_at  timestamptz
+  created_at    timestamptz default now()
+  updated_at    timestamptz default now()
+```
+
+### Auto-update trigger
+
+All tables with `updated_at` (except `activity_log`, which is append-only) use a shared trigger function:
+
+```sql
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Applied to each table:
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON {table}
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 ```
 
 ### Schema additions rationale
@@ -704,20 +761,21 @@ The following tables were added to the original schema based on feasibility asse
 | `activity_log` | Required for the timeline view and debugging. Painful to add retroactively because historical events are lost. | Phase 1 |
 | `tags` + `taggings` | Users will want custom categorisation across jobs, contacts, and companies. Polymorphic tagging via `entity_type` + `entity_id`. | Phase 1 |
 | `oauth_tokens` | Dedicated table for OAuth credentials (Gmail, future integrations). Separates OAuth tokens from AI key configuration. AI provider keys are configured via environment variables. | Phase 1 |
+| `scrape_runs` | Pipeline runs need tracking for progress UI and historical stats. Stores run status, sources, and job counts. | Phase 2 |
 
 ### Default stages
 
 When a new user is created, the application seeds default stages:
 
-| Position | Name | Terminal? |
-|---|---|---|
-| 0 | Saved | No |
-| 1 | Applied | No |
-| 2 | Interviewing | No |
-| 3 | Offer | No |
-| 4 | Closed | Yes |
+| Position | Name | Terminal? | Mapped Status |
+|---|---|---|---|
+| 0 | Saved | No | `saved` |
+| 1 | Applied | No | `applied` |
+| 2 | Interviewing | No | `interviewing` |
+| 3 | Offer | No | `offer` |
+| 4 | Closed | Yes | `closed` |
 
-Users can rename, reorder, add, or remove stages. The `status` field on `jobs` continues to power the state machine for automation; `stage_id` determines the visual Kanban column position.
+Users can rename, reorder, add, or remove stages. Custom stages (e.g. "Take-home") map to a state machine value via `mapped_status` (e.g. `interviewing`). When a card moves to a stage, `jobs.status` auto-updates to the stage's `mapped_status` value — keeping the two fields in sync. The `status` field powers the state machine for automation; `stage_id` determines the visual Kanban column position.
 
 ---
 
@@ -1094,8 +1152,8 @@ Tested on: Hetzner CX11 (€3.79/mo), DigitalOcean Basic ($6/mo), Oracle Cloud F
 A complete `.env.example` is committed to the repo. Required variables for minimal setup:
 
 ```bash
-# Database
-DATABASE_URL=postgres://jobtopbob:password@postgres:5432/jobtopbob
+# Database (jobtopbob_app role — DML only, RLS-enforced)
+DATABASE_URL=postgres://jobtopbob_app:password@postgres:5432/jobtopbob
 
 # Auth
 BETTER_AUTH_SECRET=<random 32-char string>
@@ -1162,8 +1220,9 @@ Goal: a fully functional self-hosted product that solves the core problem comple
 - [ ] `openapi/jobtopbob.yaml` — initial spec for auth + jobs endpoints
 - [ ] `oapi-codegen` generating Go server interfaces from spec
 - [ ] `openapi-typescript` generating TypeScript types (`packages/api-client/`) — types only, no runtime client
-- [ ] `sqlc.yaml` config + initial SQL migration files (all tables including stages, activity_log, tags, oauth_tokens)
-- [ ] `golang-migrate` v4.18 init container in Docker Compose
+- [ ] `sqlc.yaml` config + initial SQL migration files (all tables including stages, activity_log, tags, oauth_tokens, scrape_runs)
+- [ ] Database role (`jobtopbob_app` — DML only) + RLS policies on all user-owned tables
+- [ ] `golang-migrate` v4.18 init container in Docker Compose (runs as `postgres` superuser)
 - [ ] Docker Compose minimal stack: web + api + worker + postgres + redis + resume-builder + resume-printer
 - [ ] Better Auth v1.3: email/password + Google OAuth in Next.js, with JWT plugin for bearer token issuance
 - [ ] Go API: JWT validation middleware using JWKS from Next.js (`/api/auth/jwks`)
@@ -1188,8 +1247,8 @@ Goal: a fully functional self-hosted product that solves the core problem comple
 
 - [ ] RxResume Docker Compose services (resume-builder + resume-printer)
 - [ ] Go API proxy endpoints for resume CRUD via RxResume REST API
-- [ ] Resume-to-application linking (which version was submitted where)
-- [ ] Resume snapshot on application submit (save RxResume JSON to `resumes.content`)
+- [ ] Resume-to-application linking (`jobs.resume_version_id` → `resume_versions.id`)
+- [ ] Resume snapshot on application submit (create `resume_versions` row with RxResume JSON, link to job)
 - [ ] DOCX export via `docx.js` in Go worker (RxResume handles PDF)
 
 ### Milestone 1.4 — AI features (BYOK) (weeks 7–10)
@@ -1436,6 +1495,193 @@ The app requests `gmail.readonly` only — the narrowest scope that allows readi
 
 The Go API serves `GET /.well-known/source-code` returning a JSON document pointing to the repository URL. This is the standard mechanism for AGPL-3.0 network use compliance — any user of the hosted service can follow the link to access the complete source code.
 
+### Row-Level Security (RLS)
+
+PostgreSQL RLS enforces tenant isolation at the database layer — even if the application has a bug, one user's queries can never return another user's data.
+
+#### Database roles (least privilege)
+
+Two roles separate DDL from DML:
+
+```sql
+-- postgres (superuser) — owns the database, runs migrations, used by Better Auth.
+--   Bypasses RLS as table owner. Already exists in Docker Compose Postgres.
+
+-- Application role — used by Go API + worker, DML only
+CREATE ROLE jobtopbob_app WITH LOGIN PASSWORD '...';
+```
+
+Grant structure:
+
+```sql
+GRANT USAGE ON SCHEMA public TO jobtopbob_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO jobtopbob_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO jobtopbob_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO jobtopbob_app;
+```
+
+If `jobtopbob_app` is compromised (SQL injection), the attacker cannot DROP/ALTER tables (OWASP recommendation). Migrations and Better Auth use the `postgres` superuser directly. The Go API and worker use `DATABASE_URL` → `jobtopbob_app`.
+
+#### User context via session variables
+
+The Go API sets user context per-transaction using `SET LOCAL`:
+
+```go
+func withUserContext(ctx context.Context, pool *pgxpool.Pool, userID string, fn func(tx pgx.Tx) error) error {
+    tx, _ := pool.Begin(ctx)
+    defer tx.Rollback(ctx)
+    tx.Exec(ctx, "SET LOCAL app.current_user_id = $1", userID)
+    err := fn(tx)
+    if err != nil { return err }
+    return tx.Commit(ctx)
+}
+```
+
+`SET LOCAL` scopes to the current transaction — safe with connection pooling. The Go worker uses the same pattern with `userID` from the Asynq task payload.
+
+#### Safety function for unset context
+
+```sql
+CREATE OR REPLACE FUNCTION current_user_id() RETURNS uuid AS $$
+BEGIN
+  RETURN current_setting('app.current_user_id', true)::uuid;
+EXCEPTION WHEN invalid_text_representation THEN
+  RETURN '00000000-0000-0000-0000-000000000000'::uuid;  -- matches nothing
+END;
+$$ LANGUAGE plpgsql STABLE;
+```
+
+If `app.current_user_id` is empty/unset, returns a nil UUID that matches no real user. Prevents silent data leaks.
+
+#### RLS enablement
+
+RLS is enabled on all user-owned tables. Do **not** use `FORCE ROW LEVEL SECURITY` — the `postgres` superuser (table owner) needs to bypass RLS for migrations and Better Auth user creation.
+
+```sql
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resumes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resume_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE interview_rounds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE job_assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ghostwriter_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE offers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE email_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE oauth_tokens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE webhooks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE taggings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE scrape_runs ENABLE ROW LEVEL SECURITY;
+```
+
+#### Policy templates
+
+**Standard pattern** (applies to: `stages`, `jobs`, `companies`, `contacts`, `resumes`, `resume_versions`, `interview_rounds`, `job_assets`, `ghostwriter_messages`, `email_events`, `oauth_tokens`, `webhooks`, `tags`, `taggings`, `scrape_runs`):
+
+```sql
+CREATE POLICY select_own ON {table} FOR SELECT
+  USING (user_id = current_user_id());
+CREATE POLICY insert_own ON {table} FOR INSERT
+  WITH CHECK (user_id = current_user_id());
+CREATE POLICY update_own ON {table} FOR UPDATE
+  USING (user_id = current_user_id())
+  WITH CHECK (user_id = current_user_id());  -- prevents user_id reassignment
+CREATE POLICY delete_own ON {table} FOR DELETE
+  USING (user_id = current_user_id());
+```
+
+**`users` table** — PK is `id`, not `user_id`:
+
+```sql
+CREATE POLICY users_select_own ON users FOR SELECT
+  USING (id = current_user_id());
+CREATE POLICY users_update_own ON users FOR UPDATE
+  USING (id = current_user_id()) WITH CHECK (id = current_user_id());
+-- No INSERT/DELETE: managed by Better Auth via postgres superuser
+```
+
+**`user_settings`** — no DELETE (settings are upserted, never deleted):
+
+```sql
+CREATE POLICY settings_select ON user_settings FOR SELECT
+  USING (user_id = current_user_id());
+CREATE POLICY settings_insert ON user_settings FOR INSERT
+  WITH CHECK (user_id = current_user_id());
+CREATE POLICY settings_update ON user_settings FOR UPDATE
+  USING (user_id = current_user_id()) WITH CHECK (user_id = current_user_id());
+```
+
+**`activity_log`** — append-only (immutable audit trail):
+
+```sql
+CREATE POLICY log_select ON activity_log FOR SELECT
+  USING (user_id = current_user_id());
+CREATE POLICY log_insert ON activity_log FOR INSERT
+  WITH CHECK (user_id = current_user_id());
+-- No UPDATE or DELETE
+```
+
+**`offers`** — no DELETE (archive, don't delete offer records):
+
+```sql
+CREATE POLICY offers_select ON offers FOR SELECT
+  USING (user_id = current_user_id());
+CREATE POLICY offers_insert ON offers FOR INSERT
+  WITH CHECK (user_id = current_user_id());
+CREATE POLICY offers_update ON offers FOR UPDATE
+  USING (user_id = current_user_id()) WITH CHECK (user_id = current_user_id());
+-- No DELETE
+```
+
+#### Polymorphic `taggings` safeguard
+
+RLS on `taggings.user_id` prevents cross-user access, but RLS alone can't verify `entity_id` ownership (no FK to 4 tables). The Go service layer must verify entity ownership before inserting — the entity lookup query runs within the same RLS-protected transaction, so invalid `entity_id` values for other users simply return no rows.
+
+#### Better Auth tables — no RLS
+
+Better Auth tables (`sessions`, `accounts`, `verification`) are managed by the library in Next.js with its own DB connection. The Go API never queries them. Adding RLS would break the library. Better Auth connects as the `postgres` superuser, which bypasses RLS.
+
+#### Indexes supporting RLS
+
+Every table with RLS gets an index on `user_id` (the RLS predicate runs on every query):
+
+```sql
+CREATE INDEX idx_users_id ON users(id);  -- PK already covers this
+CREATE INDEX idx_stages_user_id ON stages(user_id);
+CREATE INDEX idx_jobs_user_id ON jobs(user_id);
+CREATE INDEX idx_companies_user_id ON companies(user_id);
+CREATE INDEX idx_contacts_user_id ON contacts(user_id);
+CREATE INDEX idx_resumes_user_id ON resumes(user_id);
+CREATE INDEX idx_resume_versions_user_id ON resume_versions(user_id);
+CREATE INDEX idx_interview_rounds_user_id ON interview_rounds(user_id);
+CREATE INDEX idx_job_assets_user_id ON job_assets(user_id);
+CREATE INDEX idx_ghostwriter_user_id ON ghostwriter_messages(user_id);
+CREATE INDEX idx_offers_user_id ON offers(user_id);
+CREATE INDEX idx_email_events_user_id ON email_events(user_id);
+CREATE INDEX idx_oauth_tokens_user_id ON oauth_tokens(user_id);
+CREATE INDEX idx_webhooks_user_id ON webhooks(user_id);
+CREATE INDEX idx_tags_user_id ON tags(user_id);
+CREATE INDEX idx_taggings_user_id ON taggings(user_id);
+CREATE INDEX idx_activity_log_user_id ON activity_log(user_id);
+CREATE INDEX idx_scrape_runs_user_id ON scrape_runs(user_id);
+```
+
+Composite indexes for common query patterns:
+
+```sql
+CREATE INDEX idx_jobs_user_status_created ON jobs(user_id, status, created_at DESC);
+CREATE INDEX idx_activity_entity ON activity_log(user_id, entity_type, entity_id, created_at DESC);
+CREATE INDEX idx_ghostwriter_job ON ghostwriter_messages(user_id, job_id, created_at);
+CREATE INDEX idx_interview_rounds_job ON interview_rounds(user_id, job_id, round);
+CREATE INDEX idx_taggings_entity ON taggings(user_id, entity_type, entity_id);
+```
+
 ### Dependency auditing
 
 - **Go:** `govulncheck` runs in CI on every PR, failing the build on any known CVE in the dependency graph
@@ -1521,4 +1767,4 @@ Good first issues are labelled `good-first-issue` on GitHub. High-impact contrib
 
 ---
 
-*Implementation plan version 3.2 — updated: removed cloud/B2B features (organisations, multi-tenancy, billing — moved to separate private repo), removed user_api_keys table (AI keys via env vars only), added oauth_tokens table for Gmail/future OAuth integrations, removed Phase 3 B2B roadmap. Previous: Reactive Resume v5 integration, 2 AI providers (OpenAI-compatible + Ollama), shared Go AI module, HTTP scrapers, Redis Pub/Sub SSE bridge, Hyperbrowser integration for bot-hostile boards, extended schema (stages, activity_log, tags, oauth_tokens), and latest framework versions (Next.js 16, Tailwind v4, TanStack Query v5, Playwright v1.58, Better Auth v1.3, Turborepo v2.8, Gin v1.10, sqlc v1.30, golang-migrate v4.18).*
+*Implementation plan version 3.3 — updated: schema streamlining (removed `resumes.content` duplication, renamed `jobs.resume_id` → `resume_version_id`, added `stages.mapped_status` for stage↔status sync, added `jobs.salary_currency`, denormalized `user_id` onto 6 child tables for RLS performance, standardized `created_at`/`updated_at` on all tables with auto-update trigger, added `scrape_runs` table). Added PostgreSQL Row-Level Security section: 2 database roles (postgres superuser + jobtopbob_app), `current_user_id()` helper function, RLS policies on all 19 user-owned tables, per-table `user_id` indexes + composite indexes for common queries, `SET LOCAL` session variable pattern for Go API/worker. Previous: removed cloud/B2B features, removed user_api_keys table, added oauth_tokens table, Reactive Resume v5 integration, 2 AI providers, shared Go AI module, HTTP scrapers, Redis Pub/Sub SSE bridge, latest framework versions.*
