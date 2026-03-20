@@ -1,5 +1,5 @@
 # ---------- Stage 1: Build ----------
-FROM golang:1.24-alpine AS builder
+FROM golang:1.26-alpine AS builder
 WORKDIR /src
 
 RUN apk add --no-cache git
@@ -16,7 +16,7 @@ RUN cd apps/api && go mod download
 COPY apps/api/ apps/api/
 COPY internal/ internal/
 
-RUN cd apps/api && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/api ./cmd/server
+RUN cd apps/api && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/api ./cmd/api
 
 # ---------- Stage 2: Runtime ----------
 FROM alpine:3.21
