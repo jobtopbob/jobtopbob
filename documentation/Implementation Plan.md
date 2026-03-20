@@ -388,7 +388,7 @@ Phase 2: Deeper integration
                            │ HTTPS
 ┌──────────────────────────▼──────────────────────────────────────┐
 │                    Next.js (apps/web)                           │
-│          Server components · App Router · Better Auth v1.3      │
+│          Server components · App Router · Better Auth v1.5      │
 │          Issues JWTs via JWT plugin                              │
 │          Publishes JWKS at /api/auth/jwks                       │
 └───────┬─────────────────────────────────────────────────────────┘
@@ -504,7 +504,7 @@ stages
   position      int not null
   is_terminal   boolean       -- true for "closed" states
   color         text
-  mapped_status text          -- maps to jobs.status state machine value (e.g. "interviewing")
+  mapped_status text          -- maps to jobs.status value: open|accepted|rejected|closed
   created_at    timestamptz default now()
   updated_at    timestamptz default now()
 
@@ -588,8 +588,8 @@ jobs
   company_id    uuid references companies
   stage_id      uuid references stages  -- custom Kanban column position
   title         text not null
-  status        text          -- state machine: discovered|saved|ready|applied|interviewing|offer|closed
-  close_reason  text          -- rejected|withdrew|declined|ghosted
+  status        text          -- mapped from stage: open|accepted|rejected|closed
+  close_reason  text          -- optional detail when job reaches a terminal stage (e.g. ghosted|declined|compensation|relocation)
   source        text          -- job board or 'manual'
   source_url    text
   location      text
@@ -766,21 +766,24 @@ The following tables were added to the original schema based on feasibility asse
 
 When a new user is created, the application seeds default stages:
 
-| Position | Name | Terminal? | Mapped Status |
-|---|---|---|---|
-| 0 | Saved | No | `saved` |
-| 1 | Applied | No | `applied` |
-| 2 | Interviewing | No | `interviewing` |
-| 3 | Offer | No | `offer` |
-| 4 | Closed | Yes | `closed` |
+| Position | Name | Terminal? | Color | Mapped Status |
+|---|---|---|---|---|
+| 0 | Wishlist | No | `#6B7280` | `open` |
+| 1 | Applied | No | `#3B82F6` | `open` |
+| 2 | Screening | No | `#8B5CF6` | `open` |
+| 3 | Interviewing | No | `#F59E0B` | `open` |
+| 4 | Offer | No | `#10B981` | `open` |
+| 5 | Accepted | Yes | `#059669` | `accepted` |
+| 6 | Rejected | Yes | `#EF4444` | `rejected` |
+| 7 | Withdrawn | Yes | `#9CA3AF` | `closed` |
 
-Users can rename, reorder, add, or remove stages. Custom stages (e.g. "Take-home") map to a state machine value via `mapped_status` (e.g. `interviewing`). When a card moves to a stage, `jobs.status` auto-updates to the stage's `mapped_status` value — keeping the two fields in sync. The `status` field powers the state machine for automation; `stage_id` determines the visual Kanban column position.
+Users can rename, reorder, add, or remove stages. Custom stages (e.g. "Take-home") map to a `mapped_status` value. Non-terminal stages map to `open`; terminal stages map to their specific outcome (`accepted`, `rejected`, or `closed`). When a card moves to a stage, `jobs.status` auto-updates to the stage's `mapped_status` value — keeping the two fields in sync. The `status` field powers filtering and automation (e.g. follow-up queries exclude `closed`, `rejected`, and `accepted` jobs); `stage_id` determines the visual Kanban column position.
 
 ---
 
 ## 6. Authentication & multi-tenancy
 
-### Better Auth v1.3 (Next.js)
+### Better Auth v1.5 (Next.js)
 
 [Better Auth](https://www.better-auth.com) is an open-source TypeScript authentication library that runs as middleware within the Next.js app. It owns the full auth surface:
 
@@ -1223,7 +1226,7 @@ Goal: a fully functional self-hosted product that solves the core problem comple
 - [ ] Database role (`jobtopbob_app` — DML only) + RLS policies on all user-owned tables
 - [ ] `golang-migrate` v4.18 init container in Docker Compose (runs as `postgres` superuser)
 - [ ] Docker Compose minimal stack: web + api + worker + postgres + redis + resume-builder + resume-printer
-- [ ] Better Auth v1.3: email/password + Google OAuth in Next.js, with JWT plugin for bearer token issuance
+- [ ] Better Auth v1.5: email/password + Google OAuth in Next.js, with JWT plugin for bearer token issuance
 - [ ] Go API: JWT validation middleware using JWKS from Next.js (`/api/auth/jwks`)
 - [ ] CI: Go vet + test, TypeScript tsc + lint, sqlc staleness checks
 
@@ -1231,7 +1234,7 @@ Goal: a fully functional self-hosted product that solves the core problem comple
 
 - [ ] Kanban board with `@dnd-kit/react` drag-and-drop
 - [ ] List, table, and calendar views
-- [ ] Application state machine (`discovered` → `saved` → `ready` → `applied` → `interviewing` → `offer` → `closed`)
+- [ ] Application state machine: stages map to `open` → terminal stages map to `accepted` | `rejected` | `closed`
 - [ ] Custom stages: rename, reorder, add Kanban columns via `stages` table
 - [ ] Application card: all fields including JD snapshot storage
 - [ ] Follow-up reminder auto-calculation
@@ -1766,4 +1769,4 @@ Good first issues are labelled `good-first-issue` on GitHub. High-impact contrib
 
 ---
 
-*Implementation plan version 3.3 — updated: schema streamlining (removed `resumes.content` duplication, renamed `jobs.resume_id` → `resume_version_id`, added `stages.mapped_status` for stage↔status sync, added `jobs.salary_currency`, denormalized `user_id` onto 6 child tables for RLS performance, standardized `created_at`/`updated_at` on all tables with auto-update trigger, added `scrape_runs` table). Added PostgreSQL Row-Level Security section: 2 database roles (postgres superuser + jobtopbob_app), `current_user_id()` helper function, RLS policies on all 19 user-owned tables, per-table `user_id` indexes + composite indexes for common queries, `SET LOCAL` session variable pattern for Go API/worker. Previous: removed cloud/B2B features, removed user_api_keys table, added oauth_tokens table, Reactive Resume v5 integration, 2 AI providers, shared Go AI module, HTTP scrapers, Redis Pub/Sub SSE bridge, latest framework versions.*
+*Implementation plan version 3.4 — updated: aligned default stages with codebase (5-stage model → 8-stage model with Wishlist, Screening, Accepted, Rejected, Withdrawn; simplified status to open|accepted|rejected|closed), updated Better Auth v1.3 → v1.5, updated close_reason semantics. Previous (3.3): schema streamlining (removed `resumes.content` duplication, renamed `jobs.resume_id` → `resume_version_id`, added `stages.mapped_status` for stage↔status sync, added `jobs.salary_currency`, denormalized `user_id` onto 6 child tables for RLS performance, standardized `created_at`/`updated_at` on all tables with auto-update trigger, added `scrape_runs` table). Added PostgreSQL Row-Level Security section: 2 database roles (postgres superuser + jobtopbob_app), `current_user_id()` helper function, RLS policies on all 19 user-owned tables, per-table `user_id` indexes + composite indexes for common queries, `SET LOCAL` session variable pattern for Go API/worker. Previous: removed cloud/B2B features, removed user_api_keys table, added oauth_tokens table, Reactive Resume v5 integration, 2 AI providers, shared Go AI module, HTTP scrapers, Redis Pub/Sub SSE bridge, latest framework versions.*

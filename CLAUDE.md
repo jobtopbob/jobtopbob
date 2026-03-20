@@ -20,7 +20,7 @@ JobTopBob is in **planning/documentation phase** — no source code exists yet. 
 **Services:**
 | Service | Tech | Purpose |
 |---------|------|---------|
-| `apps/web` | Next.js 16 (App Router) | Frontend + Better Auth v1.3 (issues JWTs) |
+| `apps/web` | Next.js 16 (App Router) | Frontend + Better Auth v1.5 (issues JWTs) |
 | `apps/api` | Go + Gin v1.10 | API server (validates JWTs via JWKS) |
 | `apps/worker` | Go + Asynq v0.28 | Background jobs (Redis-backed queue) |
 | `scrapers/*` | TypeScript + Playwright v1.58 | Stateless HTTP scraper services |
