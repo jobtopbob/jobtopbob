@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: JobTopBob API
-  version: 0.0.1
+  version: 0.0.2
   description: JobTopBob API server
 
 servers:
@@ -16,6 +16,448 @@ components:
       bearerFormat: JWT
       description: JWT issued by Better Auth, validated via JWKS
 
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    PaginatedResponse:
+      type: object
+      required: [data, total, page, per_page]
+      properties:
+        data:
+          type: array
+          items: {}
+        total:
+          type: integer
+          format: int64
+        page:
+          type: integer
+        per_page:
+          type: integer
+
+    Job:
+      type: object
+      required: [id, user_id, title, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        stage_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        status:
+          type: string
+          nullable: true
+        close_reason:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        location_type:
+          type: string
+          nullable: true
+        salary_min:
+          type: integer
+          nullable: true
+        salary_max:
+          type: integer
+          nullable: true
+        salary_market:
+          type: integer
+          nullable: true
+        salary_currency:
+          type: string
+          nullable: true
+        interest:
+          type: integer
+          nullable: true
+        suitability:
+          type: integer
+          nullable: true
+        suitability_reason:
+          type: string
+          nullable: true
+        resume_version_id:
+          type: string
+          format: uuid
+          nullable: true
+        jd_raw:
+          type: string
+          nullable: true
+        jd_snapshot:
+          type: object
+          nullable: true
+        applied_at:
+          type: string
+          format: date-time
+          nullable: true
+        follow_up_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        company_name:
+          type: string
+          nullable: true
+          description: Joined from companies table
+        stage_name:
+          type: string
+          nullable: true
+          description: Joined from stages table
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+
+    Stage:
+      type: object
+      required: [id, user_id, name, position, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        position:
+          type: integer
+        is_terminal:
+          type: boolean
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        mapped_status:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Tag:
+      type: object
+      required: [id, user_id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Tagging:
+      type: object
+      required: [tag_id, entity_type, entity_id, user_id, created_at]
+      properties:
+        tag_id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    ActivityLogEntry:
+      type: object
+      required: [id, user_id, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+          nullable: true
+        entity_id:
+          type: string
+          format: uuid
+          nullable: true
+        action:
+          type: string
+          nullable: true
+        old_value:
+          type: object
+          nullable: true
+        new_value:
+          type: object
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    CreateJobRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        company_id:
+          type: string
+          format: uuid
+        stage_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        source:
+          type: string
+        source_url:
+          type: string
+        location:
+          type: string
+        location_type:
+          type: string
+        salary_min:
+          type: integer
+        salary_max:
+          type: integer
+        salary_currency:
+          type: string
+        interest:
+          type: integer
+        jd_raw:
+          type: string
+        applied_at:
+          type: string
+          format: date-time
+        follow_up_at:
+          type: string
+          format: date-time
+
+    UpdateJobRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        stage_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        close_reason:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        location_type:
+          type: string
+          nullable: true
+        salary_min:
+          type: integer
+          nullable: true
+        salary_max:
+          type: integer
+          nullable: true
+        salary_market:
+          type: integer
+          nullable: true
+        salary_currency:
+          type: string
+          nullable: true
+        interest:
+          type: integer
+          nullable: true
+        suitability:
+          type: integer
+          nullable: true
+        suitability_reason:
+          type: string
+          nullable: true
+        resume_version_id:
+          type: string
+          format: uuid
+          nullable: true
+        jd_raw:
+          type: string
+          nullable: true
+        applied_at:
+          type: string
+          format: date-time
+          nullable: true
+        follow_up_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ImportJobRequest:
+      type: object
+      required: [title, source_url]
+      properties:
+        title:
+          type: string
+        source_url:
+          type: string
+        source:
+          type: string
+        location:
+          type: string
+        location_type:
+          type: string
+        salary_min:
+          type: integer
+        salary_max:
+          type: integer
+        salary_currency:
+          type: string
+        jd_raw:
+          type: string
+        company_name:
+          type: string
+
+    BulkUpdateRequest:
+      type: object
+      required: [job_ids]
+      properties:
+        job_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        stage_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        delete:
+          type: boolean
+          description: If true, delete the specified jobs instead of updating
+
+    CreateStageRequest:
+      type: object
+      required: [name, position]
+      properties:
+        name:
+          type: string
+        position:
+          type: integer
+        is_terminal:
+          type: boolean
+        color:
+          type: string
+        mapped_status:
+          type: string
+
+    UpdateStageRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        is_terminal:
+          type: boolean
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        mapped_status:
+          type: string
+          nullable: true
+
+    ReorderStagesRequest:
+      type: object
+      required: [stages]
+      properties:
+        stages:
+          type: array
+          items:
+            type: object
+            required: [id, position]
+            properties:
+              id:
+                type: string
+                format: uuid
+              position:
+                type: integer
+
+    CreateTagRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+
+    Stats:
+      type: object
+      properties:
+        total_jobs:
+          type: integer
+          format: int64
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        follow_ups_due:
+          type: integer
+          format: int64
+
 security:
   - bearerAuth: []
 
@@ -27,3 +469,483 @@ paths:
       responses:
         "200":
           description: OK
+
+  /api/v1/jobs:
+    get:
+      summary: List jobs with filters and pagination
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: stage_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: location_type
+          in: query
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+        - name: tag_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search in title, company name, location
+        - name: created_after
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: created_before
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [created_at, updated_at, title]
+            default: created_at
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        "200":
+          description: Paginated list of jobs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Job"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      summary: Create a new job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobRequest"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/jobs/import:
+    post:
+      summary: Import a job from an external source
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportJobRequest"
+      responses:
+        "201":
+          description: Job imported
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/jobs/bulk:
+    patch:
+      summary: Bulk update or delete jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkUpdateRequest"
+      responses:
+        "200":
+          description: Jobs updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  affected:
+                    type: integer
+                    format: int64
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/jobs/{id}:
+    get:
+      summary: Get a job by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Update a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateJobRequest"
+      responses:
+        "200":
+          description: Job updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Delete a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Job deleted
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/jobs/{id}/activity:
+    get:
+      summary: Get activity log for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Activity log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityLogEntry"
+
+  /api/v1/jobs/{id}/tags:
+    post:
+      summary: Assign a tag to a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tag_id]
+              properties:
+                tag_id:
+                  type: string
+                  format: uuid
+      responses:
+        "201":
+          description: Tag assigned
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/jobs/{id}/tags/{tagId}:
+    delete:
+      summary: Remove a tag from a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Tag removed
+
+  /api/v1/stages:
+    get:
+      summary: List all stages for the current user
+      responses:
+        "200":
+          description: List of stages ordered by position
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Stage"
+    post:
+      summary: Create a new stage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStageRequest"
+      responses:
+        "201":
+          description: Stage created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stage"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/stages/reorder:
+    put:
+      summary: Reorder stages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReorderStagesRequest"
+      responses:
+        "200":
+          description: Stages reordered
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Stage"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/stages/{id}:
+    put:
+      summary: Update a stage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStageRequest"
+      responses:
+        "200":
+          description: Stage updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stage"
+        "404":
+          description: Stage not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Delete a stage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Stage deleted
+        "404":
+          description: Stage not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/tags:
+    get:
+      summary: List all tags for the current user
+      responses:
+        "200":
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+    post:
+      summary: Create a new tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTagRequest"
+      responses:
+        "201":
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/tags/{id}:
+    delete:
+      summary: Delete a tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Tag deleted
+        "404":
+          description: Tag not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/stats:
+    get:
+      summary: Get job statistics for the current user
+      responses:
+        "200":
+          description: Job statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"

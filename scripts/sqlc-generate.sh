@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# TODO: Run sqlc to generate Go code from SQL queries
-# Example: cd apps/api && sqlc generate
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+API_DIR="$SCRIPT_DIR/../apps/api/db"
 
-echo "sqlc-generate: not yet implemented"
+echo "Running sqlc generate..."
+cd "$API_DIR"
+sqlc generate
+echo "sqlc generation complete."

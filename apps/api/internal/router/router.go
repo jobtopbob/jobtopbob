@@ -25,8 +25,32 @@ func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string) *gin.Engine {
 	v1.Use(middleware.Auth(jwksURL))
 	v1.Use(middleware.RLS(pool))
 	{
-		// Route handlers will be registered here as they're built
-		_ = v1
+		// Jobs
+		v1.GET("/jobs", handlers.ListJobs())
+		v1.POST("/jobs", handlers.CreateJob())
+		v1.POST("/jobs/import", handlers.ImportJob())
+		v1.PATCH("/jobs/bulk", handlers.BulkUpdate())
+		v1.GET("/jobs/:id", handlers.GetJob())
+		v1.PUT("/jobs/:id", handlers.UpdateJob())
+		v1.DELETE("/jobs/:id", handlers.DeleteJob())
+		v1.GET("/jobs/:id/activity", handlers.GetJobActivity())
+		v1.POST("/jobs/:id/tags", handlers.AssignJobTag())
+		v1.DELETE("/jobs/:id/tags/:tagId", handlers.RemoveJobTag())
+
+		// Stages
+		v1.GET("/stages", handlers.ListStages())
+		v1.POST("/stages", handlers.CreateStage())
+		v1.PUT("/stages/reorder", handlers.ReorderStages())
+		v1.PUT("/stages/:id", handlers.UpdateStage())
+		v1.DELETE("/stages/:id", handlers.DeleteStage())
+
+		// Tags
+		v1.GET("/tags", handlers.ListTags())
+		v1.POST("/tags", handlers.CreateTag())
+		v1.DELETE("/tags/:id", handlers.DeleteTag())
+
+		// Stats
+		v1.GET("/stats", handlers.GetStats())
 	}
 
 	return r
