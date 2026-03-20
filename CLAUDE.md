@@ -43,10 +43,13 @@ Prompts are `.txt` files loaded via Go `embed.FS` in `internal/ai/prompts/`.
 ## Planned Development Commands
 
 ```bash
-# Setup
+# Setup (dev — infrastructure only, app services run on host)
 pnpm install
-docker compose -f docker-compose.dev.yml up -d
-cd apps/api && go run ./cmd/migrate/main.go up
+docker compose up -d
+
+# Setup (prod / self-hosted — everything in containers)
+docker compose --profile prod up -d
+docker compose --profile prod --profile scrapers up -d  # with scrapers
 
 # Code generation
 ./scripts/sqlc-generate.sh          # SQL queries → Go functions

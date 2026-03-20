@@ -111,8 +111,7 @@ jobtopbob/
 │   └── api-client/                 # Generated TypeScript client from OpenAPI spec
 ├── openapi/
 │   └── jobtopbob.yaml           # OpenAPI 3.1 spec (source of truth for API contract)
-├── docker-compose.yml              # Self-hosted stack (scrapers opt-in via --profile scrapers)
-├── docker-compose.dev.yml          # Local development (infra only, hot reload on host)
+├── docker-compose.yml              # Unified stack (profiles: prod, scrapers)
 ├── scripts/
 │   ├── generate-api-client.sh      # Runs openapi-typescript from spec
 │   └── sqlc-generate.sh            # Runs sqlc against queries/ directory
@@ -1705,7 +1704,7 @@ cp .env.example .env
 npm install
 
 # 4. Start infrastructure (Postgres + Redis only, no scrapers)
-docker compose -f docker-compose.dev.yml up -d
+docker compose up -d
 
 # 5. Run database migrations
 cd apps/api && go run ./cmd/migrate/main.go up && cd ../..

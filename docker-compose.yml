@@ -1,10 +1,21 @@
-# Production / self-hosted stack — tracker + resume builder + opt-in scrapers.
+# JobTopBob — single Compose file for dev and production.
 #
-# Usage:
-#   docker compose up -d                              # core services only
-#   docker compose --profile scrapers up -d           # core + all scrapers
+# Dev (infrastructure only — run app services on host with hot reload):
+#   docker compose up -d
 #
-# Ports:
+# Production / self-hosted:
+#   docker compose --profile prod up -d
+#
+# Production + scrapers:
+#   docker compose --profile prod --profile scrapers up -d
+#
+# Dev URLs:
+#   PostgreSQL:      localhost:5432
+#   Redis:           localhost:6379
+#   Resume Builder:  localhost:3010
+#   Asynq Inspector: localhost:8081
+#
+# Prod URLs:
 #   Frontend:        localhost:3000
 #   Go API:          localhost:8080
 #   Resume Builder:  localhost:3010
@@ -12,7 +23,7 @@
 
 services:
   # ---------------------------------------------------------------------------
-  # Infrastructure
+  # Infrastructure (always runs)
   # ---------------------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
@@ -21,8 +32,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-jobtopbob}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       POSTGRES_DB: ${POSTGRES_DB:-jobtopbob}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:-changeme}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-roles.sh:/docker-entrypoint-initdb.d/01-init-roles.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jobtopbob}"]
       interval: 10s
@@ -34,6 +49,8 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -47,81 +64,20 @@ services:
   # ---------------------------------------------------------------------------
   migrate:
     image: migrate/migrate:v4.18.3
+    restart: "no"
     command:
       - "-path=/migrations"
       - "-database"
-      - "${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}"
+      - "postgres://${POSTGRES_USER:-jobtopbob}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-jobtopbob}?sslmode=disable"
+      - "-verbose"
+      - "-lock-timeout"
+      - "60"
       - "up"
     volumes:
       - ./apps/api/db/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
-
-  # ---------------------------------------------------------------------------
-  # Application services
-  # ---------------------------------------------------------------------------
-  web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-    restart: unless-stopped
-    environment:
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
-      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}
-    ports:
-      - "${WEB_PORT:-3000}:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
-
-  api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}
-      REDIS_URL: ${REDIS_URL:-redis://:changeme@redis:6379/0}
-      PORT: "8080"
-      API_ENCRYPTION_KEY: ${API_ENCRYPTION_KEY}
-      JWKS_URL: ${JWKS_URL:-http://web:3000/api/auth/jwks}
-      RESUME_BUILDER_URL: ${RESUME_BUILDER_URL:-http://resume-builder:3000}
-    ports:
-      - "${API_PORT:-8080}:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  worker:
-    build:
-      context: .
-      dockerfile: apps/worker/Dockerfile
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}
-      REDIS_URL: ${REDIS_URL:-redis://:changeme@redis:6379/0}
-      API_ENCRYPTION_KEY: ${API_ENCRYPTION_KEY}
-      RESUME_BUILDER_URL: ${RESUME_BUILDER_URL:-http://resume-builder:3000}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # Resume builder (RxResume)
@@ -131,7 +87,7 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-jobtopbob}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/rxresume
-      AUTH_SECRET: ${RXRESUME_AUTH_SECRET}
+      AUTH_SECRET: ${RXRESUME_AUTH_SECRET:-dev-rxresume-secret-change-me}
       APP_URL: ${RESUME_BUILDER_PUBLIC_URL:-http://localhost:3010}
       PRINTER_APP_URL: http://resume-builder:3000
       PRINTER_ENDPOINT: ${RESUME_PRINTER_ENDPOINT:-ws://resume-printer:3000}
@@ -177,6 +133,74 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Application services (prod only — in dev these run on the host)
+  # ---------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    profiles: [prod]
+    environment:
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    profiles: [prod]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}
+      REDIS_URL: ${REDIS_URL:-redis://:changeme@redis:6379/0}
+      PORT: "8080"
+      API_ENCRYPTION_KEY: ${API_ENCRYPTION_KEY}
+      JWKS_URL: ${JWKS_URL:-http://web:3000/api/auth/jwks}
+      RESUME_BUILDER_URL: ${RESUME_BUILDER_URL:-http://resume-builder:3000}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    restart: unless-stopped
+    profiles: [prod]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}
+      REDIS_URL: ${REDIS_URL:-redis://:changeme@redis:6379/0}
+      API_ENCRYPTION_KEY: ${API_ENCRYPTION_KEY}
+      RESUME_BUILDER_URL: ${RESUME_BUILDER_URL:-http://resume-builder:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # Scraper services (opt-in via --profile scrapers)
