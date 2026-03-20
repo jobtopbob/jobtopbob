@@ -8,6 +8,12 @@ JobTopBob combines a job application tracker, integrated resume builder (powered
 
 No feature gates. No crippled free tier. No data selling.
 
+### Smart Router — your inbox updates your tracker
+
+Connect your Gmail and JobTopBob automatically detects recruiter replies, interview invites, rejections, and offers — then updates your application status for you. No more manually dragging cards after every email. The AI classifies each message's intent and surfaces it in a Tracking Inbox for you to confirm before anything changes. Your email content is never stored — only a short excerpt and the classification result are kept. Revoke access anytime and all data is deleted instantly.
+
+**This is the feature that makes job tracking actually stick.** Most trackers die because users stop updating them. Smart Router keeps your board accurate without lifting a finger.
+
 ---
 
 ## Why JobTopBob
@@ -39,6 +45,14 @@ Open-source alternatives exist for resume building (Reactive Resume, 1M+ users) 
 - Version history with restore
 - Resume-to-application linking with A/B analytics
 
+### Smart Router (flagship feature)
+- **Gmail integration** — connects your inbox via OAuth (`gmail.readonly` only — the app never sends or modifies emails)
+- **AI email classification** — detects recruiter replies, interview invites, rejections, and offers automatically
+- **Tracking Inbox** — every detected event surfaces for your review before any status change commits
+- **Privacy-first** — email body is used for classification then discarded; only a short excerpt and result are stored
+- **Zero-trust updates** — the app never silently moves your cards; you confirm or dismiss every change
+- **Instant revoke** — disconnect Gmail anytime; all stored tokens and email events are deleted immediately
+
 ### AI features (BYOK or managed)
 - **Suitability scoring** — AI ranks discovered jobs 0–100 against your profile before you apply
 - **ATS keyword scoring** — match your resume to a specific job description
@@ -47,7 +61,6 @@ Open-source alternatives exist for resume building (Reactive Resume, 1M+ users) 
 - **Interview prep** — role-specific questions, company research brief, answer rubric
 - **Ghostwriter** — persistent open-ended AI chat per application for anything the above buttons don't cover
 - **Manual JD import** — paste any job description; AI extracts fields and scores fit instantly
-- **Smart Router** — connects Gmail and auto-updates application status from recruiter replies
 
 ### Job discovery (optional)
 - Automated pipeline scraping LinkedIn, Indeed, Glassdoor, Adzuna, and more
@@ -90,6 +103,9 @@ You pay your provider directly — JobTopBob never charges for AI usage. The clo
 - Resume content is never used to train models or sold to third parties
 - All AI prompts are open source and auditable
 - Browser extension requests only the permissions needed — no "read all pages"
+- **Gmail: read-only access** — the app never sends, deletes, or modifies your emails
+- **No email storage** — message bodies are classified by AI then discarded; only a short excerpt and result are kept
+- **Instant revoke** — disconnect Gmail from settings and all tokens + email events are deleted immediately
 
 ---
 
@@ -101,9 +117,9 @@ AGPL-3.0. Self-host, fork, and modify freely. Anyone hosting a modified version 
 
 ## Roadmap
 
-**Now (months 1–6):** Core tracker, Reactive Resume v5 integration, manual JD import, networking CRM, company profiles, basic analytics, BYOK AI (OpenAI-compatible + Ollama), Docker self-hosting.
+**Now (months 1–6):** Core tracker, Reactive Resume v5 integration, manual JD import, networking CRM, company profiles, basic analytics, BYOK AI (OpenAI-compatible + Ollama), Smart Router Gmail integration, Docker self-hosting.
 
-**Next (months 6–12):** Automated job discovery pipeline, Ghostwriter, Smart Router Gmail integration, browser extension, offer comparison, advanced analytics, cloud hosted version.
+**Next (months 6–12):** Automated job discovery pipeline, Ghostwriter, browser extension, offer comparison, advanced analytics, cloud hosted version.
 
 **Later (months 12–18):** B2B institutional tier — cohort dashboards, SSO, white-label branding, placement outcome reports for bootcamps and university career centres.
 
@@ -130,3 +146,13 @@ All contributions welcome — features, templates, extractors, translations, and
 ---
 
 *Built on the shoulders of Reactive Resume, job-ops, and the open-source job-search community.*
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=jobtopbob%2Fjobtopbob&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=jobtopbob/jobtopbob&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=jobtopbob/jobtopbob&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=jobtopbob/jobtopbob&type=date&legend=top-left" />
+ </picture>
+</a>

@@ -960,6 +960,8 @@ The Go worker deduplicates on two signals before writing to Postgres:
 
 ## 9. Email & Smart Router
 
+> **Flagship feature.** The Smart Router is JobTopBob's primary differentiator. Most job trackers fail because users stop manually updating them. By passively reading recruiter emails and surfacing status changes for confirmation, the Smart Router keeps the tracker accurate without user effort — solving the core abandonment problem that plagues every competitor. Marketing and product copy should position this as the headline capability.
+
 ### Gmail OAuth
 
 The Smart Router requires Gmail read access via OAuth 2.0. Scopes requested:
@@ -999,6 +1001,7 @@ State changes only commit when the user confirms. The app never silently mutates
 - Email body text is sent to the LLM for intent classification, then discarded. Only the short excerpt and classification result are stored in `email_events`.
 - Users can revoke Gmail access at any time from settings. Revoking deletes all stored email events and OAuth tokens.
 - Polling stops immediately on revoke.
+- **Trust messaging is critical for adoption.** Granting Gmail access is a high-trust action. All user-facing copy, onboarding flows, and marketing materials must lead with transparency: read-only scope, no email storage, open-source prompts, self-hosting option, and instant revoke. The AGPL licence and self-hosting capability are key trust signals that proprietary competitors cannot match.
 
 ---
 
