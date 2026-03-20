@@ -1,0 +1,98 @@
+# Development stack — infrastructure services only.
+# Application services (web, api, worker) run on the host with hot reload.
+#
+# Usage:
+#   docker compose -f docker/docker-compose.dev.yml up -d
+#
+# Dev URLs:
+#   PostgreSQL:     localhost:5432
+#   Redis:          localhost:6379
+#   Resume Builder: localhost:3010
+#   Asynq Inspector: localhost:8081
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-jobtopbob}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-jobtopbob}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jobtopbob}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  resume-builder:
+    image: amruthpillai/reactive-resume:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-jobtopbob}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/rxresume
+      AUTH_SECRET: ${RXRESUME_AUTH_SECRET:-dev-rxresume-secret-change-me}
+      APP_URL: ${RESUME_BUILDER_PUBLIC_URL:-http://localhost:3010}
+      PRINTER_APP_URL: http://resume-builder:3000
+      PRINTER_ENDPOINT: ${RESUME_PRINTER_ENDPOINT:-ws://resume-printer:3000}
+    ports:
+      - "${RESUME_BUILDER_PORT:-3010}:3000"
+    volumes:
+      - rxresume_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      resume-printer:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  resume-printer:
+    image: ghcr.io/browserless/chromium:latest
+    restart: unless-stopped
+    environment:
+      HEALTH: "true"
+      CONCURRENT: 10
+      QUEUED: 5
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/pressure"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  asynq-inspector:
+    image: hibiken/asynqmon:latest
+    restart: unless-stopped
+    ports:
+      - "${ASYNQ_INSPECTOR_PORT:-8081}:8080"
+    environment:
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  rxresume_data:

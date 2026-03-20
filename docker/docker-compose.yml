@@ -1,0 +1,71 @@
+# Full self-hosted stack — tracker + resume builder + scraper pipeline.
+# Extends the minimal stack with scraper services.
+#
+# Usage:
+#   docker compose -f docker/docker-compose.yml up -d
+#
+# To run only specific scrapers:
+#   docker compose -f docker/docker-compose.yml up -d --scale scraper-glassdoor=0
+
+include:
+  - docker-compose.minimal.yml
+
+services:
+  # ---------------------------------------------------------------------------
+  # Scraper services (stateless HTTP — POST /scrape → RawJob[])
+  # ---------------------------------------------------------------------------
+  scraper-linkedin:
+    build:
+      context: ..
+      dockerfile: scrapers/linkedin/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      HYPERBROWSER_API_KEY: ${HYPERBROWSER_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scraper-indeed:
+    build:
+      context: ..
+      dockerfile: scrapers/indeed/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scraper-glassdoor:
+    build:
+      context: ..
+      dockerfile: scrapers/glassdoor/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      HYPERBROWSER_API_KEY: ${HYPERBROWSER_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scraper-adzuna:
+    build:
+      context: ..
+      dockerfile: scrapers/adzuna/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      ADZUNA_APP_ID: ${ADZUNA_APP_ID:-}
+      ADZUNA_APP_KEY: ${ADZUNA_APP_KEY:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
