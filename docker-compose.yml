@@ -37,7 +37,8 @@ services:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init-roles.sh:/docker-entrypoint-initdb.d/01-init-roles.sh:ro
+      - ./docker/postgres/01-init-app-role.sh:/docker-entrypoint-initdb.d/01-init-app-role.sh:ro
+      - ./docker/postgres/02-init-rxresume.sh:/docker-entrypoint-initdb.d/02-init-rxresume.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jobtopbob}"]
       interval: 10s

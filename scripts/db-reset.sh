@@ -1,6 +1,6 @@
 #!/bin/bash
 # Destroys all Docker volumes and recreates the dev stack from scratch.
-# This re-triggers the init-roles.sh script and runs all migrations.
+# This re-triggers the postgres init scripts (01-init-app-role.sh, 02-init-rxresume.sh) and runs all migrations.
 set -euo pipefail
 
 echo "Tearing down dev stack and destroying volumes..."

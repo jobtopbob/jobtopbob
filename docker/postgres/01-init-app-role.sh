@@ -1,5 +1,5 @@
 #!/bin/bash
-# Creates the restricted application role and the rxresume database.
+# Creates the restricted application role with default privileges.
 # Mounted into /docker-entrypoint-initdb.d/ — runs only on first container init.
 set -euo pipefail
 
@@ -25,10 +25,4 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         GRANT USAGE, SELECT ON SEQUENCES TO jobtopbob_app;
 EOSQL
 
-# Create rxresume database for Reactive Resume
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
-    SELECT 'CREATE DATABASE rxresume'
-    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'rxresume')\gexec
-EOSQL
-
-echo "init-roles.sh: jobtopbob_app role and rxresume database ready."
+echo "01-init-app-role.sh: jobtopbob_app role ready."
