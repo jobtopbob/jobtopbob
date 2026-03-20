@@ -111,10 +111,8 @@ jobtopbob/
 │   └── api-client/                 # Generated TypeScript client from OpenAPI spec
 ├── openapi/
 │   └── jobtopbob.yaml           # OpenAPI 3.1 spec (source of truth for API contract)
-├── docker/
-│   ├── docker-compose.yml          # Self-hosted full stack
-│   ├── docker-compose.minimal.yml  # No pipeline, no scrapers (tracker only)
-│   └── docker-compose.dev.yml      # Local development with hot reload
+├── docker-compose.yml              # Self-hosted stack (scrapers opt-in via --profile scrapers)
+├── docker-compose.dev.yml          # Local development (infra only, hot reload on host)
 ├── scripts/
 │   ├── generate-api-client.sh      # Runs openapi-typescript from spec
 │   └── sqlc-generate.sh            # Runs sqlc against queries/ directory
@@ -1009,9 +1007,9 @@ State changes only commit when the user confirms. The app never silently mutates
 
 ### Docker Compose (recommended)
 
-The canonical self-hosted deployment is a single `docker compose up` command. Services are split across two compose files — a minimal core and an optional pipeline extension.
+The canonical self-hosted deployment is a single `docker compose up` command. All services live in one `docker-compose.yml` at the project root. Scrapers are opt-in via Docker Compose profiles.
 
-**Minimal stack** (`docker-compose.minimal.yml`) — tracker + resume builder, no scraping:
+**Core stack** (`docker compose up -d`):
 
 ```yaml
 services:
@@ -1025,22 +1023,22 @@ services:
   resume-printer:   # Chromium (PDF generation for RxResume)
 ```
 
-**Full stack** (`docker-compose.yml`) — adds pipeline:
+**With scrapers** (`docker compose --profile scrapers up -d`):
 
 ```yaml
-# extends minimal, adds:
+# additionally starts (profiles: [scrapers]):
   scraper-linkedin:   # TypeScript — LinkedIn (Playwright + stealth)
   scraper-indeed:     # TypeScript — Indeed (Playwright)
   scraper-glassdoor:  # TypeScript — Glassdoor (Playwright + stealth)
   scraper-adzuna:     # TypeScript — Adzuna API (fetch)
 ```
 
-Self-hosters enable only the scrapers they need. The scrapers are opt-in — the minimal stack runs without them. For simpler deployments, a single combined scraper container dispatches internally by board type.
+Self-hosters enable only the scrapers they need. The scrapers are opt-in — the core stack runs without them. For simpler deployments, a single combined scraper container dispatches internally by board type.
 
 ### RxResume Docker Compose services
 
 ```yaml
-# Added to docker-compose.yml / docker-compose.minimal.yml
+# Added to docker-compose.yml
 services:
   # ... existing services ...
 
@@ -1246,7 +1244,7 @@ Goal: add the discovery pipeline, Smart Router, browser extension, and deeper in
 - [ ] `scrapers/glassdoor/` — TypeScript scraper using Playwright + stealth
 - [ ] `scrapers/adzuna/` — TypeScript scraper using `fetch()` against Adzuna REST API
 - [ ] Single combined scraper container option for self-hosted deployments
-- [ ] `docker-compose.yml` full stack (extends minimal + scrapers)
+- [ ] `docker-compose.yml` full stack (scrapers opt-in via `--profile scrapers`)
 - [ ] Pipeline run UI: source selection, country, keywords, min score threshold, topN
 - [ ] SSE endpoint for pipeline progress: jobs found / scored / filtered counts
 - [ ] Asynq Inspector UI exposed at `/internal/asynq` (basic auth protected)
@@ -1366,7 +1364,7 @@ Critical user journeys run against a full Docker Compose stack in CI:
 - Ghostwriter → send message → streaming response renders
 - Pipeline run → progress SSE updates → new discovered jobs appear
 
-E2E tests run in CI on every PR against the minimal stack (`docker-compose.minimal.yml`).
+E2E tests run in CI on every PR against the core stack (`docker compose up -d` without the scrapers profile).
 
 ### AI prompt regression tests
 
@@ -1461,7 +1459,7 @@ cp .env.example .env
 npm install
 
 # 4. Start infrastructure (Postgres + Redis only, no scrapers)
-docker compose -f docker/docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 
 # 5. Run database migrations
 cd apps/api && go run ./cmd/migrate/main.go up && cd ../..

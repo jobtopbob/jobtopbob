@@ -45,7 +45,7 @@ Prompts are `.txt` files loaded via Go `embed.FS` in `internal/ai/prompts/`.
 ```bash
 # Setup
 pnpm install
-docker compose -f docker/docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 cd apps/api && go run ./cmd/migrate/main.go up
 
 # Code generation

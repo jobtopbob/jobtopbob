@@ -1,12 +1,13 @@
-# Minimal self-hosted stack — tracker + resume builder, no scrapers.
+# Production / self-hosted stack — tracker + resume builder + opt-in scrapers.
 #
 # Usage:
-#   docker compose -f docker/docker-compose.minimal.yml up -d
+#   docker compose up -d                              # core services only
+#   docker compose --profile scrapers up -d           # core + all scrapers
 #
 # Ports:
-#   Frontend:       localhost:3000
-#   Go API:         localhost:8080
-#   Resume Builder: localhost:3010
+#   Frontend:        localhost:3000
+#   Go API:          localhost:8080
+#   Resume Builder:  localhost:3010
 #   Asynq Inspector: localhost:8081
 
 services:
@@ -52,7 +53,7 @@ services:
       - "${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}"
       - "up"
     volumes:
-      - ../apps/api/db/migrations:/migrations:ro
+      - ./apps/api/db/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,7 +63,7 @@ services:
   # ---------------------------------------------------------------------------
   web:
     build:
-      context: ..
+      context: .
       dockerfile: apps/web/Dockerfile
     restart: unless-stopped
     environment:
@@ -79,7 +80,7 @@ services:
 
   api:
     build:
-      context: ..
+      context: .
       dockerfile: apps/api/Dockerfile
     restart: unless-stopped
     environment:
@@ -106,7 +107,7 @@ services:
 
   worker:
     build:
-      context: ..
+      context: .
       dockerfile: apps/worker/Dockerfile
     restart: unless-stopped
     environment:
@@ -176,6 +177,69 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Scraper services (opt-in via --profile scrapers)
+  # ---------------------------------------------------------------------------
+  scraper-linkedin:
+    build:
+      context: .
+      dockerfile: scrapers/linkedin/Dockerfile
+    restart: unless-stopped
+    profiles: [scrapers]
+    environment:
+      PORT: "3000"
+      HYPERBROWSER_API_KEY: ${HYPERBROWSER_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scraper-indeed:
+    build:
+      context: .
+      dockerfile: scrapers/indeed/Dockerfile
+    restart: unless-stopped
+    profiles: [scrapers]
+    environment:
+      PORT: "3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scraper-glassdoor:
+    build:
+      context: .
+      dockerfile: scrapers/glassdoor/Dockerfile
+    restart: unless-stopped
+    profiles: [scrapers]
+    environment:
+      PORT: "3000"
+      HYPERBROWSER_API_KEY: ${HYPERBROWSER_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scraper-adzuna:
+    build:
+      context: .
+      dockerfile: scrapers/adzuna/Dockerfile
+    restart: unless-stopped
+    profiles: [scrapers]
+    environment:
+      PORT: "3000"
+      ADZUNA_APP_ID: ${ADZUNA_APP_ID:-}
+      ADZUNA_APP_KEY: ${ADZUNA_APP_KEY:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   postgres_data:

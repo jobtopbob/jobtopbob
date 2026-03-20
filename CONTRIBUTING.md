@@ -31,7 +31,7 @@ cp .env.example .env
 pnpm install
 
 # 4. Start infrastructure (Postgres + Redis)
-docker compose -f docker/docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 
 # 5. Run database migrations
 cd apps/api && go run ./cmd/migrate/main.go up && cd ../..

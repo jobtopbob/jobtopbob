@@ -2,12 +2,12 @@
 # Application services (web, api, worker) run on the host with hot reload.
 #
 # Usage:
-#   docker compose -f docker/docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml up -d
 #
 # Dev URLs:
-#   PostgreSQL:     localhost:5432
-#   Redis:          localhost:6379
-#   Resume Builder: localhost:3010
+#   PostgreSQL:      localhost:5432
+#   Redis:           localhost:6379
+#   Resume Builder:  localhost:3010
 #   Asynq Inspector: localhost:8081
 
 services:
