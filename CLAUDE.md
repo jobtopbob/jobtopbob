@@ -86,9 +86,10 @@ pnpm playwright test
 
 - OpenAPI spec (`openapi/jobtopbob.yaml`) is the API contract between TypeScript and Go
 - Go handlers are thin (validate → call service → respond); business logic lives in `internal/services/`
-- User API keys encrypted at rest with AES-256-GCM (per-user key derivation via HKDF)
+- AI provider keys configured via environment variables (never stored in DB)
+- OAuth tokens (Gmail etc.) encrypted at rest with AES-256-GCM (per-user key derivation via HKDF) in `oauth_tokens` table
 - User content in AI prompts wrapped in `<user_content>` XML tags for prompt injection defense
-- Feature flags: `BILLING_ENABLED`, `MULTI_TENANT`, `SCRAPERS_ENABLED`
+- Feature flags: `SCRAPERS_ENABLED`
 - Self-hosting constraint: everything must work with Docker Compose on a $10/month VPS
 
 ## Licence

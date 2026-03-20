@@ -18,10 +18,9 @@
 10. [Self-hosting & deployment](#10-self-hosting--deployment)
 11. [Phase 1 — Foundation](#11-phase-1--foundation-months-16)
 12. [Phase 2 — Growth](#12-phase-2--growth-months-612)
-13. [Phase 3 — B2B](#13-phase-3--b2b-months-1218)
-14. [Testing strategy](#14-testing-strategy)
-15. [Security considerations](#15-security-considerations)
-16. [Contributing guidelines](#16-contributing-guidelines)
+13. [Testing strategy](#13-testing-strategy)
+14. [Security considerations](#14-security-considerations)
+15. [Contributing guidelines](#15-contributing-guidelines)
 
 ---
 
@@ -82,7 +81,7 @@ jobtopbob/
 │   │       ├── ats_score.txt       # ATS keyword scoring prompt
 │   │       └── interview_prep.txt  # Interview prep prompt
 │   ├── crypto/
-│   │   └── keys.go                 # AES-256-GCM encryption for API keys
+│   │   └── keys.go                 # AES-256-GCM encryption for OAuth tokens
 │   └── go.mod
 ├── scrapers/
 │   ├── shared/                     # Shared TypeScript — types + HTTP client
@@ -143,7 +142,7 @@ The AI provider interface, prompt templates, and encryption utilities live in a 
 
 ### Frontend — Next.js 16 (App Router)
 
-- **Why Next.js:** App Router enables server components for fast initial loads. The same build artifact runs on Vercel (cloud) or a Docker container (self-hosted). No separate SSR server to operate.
+- **Why Next.js:** App Router enables server components for fast initial loads. The build artifact runs in a Docker container (self-hosted). No separate SSR server to operate.
 - **Version note:** Next.js 16 makes `params` and route segment props asynchronous — they must be `await`-ed in page/layout functions. This is a breaking change from v15.
 - **Styling:** Tailwind CSS v4 + shadcn/ui (CLI v3.5). Tailwind v4 uses CSS-native configuration (`@import "tailwindcss"` instead of `@tailwind` directives; no `tailwind.config.js` required by default). shadcn components are copy-pasted into the repo via CLI — no runtime library, no version conflicts, fully customisable.
 - **State:** Zustand for local UI state. TanStack Query v5 for server state, caching, and optimistic updates. TanStack Query v5 uses single-object arguments for all hooks (no positional overloads).
@@ -160,7 +159,7 @@ The AI provider interface, prompt templates, and encryption utilities live in a 
 
 ### Database — PostgreSQL 16 + sqlc v1.30
 
-- **Why PostgreSQL:** Full-text search (job search bar), JSONB for JD snapshot storage, and row-level security (RLS) for multi-tenancy.
+- **Why PostgreSQL:** Full-text search (job search bar), JSONB for JD snapshot storage, and robust extension ecosystem.
 - **Why sqlc:** sqlc reads plain `.sql` query files and generates fully type-safe Go functions. There is no ORM, no reflection, no struct tag magic. The generated functions are plain Go — readable, testable, and auditable by any contributor. SQL is the interface; Go is the output.
 - **Migrations:** `golang-migrate` v4.18 runs sequential numbered `.sql` migration files. Migrations are committed to the repo and run automatically by an init container on `docker compose up`. No migration DSL to learn — just SQL.
 - **Generated code is committed:** The output of `sqlc generate` lives in `apps/api/db/generated/` and is committed to the repo. Contributors do not need `sqlc` installed to build the project — they only need it when modifying queries.
@@ -338,7 +337,6 @@ Phase 1: Microservice composition
 ├── Add RxResume as a Docker Compose service (app + printer)
 ├── Share PostgreSQL instance (separate database) or use RxResume's own DB
 ├── JobTopBob Go API proxies resume operations via RxResume REST API
-├── Store RxResume user API keys in JobTopBob's user_api_keys table
 ├── Link resume IDs to job applications (existing jobs.resume_id column)
 └── PDF export calls RxResume's GET /resumes/{id}/pdf endpoint
 
@@ -522,28 +520,19 @@ user_settings
   created_at    timestamptz
   updated_at    timestamptz
 
--- User API keys (per-provider, encrypted — replaces single ai_api_key column)
-user_api_keys
+-- OAuth tokens (Gmail, future integrations — encrypted at rest)
+oauth_tokens
   id            uuid primary key
   user_id       uuid references users
-  provider      text          -- 'openai' | 'openrouter' | 'ollama' | etc.
-  api_key       text          -- encrypted at rest (AES-256-GCM)
+  provider      text not null  -- 'gmail' | future providers
+  access_token  text           -- encrypted (AES-256-GCM)
+  refresh_token text           -- encrypted (AES-256-GCM)
+  token_type    text
+  scope         text
+  expires_at    timestamptz
   created_at    timestamptz
+  updated_at    timestamptz
   UNIQUE(user_id, provider)
-
--- Organisations (B2B tier)
-organisations
-  id            uuid primary key
-  name          text
-  slug          text unique
-  plan          text          -- 'pro' | 'team' | 'enterprise'
-  created_at    timestamptz
-
--- Organisation members
-org_members
-  org_id        uuid references organisations
-  user_id       uuid references users
-  role          text          -- 'owner' | 'admin' | 'member' | 'advisor'
 
 -- Company profiles
 companies
@@ -695,7 +684,7 @@ taggings
   entity_id     uuid
   PRIMARY KEY (tag_id, entity_type, entity_id)
 
--- Activity log (audit trail for timeline view + B2B compliance)
+-- Activity log (audit trail for timeline view)
 activity_log
   id            uuid primary key
   user_id       uuid references users
@@ -714,9 +703,9 @@ The following tables were added to the original schema based on feasibility asse
 | Table | Why | When needed |
 |---|---|---|
 | `stages` | `jobs.status` as a text field cannot support custom Kanban columns (a promised feature). Users need to rename, reorder, and add columns. | Phase 1 |
-| `activity_log` | Required for the timeline view, B2B audit compliance, and debugging. Painful to add retroactively because historical events are lost. | Phase 1 |
+| `activity_log` | Required for the timeline view and debugging. Painful to add retroactively because historical events are lost. | Phase 1 |
 | `tags` + `taggings` | Users will want custom categorisation across jobs, contacts, and companies. Polymorphic tagging via `entity_type` + `entity_id`. | Phase 1 |
-| `user_api_keys` | The original single `ai_api_key` column on `user_settings` means switching providers loses the previous key. A separate table keyed by provider preserves all keys. | Phase 1 |
+| `oauth_tokens` | Dedicated table for OAuth credentials (Gmail, future integrations). Separates OAuth tokens from AI key configuration. AI provider keys are configured via environment variables. | Phase 1 |
 
 ### Default stages
 
@@ -731,14 +720,6 @@ When a new user is created, the application seeds default stages:
 | 4 | Closed | Yes |
 
 Users can rename, reorder, add, or remove stages. The `status` field on `jobs` continues to power the state machine for automation; `stage_id` determines the visual Kanban column position.
-
-### Multi-tenancy strategy
-
-Self-hosted: single-tenant. All queries implicitly scope to the single `user_id`.
-
-Multi-tenant mode (`MULTI_TENANT=true`): row-level security (RLS) in Postgres enforces tenant isolation. Every table has a `user_id` column. A session variable `app.current_user_id` is set at connection time, and RLS policies enforce `user_id = current_setting('app.current_user_id')`. No application-layer tenant filtering required — the database enforces it.
-
-Organisation (B2B) data lives in a parallel schema with `org_id` scoping and role-based access via `org_members`.
 
 ---
 
@@ -798,10 +779,6 @@ func AuthMiddleware(jwksURL string) gin.HandlerFunc {
 ```
 
 This keeps the Go API fully stateless — it can scale horizontally without sticky sessions or shared auth state.
-
-### Optional multi-tenancy
-
-The codebase supports an optional multi-tenant mode (`MULTI_TENANT=true`) for teams or hosted deployments. When disabled (the default), all queries scope to the single user.
 
 ---
 
@@ -874,11 +851,11 @@ Prompt templates use Go `text/template` syntax for dynamic values (`{{.Resume}}`
 ### Provider resolution order
 
 ```
-1. User BYOK key (decrypted from user_api_keys at request time)
-2. Organisation key  (B2B tier: org may supply a shared key)
-3. Platform default key (optional; set via AI_API_KEY env var)
-4. Error → prompt user to configure a key in settings
+1. Per-provider environment variable (OPENAI_API_KEY / ANTHROPIC_API_KEY / OPENROUTER_API_KEY / OLLAMA_HOST)
+2. Error → prompt user to set the env var in docker-compose
 ```
+
+AI provider keys are configured via environment variables and never stored in the database. The `user_settings.ai_provider` column determines which env var the app reads.
 
 ### Task-specific model routing
 
@@ -990,7 +967,7 @@ The Smart Router requires Gmail read access via OAuth 2.0. Scopes requested:
 - `gmail.readonly` — read email metadata and body
 - No `gmail.send`, no `gmail.modify` — the app never sends email or modifies inbox state
 
-The OAuth token is stored encrypted in `user_api_keys` (provider = `gmail`). Users must create their own Google Cloud project and register OAuth credentials — documented in the self-hosting guide.
+The OAuth token is stored encrypted in `oauth_tokens` (provider = `gmail`). Users must create their own Google Cloud project and register OAuth credentials — documented in the self-hosting guide.
 
 ### Email parsing pipeline
 
@@ -1123,15 +1100,17 @@ DATABASE_URL=postgres://jobtopbob:password@postgres:5432/jobtopbob
 BETTER_AUTH_SECRET=<random 32-char string>
 BETTER_AUTH_URL=http://localhost:3000
 
-# API encryption (for BYOK key storage)
+# API encryption (for OAuth token storage)
 API_ENCRYPTION_KEY=<random 32-char string>
 
 # Resume builder
 RESUME_BUILDER_URL=http://localhost:3010
 
-# Optional: AI (BYOK)
-# Leave blank to require users to supply their own keys in settings
-# AI_API_KEY=sk-...
+# AI provider keys (set the one matching your chosen provider)
+# OPENAI_API_KEY=sk-...
+# ANTHROPIC_API_KEY=sk-ant-...
+# OPENROUTER_API_KEY=sk-or-...
+# OLLAMA_HOST=http://ollama:11434
 
 # Optional: Email (for auth verification + follow-up emails)
 # SMTP_HOST=smtp.resend.com
@@ -1152,7 +1131,7 @@ RESUME_BUILDER_URL=http://localhost:3010
 On first launch, a setup wizard guides the user through:
 
 1. Creating an admin account
-2. Connecting an AI provider key (or skipping for manual-only use)
+2. Verifying AI provider key is set via env var (or skipping for manual-only use)
 3. (Optional) Configuring the job discovery pipeline — target job boards, countries, role types
 4. (Optional) Connecting Gmail for the Smart Router
 
@@ -1182,7 +1161,7 @@ Goal: a fully functional self-hosted product that solves the core problem comple
 - [ ] `openapi/jobtopbob.yaml` — initial spec for auth + jobs endpoints
 - [ ] `oapi-codegen` generating Go server interfaces from spec
 - [ ] `openapi-typescript` generating TypeScript types (`packages/api-client/`) — types only, no runtime client
-- [ ] `sqlc.yaml` config + initial SQL migration files (all tables including stages, activity_log, tags, user_api_keys)
+- [ ] `sqlc.yaml` config + initial SQL migration files (all tables including stages, activity_log, tags, oauth_tokens)
 - [ ] `golang-migrate` v4.18 init container in Docker Compose
 - [ ] Docker Compose minimal stack: web + api + worker + postgres + redis + resume-builder + resume-printer
 - [ ] Better Auth v1.3: email/password + Google OAuth in Next.js, with JWT plugin for bearer token issuance
@@ -1216,7 +1195,7 @@ Goal: a fully functional self-hosted product that solves the core problem comple
 
 - [ ] `internal/ai/` — Go provider abstraction (OpenAI-compatible + Ollama)
 - [ ] `internal/ai/prompts/` — embedded `.txt` prompt templates via `embed.FS`
-- [ ] BYOK settings page: provider selection, API key input (encrypted at rest via `user_api_keys` table), model overrides per task type
+- [ ] AI settings page: provider selection (reads from env vars), model overrides per task type. AI keys are configured via environment variables in docker-compose, not stored in the database
 - [ ] Asynq task: `job:extract` — JD field extraction via LLM → update job record (sqlc) → log to activity_log
 - [ ] Asynq task: `job:score` — suitability score + reason → update job record (sqlc) → publish SSE via Redis Pub/Sub
 - [ ] Gin endpoint: `POST /api/v1/jobs/:id/ats-score` — ATS keyword match (streaming response)
@@ -1311,36 +1290,7 @@ Goal: add the discovery pipeline, Smart Router, browser extension, and deeper in
 
 ---
 
-## 13. Phase 3 — B2B (months 12–18)
-
-Goal: build cohort management and institutional features for organisations.
-
-### Milestone 3.1 — Organisation tier (weeks 1–4)
-
-- [ ] Organisation creation and member invitation
-- [ ] Role-based access: owner, admin, member, advisor
-- [ ] Advisor view: read-only access to member job searches with annotation
-- [ ] Cohort dashboard: aggregate placement rates, application volume, response rates across members
-- [ ] Time-to-offer distribution across cohort
-- [ ] Member progress overview (at-a-glance status per student)
-- [ ] `custom_fields` JSONB column on relevant tables for institution-specific fields
-
-### Milestone 3.2 — Institutional reporting (weeks 3–6)
-
-- [ ] Exportable outcome reports (PDF + CSV) powered by `activity_log` data
-- [ ] WIOA/accreditation-compatible field mapping (workforce development programs)
-- [ ] Custom report builder: select metrics, date range, cohort filter
-- [ ] Scheduled report delivery (email weekly/monthly report to advisor)
-
-### Milestone 3.3 — Enterprise features (weeks 5–10)
-
-- [ ] SSO: SAML 2.0 + OIDC (via Better Auth enterprise plugin)
-- [ ] SCIM provisioning for bulk user management
-- [ ] Custom AI system prompt per organisation (e.g. "Focus on entry-level engineering roles")
-
----
-
-## 14. Testing strategy
+## 13. Testing strategy
 
 ### Go — unit tests (`go test`)
 
@@ -1421,11 +1371,15 @@ Each prompt in `internal/ai/prompts/` has a golden test file with 5–10 input/o
 
 ---
 
-## 15. Security considerations
+## 14. Security considerations
 
-### API key storage
+### AI provider keys
 
-User BYOK keys are encrypted at rest using AES-256-GCM in the Go API before being written to the `user_api_keys` table. The encryption key is derived per-user using HKDF from a master secret (`API_ENCRYPTION_KEY` env var) and the user's UUID as salt. Keys are never logged, never included in error responses, and never returned in API responses after the initial save — the settings UI shows only a masked placeholder.
+AI provider keys are configured via environment variables (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `OLLAMA_HOST`) and never stored in the database. The `user_settings.ai_provider` column determines which env var the app reads.
+
+### OAuth token encryption
+
+OAuth tokens (Gmail, future integrations) are encrypted at rest using AES-256-GCM before being written to the `oauth_tokens` table. The encryption key is derived per-user using HKDF from a master secret (`API_ENCRYPTION_KEY` env var) and the user's UUID as salt. Tokens are never logged, never included in error responses, and never returned in API responses after the initial save.
 
 ```go
 // internal/crypto/keys.go
@@ -1463,7 +1417,7 @@ The `sanitised()` function strips any XML/HTML tags from user input before inter
 Redis-backed rate limiting in Gin middleware using a token bucket per user ID (or IP for unauthenticated routes):
 
 - Auth endpoints: 10 requests/minute per IP
-- AI feature endpoints: 20 requests/minute per user (BYOK); 10/minute per user (managed)
+- AI feature endpoints: 20 requests/minute per user
 - Pipeline run trigger: 1 per user per 15 minutes
 - Scraper task dispatch: rate limited per source to avoid triggering anti-bot responses
 
@@ -1475,7 +1429,7 @@ Base image is `node:20-slim`. Dependencies are pinned via `package-lock.json` wi
 
 ### Gmail OAuth scope
 
-The app requests `gmail.readonly` only — the narrowest scope that allows reading email content. The Go worker never calls `gmail.send`, `gmail.modify`, or any write API. Gmail tokens are stored encrypted in `user_api_keys` (provider = `gmail`) using the same AES-256-GCM scheme as AI keys. Revoking access calls the Google OAuth revoke endpoint, then deletes all stored tokens and email events via sqlc in a single transaction.
+The app requests `gmail.readonly` only — the narrowest scope that allows reading email content. The Go worker never calls `gmail.send`, `gmail.modify`, or any write API. Gmail tokens are stored encrypted in `oauth_tokens` (provider = `gmail`) using the same AES-256-GCM encryption scheme. Revoking access calls the Google OAuth revoke endpoint, then deletes all stored tokens and email events via sqlc in a single transaction.
 
 ### AGPL compliance
 
@@ -1488,7 +1442,7 @@ The Go API serves `GET /.well-known/source-code` returning a JSON document point
 
 ---
 
-## 16. Contributing guidelines
+## 15. Contributing guidelines
 
 ### Getting started
 
@@ -1566,4 +1520,4 @@ Good first issues are labelled `good-first-issue` on GitHub. High-impact contrib
 
 ---
 
-*Implementation plan version 3.1 — updated: removed cloud/commercialization details (moved to internal Project Details), Reactive Resume v5 integration, 2 AI providers (OpenAI-compatible + Ollama), shared Go AI module, HTTP scrapers, Redis Pub/Sub SSE bridge, Hyperbrowser integration for bot-hostile boards, extended schema (stages, activity_log, tags, user_api_keys), and latest framework versions (Next.js 16, Tailwind v4, TanStack Query v5, Playwright v1.58, Better Auth v1.3, Turborepo v2.8, Gin v1.10, sqlc v1.30, golang-migrate v4.18).*
+*Implementation plan version 3.2 — updated: removed cloud/B2B features (organisations, multi-tenancy, billing — moved to separate private repo), removed user_api_keys table (AI keys via env vars only), added oauth_tokens table for Gmail/future OAuth integrations, removed Phase 3 B2B roadmap. Previous: Reactive Resume v5 integration, 2 AI providers (OpenAI-compatible + Ollama), shared Go AI module, HTTP scrapers, Redis Pub/Sub SSE bridge, Hyperbrowser integration for bot-hostile boards, extended schema (stages, activity_log, tags, oauth_tokens), and latest framework versions (Next.js 16, Tailwind v4, TanStack Query v5, Playwright v1.58, Better Auth v1.3, Turborepo v2.8, Gin v1.10, sqlc v1.30, golang-migrate v4.18).*
