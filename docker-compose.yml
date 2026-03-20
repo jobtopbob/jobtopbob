@@ -105,6 +105,7 @@ services:
   # ---------------------------------------------------------------------------
   asynq-inspector:
     image: hibiken/asynqmon:latest
+    platform: linux/amd64
     restart: unless-stopped
     ports:
       - "${ASYNQ_INSPECTOR_PORT:-8081}:8080"
