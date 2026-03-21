@@ -16,7 +16,8 @@
       "mcp__plugin_figma_figma__get_metadata",
       "mcp__magic__21st_magic_component_inspiration",
       "Bash(xargs ls:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(grep -E \"\\\\.\\(ts|yaml|json\\)$\")"
     ]
   }
 }

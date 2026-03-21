@@ -88,6 +88,41 @@ export default function SignInPage() {
               Sign up
             </Link>
           </p>
+          {process.env.NEXT_PUBLIC_SEED_DEMO_DATA === "true" && (
+            <>
+              <div className="relative w-full">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">or</span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={loading}
+                onClick={async () => {
+                  setError("");
+                  setLoading(true);
+                  const { error: signInError } = await authClient.signIn.email({
+                    email: "demo@jobtopbob.com",
+                    password: "demo1234",
+                  });
+                  if (signInError) {
+                    setError("Demo account not available. Run the seed script first.");
+                    setLoading(false);
+                    return;
+                  }
+                  router.push("/dashboard");
+                  router.refresh();
+                }}
+              >
+                {loading ? "Signing in..." : "Try Demo"}
+              </Button>
+            </>
+          )}
         </CardFooter>
       </form>
     </Card>

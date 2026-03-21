@@ -16,6 +16,7 @@ import (
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/config"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/database"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/router"
+	"github.com/jobtopbob/jobtopbob/apps/api/internal/seed"
 )
 
 func main() {
@@ -24,9 +25,9 @@ func main() {
 	// Load config
 	cfg := config.Load()
 
-	// Run embedded migrations
+	// Run embedded migrations (uses superuser for DDL privileges)
 	slog.Info("running database migrations")
-	if err := database.RunMigrations(cfg.DatabaseURL, db.MigrationsFS); err != nil {
+	if err := database.RunMigrations(cfg.MigrationDatabaseURL, db.MigrationsFS); err != nil {
 		slog.Error("migrations failed", "error", err)
 		os.Exit(1)
 	}
@@ -39,6 +40,13 @@ func main() {
 		os.Exit(1)
 	}
 	defer pool.Close()
+
+	// Seed demo data if enabled
+	if cfg.SeedDemoData {
+		if err := seed.SeedDemoData(ctx, pool); err != nil {
+			slog.Warn("demo seed failed", "error", err)
+		}
+	}
 
 	// Create Redis client
 	opts, err := redis.ParseURL(cfg.RedisURL)

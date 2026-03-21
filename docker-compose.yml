@@ -129,7 +129,8 @@ services:
     environment:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
-      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}
+      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob_app:${POSTGRES_APP_PASSWORD:-changeme}@postgres:5432/jobtopbob?sslmode=disable}
+      NEXT_PUBLIC_SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
     ports:
       - "${WEB_PORT:-3000}:3000"
     depends_on:
@@ -143,11 +144,13 @@ services:
     restart: unless-stopped
     profiles: [prod]
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}
+      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob_app:${POSTGRES_APP_PASSWORD:-changeme}@postgres:5432/jobtopbob?sslmode=disable}
+      MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL:-postgres://postgres:${POSTGRES_PASSWORD:-changeme}@postgres:5432/jobtopbob?sslmode=disable}
       REDIS_URL: ${REDIS_URL:-redis://:changeme@redis:6379/0}
       PORT: "8080"
       API_ENCRYPTION_KEY: ${API_ENCRYPTION_KEY}
       JWKS_URL: ${JWKS_URL:-http://web:3000/api/auth/jwks}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
       RESUME_BUILDER_URL: ${RESUME_BUILDER_URL:-http://resume-builder:3000}
     ports:
       - "${API_PORT:-8080}:8080"
@@ -169,7 +172,7 @@ services:
     restart: unless-stopped
     profiles: [prod]
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob:changeme@postgres:5432/jobtopbob?sslmode=disable}
+      DATABASE_URL: ${DATABASE_URL:-postgres://jobtopbob_app:${POSTGRES_APP_PASSWORD:-changeme}@postgres:5432/jobtopbob?sslmode=disable}
       REDIS_URL: ${REDIS_URL:-redis://:changeme@redis:6379/0}
       API_ENCRYPTION_KEY: ${API_ENCRYPTION_KEY}
       RESUME_BUILDER_URL: ${RESUME_BUILDER_URL:-http://resume-builder:3000}

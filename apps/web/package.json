@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "check-types": "tsc --noEmit",
-    "clean": "rm -rf .next .turbo"
+    "clean": "rm -rf .next .turbo",
+    "seed:demo": "tsx scripts/seed-demo-user.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
@@ -42,6 +43,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.0",
     "tailwindcss": "^4",
+    "tsx": "^4.19.0",
     "typescript": "^5"
   }
 }

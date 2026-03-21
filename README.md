@@ -70,6 +70,39 @@ docker compose --profile prod --profile scrapers up -d
 
 All configuration is in `.env` — see `.env.example` for the full reference.
 
+### Demo mode
+
+Seed the database with a demo user and realistic sample data (15 jobs across 8 stages, 15 companies, tags) to explore the full UI without manually creating anything. Requires infrastructure to be running first (`docker compose up -d`).
+
+#### Development
+
+Step 1 must run before step 2 — the demo user (with password hash) must exist before the API seeds application data for it.
+
+```bash
+# 1. Create the demo user (uses Better Auth for correct password hashing)
+pnpm --filter @jobtopbob/web seed:demo
+
+# 2. Start the API with demo data seeding enabled
+SEED_DEMO_DATA=true go run ./apps/api/cmd/api
+
+# Or run both steps at once:
+./scripts/seed-demo.sh
+```
+
+#### Docker (production / self-hosted)
+
+Set `SEED_DEMO_DATA=true` in your `.env` file before starting. The demo user must be created first via the seed script — the API only seeds application data (stages, jobs, tags) for an existing demo user.
+
+```bash
+echo 'SEED_DEMO_DATA=true' >> .env
+pnpm --filter @jobtopbob/web seed:demo
+docker compose --profile prod up -d
+```
+
+The sign-in page shows a **Try Demo** button when `SEED_DEMO_DATA` is enabled.
+
+**Demo credentials:** `demo@jobtopbob.com` / `demo1234`
+
 ---
 
 ## Features
