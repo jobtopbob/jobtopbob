@@ -126,6 +126,10 @@ components:
           type: string
           nullable: true
           description: Joined from companies table
+        company_logo_url:
+          type: string
+          nullable: true
+          description: Company logo URL from storage
         stage_name:
           type: string
           nullable: true

@@ -61,6 +61,29 @@ services:
       timeout: 5s
       retries: 5
 
+  rustfs:
+    image: rustfs/rustfs:latest
+    restart: unless-stopped
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: "0.0.0.0:9000"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
+      RUSTFS_CORS_ALLOWED_ORIGINS: "*"
+      RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS: "*"
+    ports:
+      - "127.0.0.1:${S3_PORT:-9000}:9000"
+      - "127.0.0.1:${S3_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - rustfs_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ---------------------------------------------------------------------------
   # Resume builder (RxResume)
   # ---------------------------------------------------------------------------
@@ -152,12 +175,19 @@ services:
       JWKS_URL: ${JWKS_URL:-http://web:3000/api/auth/jwks}
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
       RESUME_BUILDER_URL: ${RESUME_BUILDER_URL:-http://resume-builder:3000}
+      S3_BUCKET: ${S3_BUCKET:-jobtopbob}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-rustfsadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
+      S3_ENDPOINT: http://rustfs:9000
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rustfs:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -176,8 +206,15 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://:changeme@redis:6379/0}
       API_ENCRYPTION_KEY: ${API_ENCRYPTION_KEY}
       RESUME_BUILDER_URL: ${RESUME_BUILDER_URL:-http://resume-builder:3000}
+      S3_BUCKET: ${S3_BUCKET:-jobtopbob}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-rustfsadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
+      S3_ENDPOINT: http://rustfs:9000
     depends_on:
       api:
+        condition: service_healthy
+      rustfs:
         condition: service_healthy
 
   # ---------------------------------------------------------------------------
@@ -247,3 +284,4 @@ volumes:
   postgres_data:
   redis_data:
   rxresume_data:
+  rustfs_data:

@@ -1,12 +1,17 @@
 package seed
 
 import (
+	"bytes"
 	"context"
+	"embed"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/jobtopbob/jobtopbob/internal/storage"
 )
 
 const demoEmail = "demo@jobtopbob.com"
@@ -19,11 +24,15 @@ type stage struct {
 	MappedStatus string
 }
 
+//go:embed logos/*.svg
+var logoFS embed.FS
+
 type company struct {
 	Name     string
 	Website  string
 	Industry string
 	Size     string
+	LogoFile string // filename in logos/ dir, e.g. "vercel.png"
 }
 
 type job struct {
@@ -57,21 +66,21 @@ var demoStages = []stage{
 }
 
 var demoCompanies = []company{
-	{"Vercel", "https://vercel.com", "Technology", "201-500"},
-	{"Notion", "https://notion.so", "Technology", "501-1000"},
-	{"Linear", "https://linear.app", "Technology", "51-200"},
-	{"Stripe", "https://stripe.com", "Financial Technology", "5001-10000"},
-	{"Figma", "https://figma.com", "Design Technology", "1001-5000"},
-	{"Datadog", "https://datadoghq.com", "Technology", "5001-10000"},
-	{"Cloudflare", "https://cloudflare.com", "Technology", "1001-5000"},
-	{"Shopify", "https://shopify.com", "E-Commerce", "10001+"},
-	{"Airbnb", "https://airbnb.com", "Travel", "5001-10000"},
-	{"Supabase", "https://supabase.com", "Technology", "51-200"},
-	{"Ramp", "https://ramp.com", "Financial Technology", "501-1000"},
-	{"Plaid", "https://plaid.com", "Financial Technology", "1001-5000"},
-	{"Loom", "https://loom.com", "Technology", "201-500"},
-	{"Meta", "https://meta.com", "Technology", "10001+"},
-	{"Coinbase", "https://coinbase.com", "Financial Technology", "1001-5000"},
+	{"Vercel", "https://vercel.com", "Technology", "201-500", "vercel.svg"},
+	{"GitHub", "https://github.com", "Technology", "1001-5000", "github.svg"},
+	{"Linear", "https://linear.app", "Technology", "51-200", "linear.svg"},
+	{"Stripe", "https://stripe.com", "Financial Technology", "5001-10000", "stripe.svg"},
+	{"Figma", "https://figma.com", "Design Technology", "1001-5000", "figma.svg"},
+	{"Datadog", "https://datadoghq.com", "Technology", "5001-10000", "datadog.svg"},
+	{"Cloudflare", "https://cloudflare.com", "Technology", "1001-5000", "cloudflare.svg"},
+	{"Shopify", "https://shopify.com", "E-Commerce", "10001+", "shopify.svg"},
+	{"Airbnb", "https://airbnb.com", "Travel", "5001-10000", "airbnb.svg"},
+	{"Twilio", "https://twilio.com", "Technology", "5001-10000", "twilio.svg"},
+	{"Atlassian", "https://atlassian.com", "Technology", "5001-10000", "atlassian.svg"},
+	{"HashiCorp", "https://hashicorp.com", "Technology", "1001-5000", "hashicorp.svg"},
+	{"Slack", "https://slack.com", "Technology", "1001-5000", "slack.svg"},
+	{"Meta", "https://meta.com", "Technology", "10001+", "meta.svg"},
+	{"Coinbase", "https://coinbase.com", "Financial Technology", "1001-5000", "coinbase.svg"},
 }
 
 var demoTags = []struct {
@@ -89,7 +98,7 @@ var demoTags = []struct {
 var demoJobs = []job{
 	// Wishlist (3)
 	{"Staff Frontend Engineer", "Vercel", "Wishlist", "", "", "linkedin", "", "Remote", "remote", 200000, 280000, 5, 2, 0, 0, []string{"Remote", "React", "TypeScript"}},
-	{"Senior Full Stack Developer", "Notion", "Wishlist", "", "", "company_website", "", "San Francisco, CA", "onsite", 180000, 250000, 4, 5, 0, 0, []string{"React", "TypeScript"}},
+	{"Senior Full Stack Developer", "GitHub", "Wishlist", "", "", "company_website", "", "San Francisco, CA", "onsite", 180000, 250000, 4, 5, 0, 0, []string{"React", "TypeScript"}},
 	{"Principal Engineer", "Linear", "Wishlist", "", "", "referral", "", "Remote", "remote", 220000, 300000, 5, 1, 0, 0, []string{"Remote", "Startup", "TypeScript"}},
 
 	// Applied (5)
@@ -101,12 +110,12 @@ var demoJobs = []job{
 
 	// Interviewing (3)
 	{"Staff Software Engineer", "Airbnb", "Interviewing", "", "", "referral", "", "San Francisco, CA", "onsite", 210000, 290000, 5, 22, 20, 0, []string{"Senior", "FAANG"}},
-	{"Senior Backend Engineer", "Supabase", "Interviewing", "", "", "linkedin", "", "Remote", "remote", 165000, 220000, 4, 25, 24, 0, []string{"Remote", "Startup", "TypeScript"}},
-	{"Engineering Manager", "Ramp", "Interviewing", "", "", "referral", "", "New York, NY", "hybrid", 200000, 270000, 5, 20, 18, 1, []string{"Senior", "FAANG"}},
+	{"Senior Backend Engineer", "Twilio", "Interviewing", "", "", "linkedin", "", "Remote", "remote", 165000, 220000, 4, 25, 24, 0, []string{"Remote", "TypeScript"}},
+	{"Engineering Manager", "Atlassian", "Interviewing", "", "", "referral", "", "New York, NY", "hybrid", 200000, 270000, 5, 20, 18, 1, []string{"Senior"}},
 
 	// Offer (2)
-	{"Senior Software Engineer", "Plaid", "Offer", "", "", "linkedin", "", "San Francisco, CA", "hybrid", 195000, 265000, 5, 28, 27, 0, []string{"Senior", "TypeScript"}},
-	{"Lead Frontend Engineer", "Loom", "Offer", "", "", "company_website", "", "Remote", "remote", 185000, 255000, 4, 26, 25, 0, []string{"Remote", "React", "Startup"}},
+	{"Senior Software Engineer", "HashiCorp", "Offer", "", "", "linkedin", "", "San Francisco, CA", "hybrid", 195000, 265000, 5, 28, 27, 0, []string{"Senior", "TypeScript"}},
+	{"Lead Frontend Engineer", "Slack", "Offer", "", "", "company_website", "", "Remote", "remote", 185000, 255000, 4, 26, 25, 0, []string{"Remote", "React"}},
 
 	// Rejected (1)
 	{"Software Engineer", "Meta", "Rejected", "", "rejected", "linkedin", "", "Menlo Park, CA", "onsite", 180000, 250000, 3, 29, 28, 0, []string{"FAANG"}},
@@ -118,7 +127,7 @@ var demoJobs = []job{
 // SeedDemoData inserts demo data into the database for showcasing the application.
 // It requires the demo user to already exist (created by the TS seed script via Better Auth).
 // It is idempotent — if the demo user already has stages, it skips seeding.
-func SeedDemoData(ctx context.Context, pool *pgxpool.Pool) error {
+func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client) error {
 	// Look up demo user by email (ID is assigned by Better Auth, not hardcoded)
 	var demoUserID string
 	err := pool.QueryRow(ctx, `SELECT id FROM "user" WHERE email = $1`, demoEmail).Scan(&demoUserID)
@@ -161,15 +170,31 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool) error {
 		stageIDs[s.Name] = id
 	}
 
-	// 2. Insert companies and collect IDs
+	// 2. Upload company logos to storage and insert companies
 	companyIDs := make(map[string]string) // name -> id
 	for _, c := range demoCompanies {
+		var logoURL *string
+		if c.LogoFile != "" && store != nil {
+			data, readErr := logoFS.ReadFile("logos/" + c.LogoFile)
+			if readErr != nil {
+				slog.Warn("failed to read embedded logo", "file", c.LogoFile, "error", readErr)
+			} else {
+				key := "logos/" + strings.ToLower(strings.ReplaceAll(c.Name, " ", "-")) + ".svg"
+				url, uploadErr := store.Upload(ctx, key, bytes.NewReader(data), "image/svg+xml")
+				if uploadErr != nil {
+					slog.Warn("failed to upload logo", "company", c.Name, "error", uploadErr)
+				} else {
+					logoURL = &url
+				}
+			}
+		}
+
 		var id string
 		err = tx.QueryRow(ctx, `
-			INSERT INTO companies (user_id, name, website, industry, size, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $6)
+			INSERT INTO companies (user_id, name, website, industry, size, logo_url, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
 			RETURNING id`,
-			demoUserID, c.Name, c.Website, c.Industry, c.Size, now).Scan(&id)
+			demoUserID, c.Name, c.Website, c.Industry, c.Size, logoURL, now).Scan(&id)
 		if err != nil {
 			return fmt.Errorf("insert company %s: %w", c.Name, err)
 		}

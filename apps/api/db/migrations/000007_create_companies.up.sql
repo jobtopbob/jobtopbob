@@ -7,6 +7,7 @@ CREATE TABLE companies (
     size       text,
     interest   int,
     notes      text,
+    logo_url   text,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
 );

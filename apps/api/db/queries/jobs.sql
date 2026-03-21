@@ -1,6 +1,7 @@
 -- name: GetJob :one
 SELECT j.*,
        c.name AS company_name,
+       c.logo_url AS company_logo_url,
        s.name AS stage_name
 FROM jobs j
 LEFT JOIN companies c ON c.id = j.company_id
@@ -10,6 +11,7 @@ WHERE j.id = $1 AND j.user_id = $2;
 -- name: ListJobs :many
 SELECT j.*,
        c.name AS company_name,
+       c.logo_url AS company_logo_url,
        s.name AS stage_name
 FROM jobs j
 LEFT JOIN companies c ON c.id = j.company_id

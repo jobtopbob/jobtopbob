@@ -17,6 +17,7 @@ import (
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/database"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/router"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/seed"
+	"github.com/jobtopbob/jobtopbob/internal/storage"
 )
 
 func main() {
@@ -41,9 +42,22 @@ func main() {
 	}
 	defer pool.Close()
 
+	// Initialize S3-compatible storage (RustFS)
+	store, err := storage.New(ctx, storage.Config{
+		Bucket:    cfg.S3Bucket,
+		Region:    cfg.S3Region,
+		Endpoint:  cfg.S3Endpoint,
+		AccessKey: cfg.S3AccessKey,
+		SecretKey: cfg.S3SecretKey,
+	})
+	if err != nil {
+		slog.Error("failed to initialize storage", "error", err)
+		os.Exit(1)
+	}
+
 	// Seed demo data if enabled
 	if cfg.SeedDemoData {
-		if err := seed.SeedDemoData(ctx, pool); err != nil {
+		if err := seed.SeedDemoData(ctx, pool, store); err != nil {
 			slog.Warn("demo seed failed", "error", err)
 		}
 	}

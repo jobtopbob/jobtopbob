@@ -160,12 +160,20 @@ export function ApplicationsTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2.5">
-                    <div
-                      className="flex items-center justify-center w-9 h-9 rounded-lg text-white text-xs font-semibold shrink-0"
-                      style={{ backgroundColor: initialColor }}
-                    >
-                      {companyName.charAt(0).toUpperCase()}
-                    </div>
+                    {job.company_logo_url ? (
+                      <img
+                        src={job.company_logo_url}
+                        alt={companyName}
+                        className="w-9 h-9 rounded-lg shrink-0 object-contain"
+                      />
+                    ) : (
+                      <div
+                        className="flex items-center justify-center w-9 h-9 rounded-lg text-white text-xs font-semibold shrink-0"
+                        style={{ backgroundColor: initialColor }}
+                      >
+                        {companyName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex flex-col gap-0.5 min-w-0">
                       <span className="text-xs font-medium text-[#1A1A2E] truncate">
                         {job.title}

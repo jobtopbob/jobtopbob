@@ -82,14 +82,22 @@ export function RecentApplications() {
                 key={job.id}
                 className="flex items-center gap-3 py-2.5 border-b border-[#EBEBEF] last:border-b-0"
               >
-                <div
-                  className="flex items-center justify-center w-7 h-7 rounded-md shrink-0"
-                  style={{ backgroundColor: color }}
-                >
-                  <span className="text-[13px] font-bold text-white">
-                    {initial}
-                  </span>
-                </div>
+                {job.company_logo_url ? (
+                  <img
+                    src={job.company_logo_url}
+                    alt={companyName}
+                    className="w-7 h-7 rounded-md shrink-0 object-contain"
+                  />
+                ) : (
+                  <div
+                    className="flex items-center justify-center w-7 h-7 rounded-md shrink-0"
+                    style={{ backgroundColor: color }}
+                  >
+                    <span className="text-[13px] font-bold text-white">
+                      {initial}
+                    </span>
+                  </div>
+                )}
                 <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                   <span className="text-[13px] font-medium text-[#1A1A2E] truncate">
                     {job.title}

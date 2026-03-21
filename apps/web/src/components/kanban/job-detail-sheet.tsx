@@ -102,6 +102,13 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
           <div className="flex items-center gap-1.5 text-xs text-[#8B8FA3]">
             <span>Applications</span>
             <span>/</span>
+            {job.company_logo_url && (
+              <img
+                src={job.company_logo_url}
+                alt=""
+                className="w-4 h-4 rounded-sm object-contain"
+              />
+            )}
             <span>{job.company_name ?? "Unknown"}</span>
             <span>/</span>
             <span className="text-[#1A1A2E] font-medium">{job.title}</span>

@@ -63,9 +63,18 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
       style={{ opacity: isDragging ? 0.5 : isClosedColumn ? 0.6 : 1 }}
     >
       {/* Company */}
-      <span className="text-xs font-medium text-[#8B8FA3]">
-        {job.company_name ?? "Unknown Company"}
-      </span>
+      <div className="flex items-center gap-1.5">
+        {job.company_logo_url && (
+          <img
+            src={job.company_logo_url}
+            alt=""
+            className="w-4 h-4 rounded-sm object-contain"
+          />
+        )}
+        <span className="text-xs font-medium text-[#8B8FA3]">
+          {job.company_name ?? "Unknown Company"}
+        </span>
+      </div>
 
       {/* Title */}
       <span className="text-sm font-medium text-[#1A1A2E] leading-tight">

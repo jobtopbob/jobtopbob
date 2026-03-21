@@ -888,6 +888,8 @@ export interface components {
             updated_at: string;
             /** @description Joined from companies table */
             company_name?: string | null;
+            /** @description Company logo URL from storage */
+            company_logo_url?: string | null;
             /** @description Joined from stages table */
             stage_name?: string | null;
             tags?: components["schemas"]["Tag"][];

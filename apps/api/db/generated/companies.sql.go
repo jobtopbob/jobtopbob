@@ -13,9 +13,9 @@ import (
 )
 
 const createCompany = `-- name: CreateCompany :one
-INSERT INTO companies (user_id, name, website, industry, size, interest, notes)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, user_id, name, website, industry, size, interest, notes, created_at, updated_at
+INSERT INTO companies (user_id, name, website, industry, size, interest, notes, logo_url)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, user_id, name, website, industry, size, interest, notes, logo_url, created_at, updated_at
 `
 
 type CreateCompanyParams struct {
@@ -26,6 +26,7 @@ type CreateCompanyParams struct {
 	Size     pgtype.Text `json:"size"`
 	Interest pgtype.Int4 `json:"interest"`
 	Notes    pgtype.Text `json:"notes"`
+	LogoUrl  pgtype.Text `json:"logo_url"`
 }
 
 func (q *Queries) CreateCompany(ctx context.Context, arg CreateCompanyParams) (Company, error) {
@@ -37,6 +38,7 @@ func (q *Queries) CreateCompany(ctx context.Context, arg CreateCompanyParams) (C
 		arg.Size,
 		arg.Interest,
 		arg.Notes,
+		arg.LogoUrl,
 	)
 	var i Company
 	err := row.Scan(
@@ -48,6 +50,7 @@ func (q *Queries) CreateCompany(ctx context.Context, arg CreateCompanyParams) (C
 		&i.Size,
 		&i.Interest,
 		&i.Notes,
+		&i.LogoUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -68,7 +71,7 @@ func (q *Queries) DeleteCompany(ctx context.Context, arg DeleteCompanyParams) (p
 }
 
 const findCompanyByName = `-- name: FindCompanyByName :one
-SELECT id, user_id, name, website, industry, size, interest, notes, created_at, updated_at FROM companies WHERE user_id = $1 AND name = $2 LIMIT 1
+SELECT id, user_id, name, website, industry, size, interest, notes, logo_url, created_at, updated_at FROM companies WHERE user_id = $1 AND name = $2 LIMIT 1
 `
 
 type FindCompanyByNameParams struct {
@@ -88,6 +91,7 @@ func (q *Queries) FindCompanyByName(ctx context.Context, arg FindCompanyByNamePa
 		&i.Size,
 		&i.Interest,
 		&i.Notes,
+		&i.LogoUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -95,7 +99,7 @@ func (q *Queries) FindCompanyByName(ctx context.Context, arg FindCompanyByNamePa
 }
 
 const getCompany = `-- name: GetCompany :one
-SELECT id, user_id, name, website, industry, size, interest, notes, created_at, updated_at FROM companies WHERE id = $1 AND user_id = $2
+SELECT id, user_id, name, website, industry, size, interest, notes, logo_url, created_at, updated_at FROM companies WHERE id = $1 AND user_id = $2
 `
 
 type GetCompanyParams struct {
@@ -115,6 +119,7 @@ func (q *Queries) GetCompany(ctx context.Context, arg GetCompanyParams) (Company
 		&i.Size,
 		&i.Interest,
 		&i.Notes,
+		&i.LogoUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -122,7 +127,7 @@ func (q *Queries) GetCompany(ctx context.Context, arg GetCompanyParams) (Company
 }
 
 const listCompanies = `-- name: ListCompanies :many
-SELECT id, user_id, name, website, industry, size, interest, notes, created_at, updated_at FROM companies WHERE user_id = $1 ORDER BY name ASC
+SELECT id, user_id, name, website, industry, size, interest, notes, logo_url, created_at, updated_at FROM companies WHERE user_id = $1 ORDER BY name ASC
 `
 
 func (q *Queries) ListCompanies(ctx context.Context, userID string) ([]Company, error) {
@@ -143,6 +148,7 @@ func (q *Queries) ListCompanies(ctx context.Context, userID string) ([]Company, 
 			&i.Size,
 			&i.Interest,
 			&i.Notes,
+			&i.LogoUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -163,9 +169,10 @@ UPDATE companies SET
     industry = COALESCE($5, industry),
     size = COALESCE($6, size),
     interest = COALESCE($7, interest),
-    notes = COALESCE($8, notes)
+    notes = COALESCE($8, notes),
+    logo_url = COALESCE($9, logo_url)
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, name, website, industry, size, interest, notes, created_at, updated_at
+RETURNING id, user_id, name, website, industry, size, interest, notes, logo_url, created_at, updated_at
 `
 
 type UpdateCompanyParams struct {
@@ -177,6 +184,7 @@ type UpdateCompanyParams struct {
 	Size     pgtype.Text `json:"size"`
 	Interest pgtype.Int4 `json:"interest"`
 	Notes    pgtype.Text `json:"notes"`
+	LogoUrl  pgtype.Text `json:"logo_url"`
 }
 
 func (q *Queries) UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (Company, error) {
@@ -189,6 +197,7 @@ func (q *Queries) UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (C
 		arg.Size,
 		arg.Interest,
 		arg.Notes,
+		arg.LogoUrl,
 	)
 	var i Company
 	err := row.Scan(
@@ -200,6 +209,7 @@ func (q *Queries) UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (C
 		&i.Size,
 		&i.Interest,
 		&i.Notes,
+		&i.LogoUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

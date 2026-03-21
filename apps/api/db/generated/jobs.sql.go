@@ -242,6 +242,7 @@ func (q *Queries) DeleteJob(ctx context.Context, arg DeleteJobParams) (pgconn.Co
 const getJob = `-- name: GetJob :one
 SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at,
        c.name AS company_name,
+       c.logo_url AS company_logo_url,
        s.name AS stage_name
 FROM jobs j
 LEFT JOIN companies c ON c.id = j.company_id
@@ -281,6 +282,7 @@ type GetJobRow struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 	CompanyName       pgtype.Text        `json:"company_name"`
+	CompanyLogoUrl    pgtype.Text        `json:"company_logo_url"`
 	StageName         pgtype.Text        `json:"stage_name"`
 }
 
@@ -314,6 +316,7 @@ func (q *Queries) GetJob(ctx context.Context, arg GetJobParams) (GetJobRow, erro
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CompanyName,
+		&i.CompanyLogoUrl,
 		&i.StageName,
 	)
 	return i, err
@@ -322,6 +325,7 @@ func (q *Queries) GetJob(ctx context.Context, arg GetJobParams) (GetJobRow, erro
 const listJobs = `-- name: ListJobs :many
 SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at,
        c.name AS company_name,
+       c.logo_url AS company_logo_url,
        s.name AS stage_name
 FROM jobs j
 LEFT JOIN companies c ON c.id = j.company_id
@@ -395,6 +399,7 @@ type ListJobsRow struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 	CompanyName       pgtype.Text        `json:"company_name"`
+	CompanyLogoUrl    pgtype.Text        `json:"company_logo_url"`
 	StageName         pgtype.Text        `json:"stage_name"`
 }
 
@@ -448,6 +453,7 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]ListJobsR
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CompanyName,
+			&i.CompanyLogoUrl,
 			&i.StageName,
 		); err != nil {
 			return nil, err

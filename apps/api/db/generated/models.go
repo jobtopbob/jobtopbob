@@ -8,6 +8,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Account struct {
+	ID                    string             `json:"id"`
+	AccountId             string             `json:"accountId"`
+	ProviderId            string             `json:"providerId"`
+	UserId                string             `json:"userId"`
+	AccessToken           pgtype.Text        `json:"accessToken"`
+	RefreshToken          pgtype.Text        `json:"refreshToken"`
+	IdToken               pgtype.Text        `json:"idToken"`
+	AccessTokenExpiresAt  pgtype.Timestamptz `json:"accessTokenExpiresAt"`
+	RefreshTokenExpiresAt pgtype.Timestamptz `json:"refreshTokenExpiresAt"`
+	Scope                 pgtype.Text        `json:"scope"`
+	Password              pgtype.Text        `json:"password"`
+	CreatedAt             pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt             pgtype.Timestamptz `json:"updatedAt"`
+}
+
 type ActivityLog struct {
 	ID         pgtype.UUID        `json:"id"`
 	UserID     string             `json:"user_id"`
@@ -29,6 +45,7 @@ type Company struct {
 	Size      pgtype.Text        `json:"size"`
 	Interest  pgtype.Int4        `json:"interest"`
 	Notes     pgtype.Text        `json:"notes"`
+	LogoUrl   pgtype.Text        `json:"logo_url"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
@@ -127,6 +144,14 @@ type JobAsset struct {
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Jwk struct {
+	ID         string             `json:"id"`
+	PublicKey  string             `json:"publicKey"`
+	PrivateKey string             `json:"privateKey"`
+	CreatedAt  pgtype.Timestamptz `json:"createdAt"`
+	ExpiresAt  pgtype.Timestamptz `json:"expiresAt"`
+}
+
 type OauthToken struct {
 	ID           pgtype.UUID        `json:"id"`
 	UserID       string             `json:"user_id"`
@@ -188,6 +213,17 @@ type ScrapeRun struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Session struct {
+	ID        string             `json:"id"`
+	ExpiresAt pgtype.Timestamptz `json:"expiresAt"`
+	Token     string             `json:"token"`
+	CreatedAt pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt pgtype.Timestamptz `json:"updatedAt"`
+	IpAddress pgtype.Text        `json:"ipAddress"`
+	UserAgent pgtype.Text        `json:"userAgent"`
+	UserId    string             `json:"userId"`
+}
+
 type Stage struct {
 	ID           pgtype.UUID        `json:"id"`
 	UserID       string             `json:"user_id"`
@@ -237,6 +273,15 @@ type UserSetting struct {
 	TaskModels   []byte             `json:"task_models"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Verification struct {
+	ID         string             `json:"id"`
+	Identifier string             `json:"identifier"`
+	Value      string             `json:"value"`
+	ExpiresAt  pgtype.Timestamptz `json:"expiresAt"`
+	CreatedAt  pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt  pgtype.Timestamptz `json:"updatedAt"`
 }
 
 type Webhook struct {

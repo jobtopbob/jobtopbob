@@ -6,13 +6,20 @@ import (
 )
 
 type Config struct {
-	Port                string
-	DatabaseURL         string
+	Port                 string
+	DatabaseURL          string
 	MigrationDatabaseURL string
-	RedisURL            string
-	JWKSURL             string
-	CORSOrigins         []string
-	SeedDemoData        bool
+	RedisURL             string
+	JWKSURL              string
+	CORSOrigins          []string
+	SeedDemoData         bool
+
+	// S3-compatible storage (RustFS in dev, any S3 provider in prod)
+	S3Bucket    string
+	S3Region    string
+	S3Endpoint  string
+	S3AccessKey string
+	S3SecretKey string
 }
 
 func Load() *Config {
@@ -27,6 +34,11 @@ func Load() *Config {
 		JWKSURL:              getEnv("JWKS_URL", "http://localhost:3000/api/auth/jwks"),
 		CORSOrigins:          strings.Split(getEnv("CORS_ORIGINS", "http://localhost:3000"), ","),
 		SeedDemoData:         getEnv("SEED_DEMO_DATA", "false") == "true",
+		S3Bucket:             getEnv("S3_BUCKET", "jobtopbob"),
+		S3Region:             getEnv("S3_REGION", "us-east-1"),
+		S3Endpoint:           getEnv("S3_ENDPOINT", "http://localhost:9000"),
+		S3AccessKey:          getEnv("S3_ACCESS_KEY", "rustfsadmin"),
+		S3SecretKey:          getEnv("S3_SECRET_KEY", "rustfsadmin"),
 	}
 }
 

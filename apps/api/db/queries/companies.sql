@@ -5,8 +5,8 @@ SELECT * FROM companies WHERE user_id = $1 ORDER BY name ASC;
 SELECT * FROM companies WHERE id = $1 AND user_id = $2;
 
 -- name: CreateCompany :one
-INSERT INTO companies (user_id, name, website, industry, size, interest, notes)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO companies (user_id, name, website, industry, size, interest, notes, logo_url)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
 
 -- name: UpdateCompany :one
@@ -16,7 +16,8 @@ UPDATE companies SET
     industry = COALESCE(sqlc.narg('industry'), industry),
     size = COALESCE(sqlc.narg('size'), size),
     interest = COALESCE(sqlc.narg('interest'), interest),
-    notes = COALESCE(sqlc.narg('notes'), notes)
+    notes = COALESCE(sqlc.narg('notes'), notes),
+    logo_url = COALESCE(sqlc.narg('logo_url'), logo_url)
 WHERE id = $1 AND user_id = $2
 RETURNING *;
 
