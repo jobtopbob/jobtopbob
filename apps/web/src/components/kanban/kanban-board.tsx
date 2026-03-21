@@ -10,6 +10,7 @@ import { KanbanColumn } from "./kanban-column";
 import { AddJobSheet } from "./add-job-sheet";
 import { JobDetailSheet } from "./job-detail-sheet";
 import { MobileJobList } from "./mobile-job-list";
+import { ApplicationsTable } from "./applications-table";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function KanbanBoard() {
@@ -101,6 +102,12 @@ export function KanbanBoard() {
               </p>
             </div>
           </div>
+        ) : activeView === "table" ? (
+          <ApplicationsTable
+            jobs={jobsData?.data ?? []}
+            stages={stages!}
+            onJobClick={setSelectedJob}
+          />
         ) : (
           <>
             {/* Desktop: kanban columns with horizontal scroll */}
