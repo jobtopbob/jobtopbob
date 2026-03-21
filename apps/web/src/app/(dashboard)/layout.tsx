@@ -1,6 +1,9 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { Sidebar } from "@/components/app-shell/sidebar";
+import { TopBar } from "@/components/app-shell/top-bar";
+import { Toaster } from "sonner";
 
 export default async function DashboardLayout({
   children,
@@ -15,17 +18,16 @@ export default async function DashboardLayout({
     redirect("/sign-in");
   }
 
+  const userName = session.user.name || session.user.email || "User";
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold">JobTopBob</h1>
-          <span className="text-sm text-muted-foreground">
-            {session.user.email}
-          </span>
-        </div>
-      </header>
-      <main className="flex-1 p-6">{children}</main>
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar />
+      <div className="flex flex-col flex-1 min-w-0">
+        <TopBar userName={userName} />
+        <main className="flex-1 overflow-hidden">{children}</main>
+      </div>
+      <Toaster position="bottom-right" />
     </div>
   );
 }

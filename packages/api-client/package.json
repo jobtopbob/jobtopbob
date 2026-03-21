@@ -13,6 +13,10 @@
     "clean": "rm -rf dist .turbo"
   },
   "devDependencies": {
-    "@jobtopbob/config": "workspace:*"
+    "@jobtopbob/config": "workspace:*",
+    "openapi-typescript": "^7.13.0"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
   }
 }

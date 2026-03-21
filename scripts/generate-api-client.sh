@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# TODO: Generate TypeScript API client from OpenAPI spec
-# Example: npx openapi-typescript openapi/jobtopbob.yaml -o packages/api-client/src/generated.ts
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-echo "generate-api-client: not yet implemented"
+echo "Generating TypeScript types from OpenAPI spec..."
+cd "$ROOT_DIR/packages/api-client"
+npx openapi-typescript "$ROOT_DIR/openapi/jobtopbob.yaml" -o src/schema.ts
+echo "Done: packages/api-client/src/schema.ts"
