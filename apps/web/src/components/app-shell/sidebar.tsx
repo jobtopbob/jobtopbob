@@ -62,7 +62,7 @@ function TreeIndicator({ isLast }: { isLast: boolean }) {
       {/* Vertical line */}
       <div
         className={cn(
-          "absolute left-4 top-0 w-0.5 bg-[#2E2E45]",
+          "absolute left-4 top-0 w-0.5 bg-sidebar-border",
           isLast ? "h-5" : "h-full"
         )}
       />
@@ -76,7 +76,8 @@ function TreeIndicator({ isLast }: { isLast: boolean }) {
       >
         <path
           d="M1 0C1 6 1 11 12 11"
-          stroke="#2E2E45"
+          className="text-sidebar-border"
+          stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -99,10 +100,10 @@ export function Sidebar() {
 
   if (collapsed) {
     return (
-      <aside className="flex flex-col w-16 h-full bg-[#1A1A2E] border-r border-[#2E2E45] shrink-0">
+      <aside className="flex flex-col w-16 h-full bg-sidebar border-r border-sidebar-border shrink-0">
         {/* Header - logo icon only */}
-        <div className="flex items-center justify-center h-[60px] border-b border-[#2E2E45]">
-          <div className="w-7 h-7 rounded-lg bg-[#FF8400] shrink-0" />
+        <div className="flex items-center justify-center h-[60px] border-b border-sidebar-border">
+          <div className="w-7 h-7 rounded-lg bg-primary shrink-0" />
         </div>
 
         {/* Navigation - icon only */}
@@ -112,8 +113,8 @@ export function Sidebar() {
             className={cn(
               "flex items-center justify-center w-11 h-11 rounded-xl",
               pathname === "/dashboard"
-                ? "bg-[#2A2A42] text-white"
-                : "text-[#A0A3B1] hover:bg-[#2A2A42]/50"
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
             )}
           >
             <LayoutDashboard className="w-6 h-6" />
@@ -124,8 +125,8 @@ export function Sidebar() {
             className={cn(
               "flex items-center justify-center w-11 h-11 rounded-xl",
               pathname === "/settings"
-                ? "bg-[#2A2A42] text-white"
-                : "text-[#A0A3B1] hover:bg-[#2A2A42]/50"
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
             )}
           >
             <Settings className="w-6 h-6" />
@@ -134,8 +135,8 @@ export function Sidebar() {
 
         {/* Footer */}
         <div className="flex flex-col items-center gap-3 pb-4">
-          <div className="w-6 h-px bg-[#2E2E45]" />
-          <div className="flex items-center justify-center w-11 h-11 rounded-xl text-[#A0A3B1]">
+          <div className="w-6 h-px bg-sidebar-border" />
+          <div className="flex items-center justify-center w-11 h-11 rounded-xl text-sidebar-foreground">
             <LifeBuoy className="w-5 h-5" />
           </div>
         </div>
@@ -144,12 +145,12 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex flex-col w-60 h-full bg-[#1A1A2E] border-r border-[#2E2E45] shrink-0">
+    <aside className="flex flex-col w-60 h-full bg-sidebar border-r border-sidebar-border shrink-0">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 h-[60px] px-4 border-b border-[#2E2E45]">
+      <div className="flex items-center justify-between gap-2 h-[60px] px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-7 h-7 rounded-lg bg-[#FF8400] shrink-0" />
-          <span className="text-white text-[15px] font-bold leading-none truncate">
+          <div className="w-7 h-7 rounded-lg bg-primary shrink-0" />
+          <span className="text-sidebar-accent-foreground text-[15px] font-bold leading-none truncate">
             JobTopBob
           </span>
         </div>
@@ -157,7 +158,7 @@ export function Sidebar() {
           onClick={() => setCollapsed(true)}
           className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0"
         >
-          <PanelLeftClose className="w-[18px] h-[18px] text-[#A0A3B1]" />
+          <PanelLeftClose className="w-[18px] h-[18px] text-sidebar-foreground" />
         </button>
       </div>
 
@@ -169,8 +170,8 @@ export function Sidebar() {
           className={cn(
             "flex items-center gap-3 px-3 py-3 rounded-xl text-base",
             pathname === "/dashboard"
-              ? "bg-[#2A2A42] text-white"
-              : "text-[#A0A3B1] hover:bg-[#2A2A42]/50"
+              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+              : "text-sidebar-foreground hover:bg-sidebar-accent/50"
           )}
         >
           <LayoutDashboard className="w-6 h-6 shrink-0" />
@@ -182,7 +183,7 @@ export function Sidebar() {
           <div key={group.label}>
             <button
               onClick={() => toggleGroup(group.label)}
-              className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-[#A0A3B1] hover:bg-[#2A2A42]/50"
+              className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent/50"
             >
               <group.icon className="w-5 h-5 shrink-0" />
               <span className="flex-1 text-left text-sm font-semibold leading-5">
@@ -206,8 +207,8 @@ export function Sidebar() {
                       className={cn(
                         "flex items-center gap-3 flex-1 px-3 py-3 rounded-xl text-sm",
                         pathname === item.href
-                          ? "text-white"
-                          : "text-[#A0A3B1] hover:text-white/80"
+                          ? "text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground hover:text-sidebar-accent-foreground/80"
                       )}
                     >
                       <item.icon className="w-[18px] h-[18px] shrink-0" />
@@ -226,8 +227,8 @@ export function Sidebar() {
           className={cn(
             "flex items-center gap-3 px-3 py-3 rounded-xl text-base",
             pathname === "/settings"
-              ? "bg-[#2A2A42] text-white"
-              : "text-[#A0A3B1] hover:bg-[#2A2A42]/50"
+              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+              : "text-sidebar-foreground hover:bg-sidebar-accent/50"
           )}
         >
           <Settings className="w-6 h-6 shrink-0" />
@@ -237,26 +238,26 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-4 pb-4 space-y-4">
-        <div className="h-px bg-[#2E2E45]" />
+        <div className="h-px bg-sidebar-border" />
 
         {/* Help */}
-        <div className="flex items-center gap-2.5 px-3 py-3 rounded-xl text-[#A0A3B1]">
+        <div className="flex items-center gap-2.5 px-3 py-3 rounded-xl text-sidebar-foreground">
           <LifeBuoy className="w-5 h-5 shrink-0" />
           <span className="flex-1 text-sm">Help</span>
-          <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-[#FF8400] text-white text-[11px] font-semibold">
+          <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold">
             3
           </span>
         </div>
 
         {/* Theme Toggle */}
-        <div className="flex rounded-full bg-[#2A2A42] p-1">
-          <button className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full bg-[#2E2E45] shadow-sm">
-            <Sun className="w-4 h-4 text-white" />
-            <span className="text-white text-xs font-medium">Light</span>
+        <div className="flex rounded-full bg-sidebar-accent p-1">
+          <button className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full bg-sidebar-border shadow-sm">
+            <Sun className="w-4 h-4 text-sidebar-accent-foreground" />
+            <span className="text-sidebar-accent-foreground text-xs font-medium">Light</span>
           </button>
-          <button className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full bg-[#1A1A2E]">
-            <Moon className="w-4 h-4 text-[#A0A3B1]" />
-            <span className="text-[#A0A3B1] text-xs font-medium">Dark</span>
+          <button className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full bg-sidebar">
+            <Moon className="w-4 h-4 text-sidebar-foreground" />
+            <span className="text-sidebar-foreground text-xs font-medium">Dark</span>
           </button>
         </div>
       </div>
