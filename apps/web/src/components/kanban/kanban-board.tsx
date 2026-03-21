@@ -11,6 +11,7 @@ import { AddJobSheet } from "./add-job-sheet";
 import { JobDetailSheet } from "./job-detail-sheet";
 import { MobileJobList } from "./mobile-job-list";
 import { ApplicationsTable } from "./applications-table";
+import { ApplicationsCalendar } from "./applications-calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function KanbanBoard() {
@@ -104,6 +105,12 @@ export function KanbanBoard() {
           </div>
         ) : activeView === "table" ? (
           <ApplicationsTable
+            jobs={jobsData?.data ?? []}
+            stages={stages!}
+            onJobClick={setSelectedJob}
+          />
+        ) : activeView === "calendar" ? (
+          <ApplicationsCalendar
             jobs={jobsData?.data ?? []}
             stages={stages!}
             onJobClick={setSelectedJob}

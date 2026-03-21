@@ -17,7 +17,8 @@
       "mcp__magic__21st_magic_component_inspiration",
       "Bash(xargs ls:*)",
       "Bash(ls:*)",
-      "Bash(grep -E \"\\\\.\\(ts|yaml|json\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|yaml|json\\)$\")",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }
