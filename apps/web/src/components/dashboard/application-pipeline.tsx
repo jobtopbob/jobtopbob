@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { useJobs } from "@/hooks/use-jobs";
 import {
-  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
@@ -11,6 +10,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { useRef, useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function getLast30DaysData(
@@ -46,6 +46,73 @@ function formatDateLabel(dateStr: string): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+function ChartContainer({
+  chartData,
+}: {
+  chartData: { date: string; count: number }[];
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) {
+        setSize({ width, height });
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className="flex-1 min-h-[180px]">
+      {size.width > 0 && size.height > 0 && (
+        <LineChart width={size.width} height={size.height} data={chartData}>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#EBEBEF"
+            vertical={false}
+          />
+          <XAxis
+            dataKey="date"
+            tickFormatter={formatDateLabel}
+            tick={{ fontSize: 11, fill: "#8B8FA3" }}
+            axisLine={false}
+            tickLine={false}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            tick={{ fontSize: 11, fill: "#8B8FA3" }}
+            axisLine={false}
+            tickLine={false}
+            width={30}
+            allowDecimals={false}
+          />
+          <Tooltip
+            labelFormatter={(label) => formatDateLabel(String(label))}
+            contentStyle={{
+              borderRadius: 8,
+              border: "1px solid #EBEBEF",
+              fontSize: 13,
+            }}
+          />
+          <Line
+            type="monotone"
+            dataKey="count"
+            stroke="#FF8400"
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4, fill: "#FF8400" }}
+          />
+        </LineChart>
+      )}
+    </div>
+  );
+}
+
 export function ApplicationPipeline() {
   const { data: jobsData, isLoading } = useJobs();
 
@@ -78,48 +145,7 @@ export function ApplicationPipeline() {
       </div>
 
       {/* Chart */}
-      <div className="flex-1 min-h-[180px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="#EBEBEF"
-              vertical={false}
-            />
-            <XAxis
-              dataKey="date"
-              tickFormatter={formatDateLabel}
-              tick={{ fontSize: 11, fill: "#8B8FA3" }}
-              axisLine={false}
-              tickLine={false}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              tick={{ fontSize: 11, fill: "#8B8FA3" }}
-              axisLine={false}
-              tickLine={false}
-              width={30}
-              allowDecimals={false}
-            />
-            <Tooltip
-              labelFormatter={(label) => formatDateLabel(String(label))}
-              contentStyle={{
-                borderRadius: 8,
-                border: "1px solid #EBEBEF",
-                fontSize: 13,
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="count"
-              stroke="#FF8400"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4, fill: "#FF8400" }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      <ChartContainer chartData={chartData} />
     </div>
   );
 }
