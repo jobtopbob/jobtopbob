@@ -10,18 +10,16 @@ export const api = createClient<paths>({
 
 api.use({
   async onRequest({ request }) {
-    const session = await authClient.getSession();
-    if (session.data?.session) {
-      const token = session.data.session.token;
-      if (token) {
-        request.headers.set("Authorization", `Bearer ${token}`);
-      }
+    const { data } = await authClient.token();
+    if (data?.token) {
+      request.headers.set("Authorization", `Bearer ${data.token}`);
     }
     return request;
   },
   async onResponse({ response }) {
-    if (response.status === 401) {
-      if (typeof window !== "undefined") {
+    if (response.status === 401 && typeof window !== "undefined") {
+      const session = await authClient.getSession();
+      if (!session.data) {
         window.location.href = "/sign-in";
       }
     }
