@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +19,7 @@ func ListStages() gin.HandlerFunc {
 
 		stages, err := services.ListStages(c.Request.Context(), q, userID)
 		if err != nil {
+			slog.Error("failed to list stages", "error", err, "userID", userID)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list stages"})
 			return
 		}

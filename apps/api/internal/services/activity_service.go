@@ -10,7 +10,7 @@ import (
 )
 
 // LogActivity creates an activity log entry.
-func LogActivity(ctx context.Context, q *db.Queries, userID pgtype.UUID, entityType string, entityID pgtype.UUID, action string, oldValue, newValue any) error {
+func LogActivity(ctx context.Context, q *db.Queries, userID string, entityType string, entityID pgtype.UUID, action string, oldValue, newValue any) error {
 	var oldJSON, newJSON []byte
 	var err error
 
@@ -39,7 +39,7 @@ func LogActivity(ctx context.Context, q *db.Queries, userID pgtype.UUID, entityT
 }
 
 // ListActivityForEntity returns activity log entries for a given entity.
-func ListActivityForEntity(ctx context.Context, q *db.Queries, userID pgtype.UUID, entityType string, entityID pgtype.UUID) ([]db.ActivityLog, error) {
+func ListActivityForEntity(ctx context.Context, q *db.Queries, userID string, entityType string, entityID pgtype.UUID) ([]db.ActivityLog, error) {
 	return q.ListActivityByEntity(ctx, db.ListActivityByEntityParams{
 		UserID:     userID,
 		EntityType: pgtype.Text{String: entityType, Valid: true},

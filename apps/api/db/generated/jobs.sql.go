@@ -18,7 +18,7 @@ DELETE FROM jobs WHERE id = ANY($1::uuid[]) AND user_id = $2
 
 type BulkDeleteJobsParams struct {
 	Column1 []pgtype.UUID `json:"column_1"`
-	UserID  pgtype.UUID   `json:"user_id"`
+	UserID  string        `json:"user_id"`
 }
 
 func (q *Queries) BulkDeleteJobs(ctx context.Context, arg BulkDeleteJobsParams) (pgconn.CommandTag, error) {
@@ -32,7 +32,7 @@ UPDATE jobs SET stage_id = $1 WHERE id = ANY($2::uuid[]) AND user_id = $3
 type BulkUpdateJobStageParams struct {
 	StageID pgtype.UUID   `json:"stage_id"`
 	Column2 []pgtype.UUID `json:"column_2"`
-	UserID  pgtype.UUID   `json:"user_id"`
+	UserID  string        `json:"user_id"`
 }
 
 func (q *Queries) BulkUpdateJobStage(ctx context.Context, arg BulkUpdateJobStageParams) (pgconn.CommandTag, error) {
@@ -46,7 +46,7 @@ UPDATE jobs SET status = $1 WHERE id = ANY($2::uuid[]) AND user_id = $3
 type BulkUpdateJobStatusParams struct {
 	Status  pgtype.Text   `json:"status"`
 	Column2 []pgtype.UUID `json:"column_2"`
-	UserID  pgtype.UUID   `json:"user_id"`
+	UserID  string        `json:"user_id"`
 }
 
 func (q *Queries) BulkUpdateJobStatus(ctx context.Context, arg BulkUpdateJobStatusParams) (pgconn.CommandTag, error) {
@@ -58,7 +58,7 @@ SELECT count(*) FROM jobs
 WHERE user_id = $1 AND follow_up_at <= now() AND status NOT IN ('closed', 'rejected', 'accepted')
 `
 
-func (q *Queries) CountFollowUpsDue(ctx context.Context, userID pgtype.UUID) (int64, error) {
+func (q *Queries) CountFollowUpsDue(ctx context.Context, userID string) (int64, error) {
 	row := q.db.QueryRow(ctx, countFollowUpsDue, userID)
 	var count int64
 	err := row.Scan(&count)
@@ -87,7 +87,7 @@ WHERE j.user_id = $1
 `
 
 type CountJobsParams struct {
-	UserID        pgtype.UUID        `json:"user_id"`
+	UserID        string             `json:"user_id"`
 	Status        pgtype.Text        `json:"status"`
 	StageID       pgtype.UUID        `json:"stage_id"`
 	LocationType  pgtype.Text        `json:"location_type"`
@@ -127,7 +127,7 @@ type CountJobsByStatusRow struct {
 	Count  int64  `json:"count"`
 }
 
-func (q *Queries) CountJobsByStatus(ctx context.Context, userID pgtype.UUID) ([]CountJobsByStatusRow, error) {
+func (q *Queries) CountJobsByStatus(ctx context.Context, userID string) ([]CountJobsByStatusRow, error) {
 	rows, err := q.db.Query(ctx, countJobsByStatus, userID)
 	if err != nil {
 		return nil, err
@@ -158,7 +158,7 @@ INSERT INTO jobs (
 `
 
 type CreateJobParams struct {
-	UserID         pgtype.UUID        `json:"user_id"`
+	UserID         string             `json:"user_id"`
 	CompanyID      pgtype.UUID        `json:"company_id"`
 	StageID        pgtype.UUID        `json:"stage_id"`
 	Title          string             `json:"title"`
@@ -232,7 +232,7 @@ DELETE FROM jobs WHERE id = $1 AND user_id = $2
 
 type DeleteJobParams struct {
 	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	UserID string      `json:"user_id"`
 }
 
 func (q *Queries) DeleteJob(ctx context.Context, arg DeleteJobParams) (pgconn.CommandTag, error) {
@@ -251,12 +251,12 @@ WHERE j.id = $1 AND j.user_id = $2
 
 type GetJobParams struct {
 	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	UserID string      `json:"user_id"`
 }
 
 type GetJobRow struct {
 	ID                pgtype.UUID        `json:"id"`
-	UserID            pgtype.UUID        `json:"user_id"`
+	UserID            string             `json:"user_id"`
 	CompanyID         pgtype.UUID        `json:"company_id"`
 	StageID           pgtype.UUID        `json:"stage_id"`
 	Title             string             `json:"title"`
@@ -353,7 +353,7 @@ LIMIT $2 OFFSET $3
 `
 
 type ListJobsParams struct {
-	UserID        pgtype.UUID        `json:"user_id"`
+	UserID        string             `json:"user_id"`
 	Limit         int32              `json:"limit"`
 	Offset        int32              `json:"offset"`
 	Status        pgtype.Text        `json:"status"`
@@ -370,7 +370,7 @@ type ListJobsParams struct {
 
 type ListJobsRow struct {
 	ID                pgtype.UUID        `json:"id"`
-	UserID            pgtype.UUID        `json:"user_id"`
+	UserID            string             `json:"user_id"`
 	CompanyID         pgtype.UUID        `json:"company_id"`
 	StageID           pgtype.UUID        `json:"stage_id"`
 	Title             string             `json:"title"`
@@ -488,7 +488,7 @@ RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source
 
 type UpdateJobParams struct {
 	ID                pgtype.UUID        `json:"id"`
-	UserID            pgtype.UUID        `json:"user_id"`
+	UserID            string             `json:"user_id"`
 	CompanyID         pgtype.UUID        `json:"company_id"`
 	StageID           pgtype.UUID        `json:"stage_id"`
 	Title             pgtype.Text        `json:"title"`

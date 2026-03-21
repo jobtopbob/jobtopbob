@@ -18,7 +18,7 @@ RETURNING id, user_id, entity_type, entity_id, action, old_value, new_value, cre
 `
 
 type CreateActivityLogParams struct {
-	UserID     pgtype.UUID `json:"user_id"`
+	UserID     string      `json:"user_id"`
 	EntityType pgtype.Text `json:"entity_type"`
 	EntityID   pgtype.UUID `json:"entity_id"`
 	Action     pgtype.Text `json:"action"`
@@ -57,7 +57,7 @@ ORDER BY created_at DESC
 `
 
 type ListActivityByEntityParams struct {
-	UserID     pgtype.UUID `json:"user_id"`
+	UserID     string      `json:"user_id"`
 	EntityType pgtype.Text `json:"entity_type"`
 	EntityID   pgtype.UUID `json:"entity_id"`
 }

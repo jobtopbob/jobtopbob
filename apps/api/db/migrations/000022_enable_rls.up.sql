@@ -1,4 +1,4 @@
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+-- Note: Better Auth's "user" table is not RLS-protected (managed by BA as superuser).
 ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE oauth_tokens ENABLE ROW LEVEL SECURITY;

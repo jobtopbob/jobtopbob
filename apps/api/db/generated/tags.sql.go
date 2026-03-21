@@ -17,7 +17,7 @@ INSERT INTO tags (user_id, name, color) VALUES ($1, $2, $3) RETURNING id, user_i
 `
 
 type CreateTagParams struct {
-	UserID pgtype.UUID `json:"user_id"`
+	UserID string      `json:"user_id"`
 	Name   pgtype.Text `json:"name"`
 	Color  pgtype.Text `json:"color"`
 }
@@ -43,7 +43,7 @@ ON CONFLICT DO NOTHING
 `
 
 type CreateTaggingParams struct {
-	UserID     pgtype.UUID `json:"user_id"`
+	UserID     string      `json:"user_id"`
 	TagID      pgtype.UUID `json:"tag_id"`
 	EntityType string      `json:"entity_type"`
 	EntityID   pgtype.UUID `json:"entity_id"`
@@ -65,7 +65,7 @@ DELETE FROM tags WHERE id = $1 AND user_id = $2
 
 type DeleteTagParams struct {
 	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	UserID string      `json:"user_id"`
 }
 
 func (q *Queries) DeleteTag(ctx context.Context, arg DeleteTagParams) (pgconn.CommandTag, error) {
@@ -78,7 +78,7 @@ WHERE user_id = $1 AND tag_id = $2 AND entity_type = $3 AND entity_id = $4
 `
 
 type DeleteTaggingParams struct {
-	UserID     pgtype.UUID `json:"user_id"`
+	UserID     string      `json:"user_id"`
 	TagID      pgtype.UUID `json:"tag_id"`
 	EntityType string      `json:"entity_type"`
 	EntityID   pgtype.UUID `json:"entity_id"`
@@ -99,7 +99,7 @@ SELECT id, user_id, name, color, created_at, updated_at FROM tags WHERE id = $1 
 
 type GetTagParams struct {
 	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	UserID string      `json:"user_id"`
 }
 
 func (q *Queries) GetTag(ctx context.Context, arg GetTagParams) (Tag, error) {
@@ -120,7 +120,7 @@ const listTags = `-- name: ListTags :many
 SELECT id, user_id, name, color, created_at, updated_at FROM tags WHERE user_id = $1 ORDER BY name ASC
 `
 
-func (q *Queries) ListTags(ctx context.Context, userID pgtype.UUID) ([]Tag, error) {
+func (q *Queries) ListTags(ctx context.Context, userID string) ([]Tag, error) {
 	rows, err := q.db.Query(ctx, listTags, userID)
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ ORDER BY t.name ASC
 `
 
 type ListTagsForEntityParams struct {
-	UserID     pgtype.UUID `json:"user_id"`
+	UserID     string      `json:"user_id"`
 	EntityType string      `json:"entity_type"`
 	EntityID   pgtype.UUID `json:"entity_id"`
 }

@@ -14,11 +14,9 @@ func getTx(c *gin.Context) pgx.Tx {
 	return c.MustGet("tx").(pgx.Tx)
 }
 
-// getUserID extracts the authenticated user ID from the Gin context
-// and returns it as a pgtype.UUID.
-func getUserID(c *gin.Context) pgtype.UUID {
-	id := c.MustGet("userID").(string)
-	return parseUUID(id)
+// getUserID extracts the authenticated user ID from the Gin context.
+func getUserID(c *gin.Context) string {
+	return c.MustGet("userID").(string)
 }
 
 // parseUUID parses a string into a pgtype.UUID.

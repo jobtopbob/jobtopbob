@@ -1,6 +1,6 @@
 CREATE TABLE email_events (
     id               uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id          uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id          text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     job_id           uuid REFERENCES jobs(id) ON DELETE SET NULL,
     gmail_message_id text,
     detected_type    text,

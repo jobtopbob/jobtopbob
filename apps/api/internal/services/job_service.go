@@ -14,7 +14,7 @@ import (
 var ErrNotFound = errors.New("not found")
 
 // GetJob returns a single job with company and stage names joined.
-func GetJob(ctx context.Context, q *db.Queries, userID pgtype.UUID, id pgtype.UUID) (db.GetJobRow, error) {
+func GetJob(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID) (db.GetJobRow, error) {
 	row, err := q.GetJob(ctx, db.GetJobParams{ID: id, UserID: userID})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return row, ErrNotFound
@@ -47,7 +47,7 @@ type ListJobsResult struct {
 }
 
 // ListJobs returns a paginated, filtered list of jobs.
-func ListJobs(ctx context.Context, q *db.Queries, userID pgtype.UUID, p ListJobsParams) (ListJobsResult, error) {
+func ListJobs(ctx context.Context, q *db.Queries, userID string, p ListJobsParams) (ListJobsResult, error) {
 	if p.Page < 1 {
 		p.Page = 1
 	}
@@ -108,7 +108,7 @@ func ListJobs(ctx context.Context, q *db.Queries, userID pgtype.UUID, p ListJobs
 }
 
 // CreateJob creates a new job and logs the activity.
-func CreateJob(ctx context.Context, q *db.Queries, userID pgtype.UUID, params db.CreateJobParams) (db.Job, error) {
+func CreateJob(ctx context.Context, q *db.Queries, userID string, params db.CreateJobParams) (db.Job, error) {
 	params.UserID = userID
 	job, err := q.CreateJob(ctx, params)
 	if err != nil {
@@ -120,7 +120,7 @@ func CreateJob(ctx context.Context, q *db.Queries, userID pgtype.UUID, params db
 }
 
 // UpdateJob updates a job, detects field changes, and logs activity.
-func UpdateJob(ctx context.Context, q *db.Queries, userID pgtype.UUID, id pgtype.UUID, params db.UpdateJobParams) (db.Job, error) {
+func UpdateJob(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID, params db.UpdateJobParams) (db.Job, error) {
 	// Fetch current state for change detection
 	old, err := q.GetJob(ctx, db.GetJobParams{ID: id, UserID: userID})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -147,7 +147,7 @@ func UpdateJob(ctx context.Context, q *db.Queries, userID pgtype.UUID, id pgtype
 }
 
 // DeleteJob deletes a job and logs activity.
-func DeleteJob(ctx context.Context, q *db.Queries, userID pgtype.UUID, id pgtype.UUID) (int64, error) {
+func DeleteJob(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID) (int64, error) {
 	result, err := q.DeleteJob(ctx, db.DeleteJobParams{ID: id, UserID: userID})
 	if err != nil {
 		return 0, err
@@ -160,7 +160,7 @@ func DeleteJob(ctx context.Context, q *db.Queries, userID pgtype.UUID, id pgtype
 }
 
 // ImportJob creates a job from an external source, optionally resolving the company by name.
-func ImportJob(ctx context.Context, q *db.Queries, userID pgtype.UUID, params db.CreateJobParams, companyName string) (db.Job, error) {
+func ImportJob(ctx context.Context, q *db.Queries, userID string, params db.CreateJobParams, companyName string) (db.Job, error) {
 	if companyName != "" {
 		company, err := q.FindCompanyByName(ctx, db.FindCompanyByNameParams{
 			UserID: userID,
@@ -189,7 +189,7 @@ func ImportJob(ctx context.Context, q *db.Queries, userID pgtype.UUID, params db
 }
 
 // BulkUpdateStage updates the stage for multiple jobs.
-func BulkUpdateStage(ctx context.Context, q *db.Queries, userID pgtype.UUID, jobIDs []pgtype.UUID, stageID pgtype.UUID) (int64, error) {
+func BulkUpdateStage(ctx context.Context, q *db.Queries, userID string, jobIDs []pgtype.UUID, stageID pgtype.UUID) (int64, error) {
 	result, err := q.BulkUpdateJobStage(ctx, db.BulkUpdateJobStageParams{
 		StageID: stageID,
 		Column2: jobIDs,
@@ -202,7 +202,7 @@ func BulkUpdateStage(ctx context.Context, q *db.Queries, userID pgtype.UUID, job
 }
 
 // BulkUpdateStatus updates the status for multiple jobs.
-func BulkUpdateStatus(ctx context.Context, q *db.Queries, userID pgtype.UUID, jobIDs []pgtype.UUID, status string) (int64, error) {
+func BulkUpdateStatus(ctx context.Context, q *db.Queries, userID string, jobIDs []pgtype.UUID, status string) (int64, error) {
 	result, err := q.BulkUpdateJobStatus(ctx, db.BulkUpdateJobStatusParams{
 		Status:  pgtype.Text{String: status, Valid: true},
 		Column2: jobIDs,
@@ -215,7 +215,7 @@ func BulkUpdateStatus(ctx context.Context, q *db.Queries, userID pgtype.UUID, jo
 }
 
 // BulkDelete deletes multiple jobs.
-func BulkDelete(ctx context.Context, q *db.Queries, userID pgtype.UUID, jobIDs []pgtype.UUID) (int64, error) {
+func BulkDelete(ctx context.Context, q *db.Queries, userID string, jobIDs []pgtype.UUID) (int64, error) {
 	result, err := q.BulkDeleteJobs(ctx, db.BulkDeleteJobsParams{
 		Column1: jobIDs,
 		UserID:  userID,
@@ -234,7 +234,7 @@ type StatsResult struct {
 }
 
 // GetStats returns job statistics for a user.
-func GetStats(ctx context.Context, q *db.Queries, userID pgtype.UUID) (StatsResult, error) {
+func GetStats(ctx context.Context, q *db.Queries, userID string) (StatsResult, error) {
 	statusCounts, err := q.CountJobsByStatus(ctx, userID)
 	if err != nil {
 		return StatsResult{}, err

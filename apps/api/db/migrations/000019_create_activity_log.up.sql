@@ -1,6 +1,6 @@
 CREATE TABLE activity_log (
     id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id     text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     entity_type text,
     entity_id   uuid,
     action      text,

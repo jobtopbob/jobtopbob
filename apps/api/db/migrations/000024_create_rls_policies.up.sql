@@ -1,10 +1,4 @@
--- =============================================================================
--- users — PK is id, not user_id. No INSERT/DELETE (managed by Better Auth).
--- =============================================================================
-CREATE POLICY users_select_own ON users FOR SELECT
-    USING (id = current_user_id());
-CREATE POLICY users_update_own ON users FOR UPDATE
-    USING (id = current_user_id()) WITH CHECK (id = current_user_id());
+-- Note: Better Auth's "user" table has no RLS (managed by BA as superuser).
 
 -- =============================================================================
 -- user_settings — no DELETE (settings are upserted, never deleted)

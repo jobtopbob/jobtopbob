@@ -10,7 +10,7 @@ import (
 
 type ActivityLog struct {
 	ID         pgtype.UUID        `json:"id"`
-	UserID     pgtype.UUID        `json:"user_id"`
+	UserID     string             `json:"user_id"`
 	EntityType pgtype.Text        `json:"entity_type"`
 	EntityID   pgtype.UUID        `json:"entity_id"`
 	Action     pgtype.Text        `json:"action"`
@@ -22,7 +22,7 @@ type ActivityLog struct {
 
 type Company struct {
 	ID        pgtype.UUID        `json:"id"`
-	UserID    pgtype.UUID        `json:"user_id"`
+	UserID    string             `json:"user_id"`
 	Name      string             `json:"name"`
 	Website   pgtype.Text        `json:"website"`
 	Industry  pgtype.Text        `json:"industry"`
@@ -35,7 +35,7 @@ type Company struct {
 
 type Contact struct {
 	ID          pgtype.UUID        `json:"id"`
-	UserID      pgtype.UUID        `json:"user_id"`
+	UserID      string             `json:"user_id"`
 	CompanyID   pgtype.UUID        `json:"company_id"`
 	Name        string             `json:"name"`
 	Role        pgtype.Text        `json:"role"`
@@ -51,7 +51,7 @@ type Contact struct {
 
 type EmailEvent struct {
 	ID             pgtype.UUID        `json:"id"`
-	UserID         pgtype.UUID        `json:"user_id"`
+	UserID         string             `json:"user_id"`
 	JobID          pgtype.UUID        `json:"job_id"`
 	GmailMessageID pgtype.Text        `json:"gmail_message_id"`
 	DetectedType   pgtype.Text        `json:"detected_type"`
@@ -64,7 +64,7 @@ type EmailEvent struct {
 
 type GhostwriterMessage struct {
 	ID        pgtype.UUID        `json:"id"`
-	UserID    pgtype.UUID        `json:"user_id"`
+	UserID    string             `json:"user_id"`
 	JobID     pgtype.UUID        `json:"job_id"`
 	Role      pgtype.Text        `json:"role"`
 	Content   pgtype.Text        `json:"content"`
@@ -74,7 +74,7 @@ type GhostwriterMessage struct {
 
 type InterviewRound struct {
 	ID            pgtype.UUID        `json:"id"`
-	UserID        pgtype.UUID        `json:"user_id"`
+	UserID        string             `json:"user_id"`
 	JobID         pgtype.UUID        `json:"job_id"`
 	Round         pgtype.Int4        `json:"round"`
 	Type          pgtype.Text        `json:"type"`
@@ -89,7 +89,7 @@ type InterviewRound struct {
 
 type Job struct {
 	ID                pgtype.UUID        `json:"id"`
-	UserID            pgtype.UUID        `json:"user_id"`
+	UserID            string             `json:"user_id"`
 	CompanyID         pgtype.UUID        `json:"company_id"`
 	StageID           pgtype.UUID        `json:"stage_id"`
 	Title             string             `json:"title"`
@@ -117,7 +117,7 @@ type Job struct {
 
 type JobAsset struct {
 	ID         pgtype.UUID        `json:"id"`
-	UserID     pgtype.UUID        `json:"user_id"`
+	UserID     string             `json:"user_id"`
 	JobID      pgtype.UUID        `json:"job_id"`
 	Type       pgtype.Text        `json:"type"`
 	Content    pgtype.Text        `json:"content"`
@@ -129,7 +129,7 @@ type JobAsset struct {
 
 type OauthToken struct {
 	ID           pgtype.UUID        `json:"id"`
-	UserID       pgtype.UUID        `json:"user_id"`
+	UserID       string             `json:"user_id"`
 	Provider     string             `json:"provider"`
 	AccessToken  pgtype.Text        `json:"access_token"`
 	RefreshToken pgtype.Text        `json:"refresh_token"`
@@ -142,7 +142,7 @@ type OauthToken struct {
 
 type Offer struct {
 	ID             pgtype.UUID        `json:"id"`
-	UserID         pgtype.UUID        `json:"user_id"`
+	UserID         string             `json:"user_id"`
 	JobID          pgtype.UUID        `json:"job_id"`
 	BaseSalary     pgtype.Int4        `json:"base_salary"`
 	Currency       pgtype.Text        `json:"currency"`
@@ -158,7 +158,7 @@ type Offer struct {
 
 type Resume struct {
 	ID         pgtype.UUID        `json:"id"`
-	UserID     pgtype.UUID        `json:"user_id"`
+	UserID     string             `json:"user_id"`
 	Name       string             `json:"name"`
 	RxresumeID pgtype.Text        `json:"rxresume_id"`
 	IsBase     pgtype.Bool        `json:"is_base"`
@@ -168,7 +168,7 @@ type Resume struct {
 
 type ResumeVersion struct {
 	ID        pgtype.UUID        `json:"id"`
-	UserID    pgtype.UUID        `json:"user_id"`
+	UserID    string             `json:"user_id"`
 	ResumeID  pgtype.UUID        `json:"resume_id"`
 	Content   []byte             `json:"content"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
@@ -177,7 +177,7 @@ type ResumeVersion struct {
 
 type ScrapeRun struct {
 	ID          pgtype.UUID        `json:"id"`
-	UserID      pgtype.UUID        `json:"user_id"`
+	UserID      string             `json:"user_id"`
 	Status      pgtype.Text        `json:"status"`
 	Sources     []string           `json:"sources"`
 	JobsFound   pgtype.Int4        `json:"jobs_found"`
@@ -190,7 +190,7 @@ type ScrapeRun struct {
 
 type Stage struct {
 	ID           pgtype.UUID        `json:"id"`
-	UserID       pgtype.UUID        `json:"user_id"`
+	UserID       string             `json:"user_id"`
 	Name         string             `json:"name"`
 	Position     int32              `json:"position"`
 	IsTerminal   pgtype.Bool        `json:"is_terminal"`
@@ -202,7 +202,7 @@ type Stage struct {
 
 type Tag struct {
 	ID        pgtype.UUID        `json:"id"`
-	UserID    pgtype.UUID        `json:"user_id"`
+	UserID    string             `json:"user_id"`
 	Name      pgtype.Text        `json:"name"`
 	Color     pgtype.Text        `json:"color"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
@@ -210,7 +210,7 @@ type Tag struct {
 }
 
 type Tagging struct {
-	UserID     pgtype.UUID        `json:"user_id"`
+	UserID     string             `json:"user_id"`
 	TagID      pgtype.UUID        `json:"tag_id"`
 	EntityType string             `json:"entity_type"`
 	EntityID   pgtype.UUID        `json:"entity_id"`
@@ -219,16 +219,17 @@ type Tagging struct {
 }
 
 type User struct {
-	ID        pgtype.UUID        `json:"id"`
-	Email     string             `json:"email"`
-	Name      pgtype.Text        `json:"name"`
-	AvatarUrl pgtype.Text        `json:"avatar_url"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID            string             `json:"id"`
+	Name          string             `json:"name"`
+	Email         string             `json:"email"`
+	EmailVerified bool               `json:"emailVerified"`
+	Image         pgtype.Text        `json:"image"`
+	CreatedAt     pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt     pgtype.Timestamptz `json:"updatedAt"`
 }
 
 type UserSetting struct {
-	UserID       pgtype.UUID        `json:"user_id"`
+	UserID       string             `json:"user_id"`
 	AiProvider   pgtype.Text        `json:"ai_provider"`
 	AiModel      pgtype.Text        `json:"ai_model"`
 	WritingStyle pgtype.Text        `json:"writing_style"`
@@ -240,7 +241,7 @@ type UserSetting struct {
 
 type Webhook struct {
 	ID        pgtype.UUID        `json:"id"`
-	UserID    pgtype.UUID        `json:"user_id"`
+	UserID    string             `json:"user_id"`
 	Url       pgtype.Text        `json:"url"`
 	Events    []string           `json:"events"`
 	Secret    pgtype.Text        `json:"secret"`

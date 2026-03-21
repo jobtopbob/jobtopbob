@@ -1,6 +1,6 @@
 CREATE TABLE jobs (
     id                uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id           uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id           text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     company_id        uuid REFERENCES companies(id) ON DELETE SET NULL,
     stage_id          uuid REFERENCES stages(id) ON DELETE SET NULL,
     title             text NOT NULL,

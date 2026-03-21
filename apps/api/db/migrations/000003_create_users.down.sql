@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS users;
+-- No-op: Better Auth manages the "user" table.

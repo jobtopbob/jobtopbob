@@ -19,7 +19,7 @@ RETURNING id, user_id, name, website, industry, size, interest, notes, created_a
 `
 
 type CreateCompanyParams struct {
-	UserID   pgtype.UUID `json:"user_id"`
+	UserID   string      `json:"user_id"`
 	Name     string      `json:"name"`
 	Website  pgtype.Text `json:"website"`
 	Industry pgtype.Text `json:"industry"`
@@ -60,7 +60,7 @@ DELETE FROM companies WHERE id = $1 AND user_id = $2
 
 type DeleteCompanyParams struct {
 	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	UserID string      `json:"user_id"`
 }
 
 func (q *Queries) DeleteCompany(ctx context.Context, arg DeleteCompanyParams) (pgconn.CommandTag, error) {
@@ -72,8 +72,8 @@ SELECT id, user_id, name, website, industry, size, interest, notes, created_at, 
 `
 
 type FindCompanyByNameParams struct {
-	UserID pgtype.UUID `json:"user_id"`
-	Name   string      `json:"name"`
+	UserID string `json:"user_id"`
+	Name   string `json:"name"`
 }
 
 func (q *Queries) FindCompanyByName(ctx context.Context, arg FindCompanyByNameParams) (Company, error) {
@@ -100,7 +100,7 @@ SELECT id, user_id, name, website, industry, size, interest, notes, created_at, 
 
 type GetCompanyParams struct {
 	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	UserID string      `json:"user_id"`
 }
 
 func (q *Queries) GetCompany(ctx context.Context, arg GetCompanyParams) (Company, error) {
@@ -125,7 +125,7 @@ const listCompanies = `-- name: ListCompanies :many
 SELECT id, user_id, name, website, industry, size, interest, notes, created_at, updated_at FROM companies WHERE user_id = $1 ORDER BY name ASC
 `
 
-func (q *Queries) ListCompanies(ctx context.Context, userID pgtype.UUID) ([]Company, error) {
+func (q *Queries) ListCompanies(ctx context.Context, userID string) ([]Company, error) {
 	rows, err := q.db.Query(ctx, listCompanies, userID)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ RETURNING id, user_id, name, website, industry, size, interest, notes, created_a
 
 type UpdateCompanyParams struct {
 	ID       pgtype.UUID `json:"id"`
-	UserID   pgtype.UUID `json:"user_id"`
+	UserID   string      `json:"user_id"`
 	Name     pgtype.Text `json:"name"`
 	Website  pgtype.Text `json:"website"`
 	Industry pgtype.Text `json:"industry"`

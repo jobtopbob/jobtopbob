@@ -39,7 +39,7 @@ func Auth(jwksURL string) gin.HandlerFunc {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 		token, err := jwt.Parse(tokenString, k.KeyfuncCtx(c.Request.Context()),
-			jwt.WithValidMethods([]string{"RS256", "ES256"}),
+			jwt.WithValidMethods([]string{"RS256", "ES256", "EdDSA"}),
 		)
 		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
@@ -48,8 +48,18 @@ func Auth(jwksURL string) gin.HandlerFunc {
 
 		sub, err := token.Claims.GetSubject()
 		if err != nil || sub == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing subject claim"})
-			return
+			// Fallback: Better Auth may put user ID in "id" claim instead of "sub"
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				if id, exists := claims["id"]; exists {
+					if idStr, ok := id.(string); ok && idStr != "" {
+						sub = idStr
+					}
+				}
+			}
+			if sub == "" {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing subject claim"})
+				return
+			}
 		}
 
 		// Store userID in both Gin context and request context

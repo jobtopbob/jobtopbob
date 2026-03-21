@@ -19,7 +19,7 @@ RETURNING id, user_id, name, position, is_terminal, color, mapped_status, create
 `
 
 type CreateStageParams struct {
-	UserID       pgtype.UUID `json:"user_id"`
+	UserID       string      `json:"user_id"`
 	Name         string      `json:"name"`
 	Position     int32       `json:"position"`
 	IsTerminal   pgtype.Bool `json:"is_terminal"`
@@ -57,7 +57,7 @@ DELETE FROM stages WHERE id = $1 AND user_id = $2
 
 type DeleteStageParams struct {
 	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	UserID string      `json:"user_id"`
 }
 
 func (q *Queries) DeleteStage(ctx context.Context, arg DeleteStageParams) (pgconn.CommandTag, error) {
@@ -70,7 +70,7 @@ SELECT id, user_id, name, position, is_terminal, color, mapped_status, created_a
 
 type GetStageParams struct {
 	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	UserID string      `json:"user_id"`
 }
 
 func (q *Queries) GetStage(ctx context.Context, arg GetStageParams) (Stage, error) {
@@ -94,7 +94,7 @@ const listStages = `-- name: ListStages :many
 SELECT id, user_id, name, position, is_terminal, color, mapped_status, created_at, updated_at FROM stages WHERE user_id = $1 ORDER BY position ASC
 `
 
-func (q *Queries) ListStages(ctx context.Context, userID pgtype.UUID) ([]Stage, error) {
+func (q *Queries) ListStages(ctx context.Context, userID string) ([]Stage, error) {
 	rows, err := q.db.Query(ctx, listStages, userID)
 	if err != nil {
 		return nil, err
@@ -136,7 +136,7 @@ INSERT INTO stages (user_id, name, position, is_terminal, color, mapped_status) 
     ($1, 'Withdrawn',   7, true,  '#9CA3AF', 'closed')
 `
 
-func (q *Queries) SeedDefaultStages(ctx context.Context, userID pgtype.UUID) error {
+func (q *Queries) SeedDefaultStages(ctx context.Context, userID string) error {
 	_, err := q.db.Exec(ctx, seedDefaultStages, userID)
 	return err
 }
@@ -153,7 +153,7 @@ RETURNING id, user_id, name, position, is_terminal, color, mapped_status, create
 
 type UpdateStageParams struct {
 	ID           pgtype.UUID `json:"id"`
-	UserID       pgtype.UUID `json:"user_id"`
+	UserID       string      `json:"user_id"`
 	Name         pgtype.Text `json:"name"`
 	IsTerminal   pgtype.Bool `json:"is_terminal"`
 	Color        pgtype.Text `json:"color"`
@@ -191,7 +191,7 @@ UPDATE stages SET position = $1 WHERE id = $2 AND user_id = $3
 type UpdateStagePositionParams struct {
 	Position int32       `json:"position"`
 	ID       pgtype.UUID `json:"id"`
-	UserID   pgtype.UUID `json:"user_id"`
+	UserID   string      `json:"user_id"`
 }
 
 func (q *Queries) UpdateStagePosition(ctx context.Context, arg UpdateStagePositionParams) error {

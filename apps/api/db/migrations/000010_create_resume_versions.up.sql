@@ -1,6 +1,6 @@
 CREATE TABLE resume_versions (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id    text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     resume_id  uuid NOT NULL REFERENCES resumes(id) ON DELETE CASCADE,
     content    jsonb NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now(),

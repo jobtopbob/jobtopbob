@@ -1,5 +1,5 @@
 CREATE TABLE user_settings (
-    user_id       uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    user_id       text PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
     ai_provider   text,
     ai_model      text,
     writing_style text,

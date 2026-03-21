@@ -1,7 +1,5 @@
-CREATE OR REPLACE FUNCTION current_user_id() RETURNS uuid AS $$
+CREATE OR REPLACE FUNCTION current_user_id() RETURNS text AS $$
 BEGIN
-    RETURN current_setting('app.current_user_id', true)::uuid;
-EXCEPTION WHEN invalid_text_representation THEN
-    RETURN '00000000-0000-0000-0000-000000000000'::uuid;
+    RETURN NULLIF(current_setting('app.current_user_id', true), '');
 END;
 $$ LANGUAGE plpgsql STABLE;
