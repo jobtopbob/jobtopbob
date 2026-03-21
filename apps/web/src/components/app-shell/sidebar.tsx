@@ -40,7 +40,7 @@ const navGroups: NavGroup[] = [
     label: "Job Tracking",
     icon: Briefcase,
     items: [
-      { label: "Applications", icon: Briefcase, href: "/dashboard" },
+      { label: "Applications", icon: Briefcase, href: "/applications" },
       { label: "Companies", icon: Building2, href: "/companies" },
       { label: "Offers", icon: HandCoins, href: "/offers" },
     ],
@@ -107,27 +107,47 @@ export function Sidebar() {
         </div>
 
         {/* Navigation - icon only */}
-        <nav className="flex-1 flex flex-col items-center gap-2 py-3">
+        <nav className="flex-1 flex flex-col items-center gap-2 py-3 overflow-y-auto">
           <Link
             href="/dashboard"
             className={cn(
-              "flex items-center justify-center w-11 h-11 rounded-xl",
+              "flex items-center justify-center w-11 h-11 rounded-xl shrink-0",
               pathname === "/dashboard"
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-sidebar-foreground hover:bg-sidebar-accent/50"
             )}
+            title="Dashboard"
           >
             <LayoutDashboard className="w-6 h-6" />
           </Link>
 
+          {navGroups.map((group) =>
+            group.items.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center justify-center w-11 h-11 rounded-xl shrink-0",
+                  pathname === item.href
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                )}
+                title={item.label}
+              >
+                <item.icon className="w-[18px] h-[18px]" />
+              </Link>
+            ))
+          )}
+
           <Link
             href="/settings"
             className={cn(
-              "flex items-center justify-center w-11 h-11 rounded-xl",
+              "flex items-center justify-center w-11 h-11 rounded-xl shrink-0",
               pathname === "/settings"
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-sidebar-foreground hover:bg-sidebar-accent/50"
             )}
+            title="Settings"
           >
             <Settings className="w-6 h-6" />
           </Link>
