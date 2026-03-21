@@ -10,7 +10,7 @@ interface JobCardProps {
   isClosedColumn?: boolean;
 }
 
-function formatRelativeDate(dateStr: string | null | undefined): {
+export function formatRelativeDate(dateStr: string | null | undefined): {
   text: string;
   isToday: boolean;
 } {
@@ -28,7 +28,7 @@ function formatRelativeDate(dateStr: string | null | undefined): {
   return { text: `${Math.floor(diffDays / 365)}y`, isToday: false };
 }
 
-function formatSalary(
+export function formatSalary(
   min: number | null | undefined,
   max: number | null | undefined,
   currency: string | null | undefined
@@ -63,12 +63,12 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
       style={{ opacity: isDragging ? 0.5 : isClosedColumn ? 0.6 : 1 }}
     >
       {/* Company */}
-      <span className="text-[11px] font-medium text-[#8B8FA3]">
+      <span className="text-xs font-medium text-[#8B8FA3]">
         {job.company_name ?? "Unknown Company"}
       </span>
 
       {/* Title */}
-      <span className="text-xs font-medium text-[#1A1A2E] leading-tight">
+      <span className="text-sm font-medium text-[#1A1A2E] leading-tight">
         {job.title}
       </span>
 

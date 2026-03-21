@@ -9,6 +9,7 @@ import { BoardDndProvider } from "./board-dnd-provider";
 import { KanbanColumn } from "./kanban-column";
 import { AddJobSheet } from "./add-job-sheet";
 import { JobDetailSheet } from "./job-detail-sheet";
+import { MobileJobList } from "./mobile-job-list";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function KanbanBoard() {
@@ -48,7 +49,7 @@ export function KanbanBoard() {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Page Header */}
-      <div className="px-7 pt-5">
+      <div className="px-4 lg:px-7 pt-5">
         <h1 className="text-2xl font-bold text-[#1A1A2E] tracking-tight">
           Applications
         </h1>
@@ -65,7 +66,7 @@ export function KanbanBoard() {
       />
 
       {/* Kanban Columns */}
-      <div className="flex-1 overflow-hidden px-7 pb-4 pt-4">
+      <div className="flex-1 overflow-hidden px-4 lg:px-7 pb-4 pt-4">
         {isLoading ? (
           <div className="flex gap-4 h-full">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -101,18 +102,30 @@ export function KanbanBoard() {
             </div>
           </div>
         ) : (
-          <BoardDndProvider>
-            <div className="flex gap-4 h-full">
-              {stages!.map((stage) => (
-                <KanbanColumn
-                  key={stage.id}
-                  stage={stage}
-                  jobs={jobsByStage.get(stage.id) ?? []}
-                  onJobClick={setSelectedJob}
-                />
-              ))}
+          <>
+            {/* Desktop: kanban columns with horizontal scroll */}
+            <BoardDndProvider>
+              <div className="hidden lg:flex gap-4 h-full overflow-x-auto pr-2">
+                {stages!.map((stage) => (
+                  <KanbanColumn
+                    key={stage.id}
+                    stage={stage}
+                    jobs={jobsByStage.get(stage.id) ?? []}
+                    onJobClick={setSelectedJob}
+                  />
+                ))}
+              </div>
+            </BoardDndProvider>
+
+            {/* Mobile: grouped list view */}
+            <div className="lg:hidden h-full overflow-y-auto">
+              <MobileJobList
+                stages={stages!}
+                jobsByStage={jobsByStage}
+                onJobClick={setSelectedJob}
+              />
             </div>
-          </BoardDndProvider>
+          </>
         )}
       </div>
 

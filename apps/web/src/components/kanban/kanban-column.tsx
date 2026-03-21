@@ -5,7 +5,7 @@ import type { Job } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
 import { JobCard } from "./job-card";
 
-const STAGE_DOT_COLORS: Record<string, string> = {
+export const STAGE_DOT_COLORS: Record<string, string> = {
   saved: "#7B8494",
   applied: "#3366CC",
   interviewing: "#C49B30",
@@ -15,7 +15,7 @@ const STAGE_DOT_COLORS: Record<string, string> = {
   default: "#7B8494",
 };
 
-function getDotColor(stageName: string): string {
+export function getDotColor(stageName: string): string {
   const key = stageName.toLowerCase();
   return STAGE_DOT_COLORS[key] ?? STAGE_DOT_COLORS.default;
 }
@@ -37,7 +37,7 @@ export function KanbanColumn({ stage, jobs, onJobClick }: KanbanColumnProps) {
   return (
     <div
       ref={ref}
-      className="flex flex-col rounded-xl bg-[#F5F5F7] border border-[#EBEBEF] min-w-0 flex-1 overflow-hidden"
+      className="flex flex-col rounded-xl bg-[#F5F5F7] border border-[#EBEBEF] w-[280px] min-w-[280px] shrink-0 overflow-hidden"
       style={{
         outline: isDropTarget ? "2px solid #FF8400" : undefined,
         outlineOffset: -2,
