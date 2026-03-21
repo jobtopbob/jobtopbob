@@ -2,10 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Status
-
-JobTopBob is in **planning/documentation phase** — no source code exists yet. The engineering specification is fully written. When implementation begins, update this file with actual commands and patterns.
-
 ### Source of Truth Documents
 - `documentation/Implementation Plan.md` — full engineering spec (repo structure, tech stack, database schema, auth, AI layer, scrapers, deployment, testing, security)
 - `documentation/internal/Project Details.md` — product vision, business model, competitive analysis (gitignored from public)
@@ -55,8 +51,10 @@ docker compose --profile prod --profile scrapers up -d  # with scrapers
 ./scripts/sqlc-generate.sh          # SQL queries → Go functions
 ./scripts/generate-api-client.sh    # OpenAPI spec → TypeScript types
 
-# Development (starts all services)
-pnpm dev
+# Development
+pnpm dev                            # starts Next.js web app
+go run ./apps/api/cmd/api           # starts Go API server
+go run ./apps/worker/cmd/worker     # starts Go background worker
 
 # Go quality
 go vet ./...
@@ -94,7 +92,3 @@ pnpm playwright test
 - User content in AI prompts wrapped in `<user_content>` XML tags for prompt injection defense
 - Feature flags: `SCRAPERS_ENABLED`
 - Self-hosting constraint: everything must work with Docker Compose on a $10/month VPS
-
-## Licence
-
-AGPL-3.0. Modified hosted versions must publish source code.

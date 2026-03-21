@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -8,21 +7,21 @@ import {
   Briefcase,
   FileText,
   Building2,
-  Gift,
+  HandCoins,
   Wrench,
-  FileBadge,
   Mail,
   Users,
   Settings,
   LifeBuoy,
   PanelLeftClose,
-  PanelLeftOpen,
   Sun,
   Moon,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "./sidebar-context";
+import { useState } from "react";
 
 interface NavItem {
   label: string;
@@ -41,28 +40,58 @@ const navGroups: NavGroup[] = [
     label: "Job Tracking",
     icon: Briefcase,
     items: [
-      { label: "Applications", icon: FileText, href: "/dashboard" },
+      { label: "Applications", icon: Briefcase, href: "/dashboard" },
       { label: "Companies", icon: Building2, href: "/companies" },
-      { label: "Offers", icon: Gift, href: "/offers" },
+      { label: "Offers", icon: HandCoins, href: "/offers" },
     ],
   },
   {
     label: "Tools",
     icon: Wrench,
     items: [
-      { label: "Resumes", icon: FileBadge, href: "/resumes" },
+      { label: "Resumes", icon: FileText, href: "/resumes" },
       { label: "Smart Router", icon: Mail, href: "/smart-router" },
       { label: "Contacts", icon: Users, href: "/contacts" },
     ],
   },
 ];
 
+function TreeIndicator({ isLast }: { isLast: boolean }) {
+  return (
+    <div className="w-9 h-11 shrink-0 relative">
+      {/* Vertical line */}
+      <div
+        className={cn(
+          "absolute left-4 top-0 w-0.5 bg-[#2E2E45]",
+          isLast ? "h-5" : "h-full"
+        )}
+      />
+      {/* Curve connector */}
+      <svg
+        className="absolute left-[15px] top-5"
+        width="13"
+        height="12"
+        viewBox="0 0 13 12"
+        fill="none"
+      >
+        <path
+          d="M1 0C1 6 1 11 12 11"
+          stroke="#2E2E45"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
-    { "Job Tracking": true, Tools: true }
-  );
+  const { collapsed, setCollapsed } = useSidebar();
+  const [expandedGroups, setExpandedGroups] = useState<
+    Record<string, boolean>
+  >({ "Job Tracking": true, Tools: true });
 
   const toggleGroup = (label: string) => {
     setExpandedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
@@ -71,10 +100,44 @@ export function Sidebar() {
   if (collapsed) {
     return (
       <aside className="flex flex-col w-16 h-full bg-[#1A1A2E] border-r border-[#2E2E45] shrink-0">
+        {/* Header - logo icon only */}
         <div className="flex items-center justify-center h-[60px] border-b border-[#2E2E45]">
-          <button onClick={() => setCollapsed(false)} className="p-1">
-            <PanelLeftOpen className="w-[18px] h-[18px] text-[#A0A3B1]" />
-          </button>
+          <div className="w-7 h-7 rounded-lg bg-[#FF8400] shrink-0" />
+        </div>
+
+        {/* Navigation - icon only */}
+        <nav className="flex-1 flex flex-col items-center gap-2 py-3">
+          <Link
+            href="/dashboard"
+            className={cn(
+              "flex items-center justify-center w-11 h-11 rounded-xl",
+              pathname === "/dashboard"
+                ? "bg-[#2A2A42] text-white"
+                : "text-[#A0A3B1] hover:bg-[#2A2A42]/50"
+            )}
+          >
+            <LayoutDashboard className="w-6 h-6" />
+          </Link>
+
+          <Link
+            href="/settings"
+            className={cn(
+              "flex items-center justify-center w-11 h-11 rounded-xl",
+              pathname === "/settings"
+                ? "bg-[#2A2A42] text-white"
+                : "text-[#A0A3B1] hover:bg-[#2A2A42]/50"
+            )}
+          >
+            <Settings className="w-6 h-6" />
+          </Link>
+        </nav>
+
+        {/* Footer */}
+        <div className="flex flex-col items-center gap-3 pb-4">
+          <div className="w-6 h-px bg-[#2E2E45]" />
+          <div className="flex items-center justify-center w-11 h-11 rounded-xl text-[#A0A3B1]">
+            <LifeBuoy className="w-5 h-5" />
+          </div>
         </div>
       </aside>
     );
@@ -86,14 +149,9 @@ export function Sidebar() {
       <div className="flex items-center justify-between gap-2 h-[60px] px-4 border-b border-[#2E2E45]">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-7 h-7 rounded-lg bg-[#FF8400] shrink-0" />
-          <div className="flex flex-col min-w-0">
-            <span className="text-white text-sm font-semibold leading-tight truncate">
-              JobTopBob
-            </span>
-            <span className="text-[#A0A3B1] text-[10px] leading-tight truncate">
-              Job Tracker
-            </span>
-          </div>
+          <span className="text-white text-[15px] font-bold leading-none truncate">
+            JobTopBob
+          </span>
         </div>
         <button
           onClick={() => setCollapsed(true)}
@@ -124,10 +182,12 @@ export function Sidebar() {
           <div key={group.label}>
             <button
               onClick={() => toggleGroup(group.label)}
-              className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-[#A0A3B1] text-base hover:bg-[#2A2A42]/50"
+              className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-[#A0A3B1] hover:bg-[#2A2A42]/50"
             >
-              <group.icon className="w-6 h-6 shrink-0" />
-              <span className="flex-1 text-left leading-6">{group.label}</span>
+              <group.icon className="w-5 h-5 shrink-0" />
+              <span className="flex-1 text-left text-sm font-semibold leading-5">
+                {group.label}
+              </span>
               {expandedGroups[group.label] ? (
                 <ChevronDown className="w-4 h-4" />
               ) : (
@@ -135,21 +195,25 @@ export function Sidebar() {
               )}
             </button>
             {expandedGroups[group.label] && (
-              <div className="mt-0.5">
-                {group.items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 h-11 pl-12 pr-3 text-sm",
-                      pathname === item.href
-                        ? "text-white"
-                        : "text-[#A0A3B1] hover:text-white/80"
-                    )}
-                  >
-                    <item.icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </Link>
+              <div>
+                {group.items.map((item, index) => (
+                  <div key={item.href} className="flex items-center h-11">
+                    <TreeIndicator
+                      isLast={index === group.items.length - 1}
+                    />
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 flex-1 px-3 py-3 rounded-xl text-sm",
+                        pathname === item.href
+                          ? "text-white"
+                          : "text-[#A0A3B1] hover:text-white/80"
+                      )}
+                    >
+                      <item.icon className="w-[18px] h-[18px] shrink-0" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -179,7 +243,7 @@ export function Sidebar() {
         <div className="flex items-center gap-2.5 px-3 py-3 rounded-xl text-[#A0A3B1]">
           <LifeBuoy className="w-5 h-5 shrink-0" />
           <span className="flex-1 text-sm">Help</span>
-          <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-[#FF8400] text-white text-[10px] font-medium">
+          <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-[#FF8400] text-white text-[11px] font-semibold">
             3
           </span>
         </div>
@@ -187,12 +251,12 @@ export function Sidebar() {
         {/* Theme Toggle */}
         <div className="flex rounded-full bg-[#2A2A42] p-1">
           <button className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full bg-[#2E2E45] shadow-sm">
-            <Sun className="w-3.5 h-3.5 text-[#A0A3B1]" />
-            <span className="text-[#A0A3B1] text-xs">Light</span>
+            <Sun className="w-4 h-4 text-white" />
+            <span className="text-white text-xs font-medium">Light</span>
           </button>
           <button className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full bg-[#1A1A2E]">
-            <Moon className="w-3.5 h-3.5 text-white" />
-            <span className="text-white text-xs">Dark</span>
+            <Moon className="w-4 h-4 text-[#A0A3B1]" />
+            <span className="text-[#A0A3B1] text-xs font-medium">Dark</span>
           </button>
         </div>
       </div>

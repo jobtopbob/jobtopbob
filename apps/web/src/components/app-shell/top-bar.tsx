@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, ChevronDown, LogOut } from "lucide-react";
+import { Search, Bell, ChevronDown, LogOut, PanelLeftOpen } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { useSidebar } from "./sidebar-context";
 
 interface TopBarProps {
   userName: string;
@@ -16,6 +17,7 @@ interface TopBarProps {
 
 export function TopBar({ userName }: TopBarProps) {
   const router = useRouter();
+  const { collapsed, setCollapsed } = useSidebar();
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -24,6 +26,16 @@ export function TopBar({ userName }: TopBarProps) {
 
   return (
     <header className="flex items-center h-14 px-6 bg-white shrink-0">
+      {/* Expand button (shown when sidebar is collapsed) */}
+      {collapsed && (
+        <button
+          onClick={() => setCollapsed(false)}
+          className="flex items-center justify-center w-7 h-7 rounded-lg mr-3 shrink-0"
+        >
+          <PanelLeftOpen className="w-[18px] h-[18px] text-[#A0A3B1]" />
+        </button>
+      )}
+
       {/* Search */}
       <div className="flex items-center gap-2 w-[280px] px-3 py-2 rounded-xl bg-[#F5F5F7] border border-[#EBEBEF]">
         <Search className="w-4 h-4 text-[#8B8FA3] shrink-0" />

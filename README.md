@@ -2,8 +2,6 @@
 
 > Open-source job application management. Every feature, free — forever.
 
----
-
 JobTopBob combines a job application tracker, integrated resume builder (powered by [Reactive Resume](https://rxresu.me)), and AI job assistant in a single open-source platform. Self-host it for free with your own AI key, or use the managed cloud version and let us handle the infrastructure.
 
 No feature gates. No crippled free tier. No data selling.
@@ -21,6 +19,56 @@ Connect your Gmail and JobTopBob automatically detects recruiter replies, interv
 The average successful job search requires 100–200 applications over 5–8 months. Spreadsheets break under that load. Proprietary tools like Teal ($29/mo) and Huntr ($40/mo) charge significant recurring fees to users who are often unemployed — and have drawn criticism for selling resume data, blocking data export, and producing generic AI output.
 
 Open-source alternatives exist for resume building (Reactive Resume, 1M+ users) but nothing meaningful combines a resume builder with a full application tracker. That's the gap JobTopBob fills — integrating Reactive Resume v5 as a microservice rather than rebuilding from scratch.
+
+---
+
+## Quickstart
+
+**Prerequisites:** [Node.js 20+](https://nodejs.org), [pnpm 10.26+](https://pnpm.io), [Go 1.26+](https://go.dev), [Docker](https://www.docker.com)
+
+### Development
+
+```bash
+# 1. Clone and configure
+git clone https://github.com/jobtopbob/jobtopbob.git
+cd jobtopbob
+cp .env.example .env        # defaults work for local dev
+
+# 2. Install TypeScript dependencies
+pnpm install
+
+# 3. Start infrastructure (Postgres, Redis, Resume Builder, Asynq Inspector)
+docker compose up -d
+
+# 4. Start the Next.js frontend (terminal 1)
+pnpm dev
+
+# 5. Start Go services (terminals 2 & 3)
+go run ./apps/api/cmd/api
+go run ./apps/worker/cmd/worker
+```
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Go API | http://localhost:8080 |
+| Resume Builder | http://localhost:3010 |
+| Asynq Inspector | http://localhost:8081 |
+
+> **Note:** `pnpm dev` starts the Next.js web app only. The Go API and worker are separate processes — they're not part of the pnpm workspace, so they need their own terminal.
+
+### Self-hosting (production)
+
+Everything runs in Docker — no host toolchain required:
+
+```bash
+cp .env.example .env         # configure secrets and AI keys
+docker compose --profile prod up -d
+# With job discovery scrapers:
+docker compose --profile prod --profile scrapers up -d
+```
+
+All configuration is in `.env` — see `.env.example` for the full reference.
 
 ---
 
@@ -112,16 +160,6 @@ You pay your provider directly — JobTopBob never charges for AI usage. The clo
 ## Licence
 
 AGPL-3.0. Self-host, fork, and modify freely. Anyone hosting a modified version must publish their source code under the same licence. Commercial licence available for institutions with procurement constraints.
-
----
-
-## Roadmap
-
-**Now (months 1–6):** Core tracker, Reactive Resume v5 integration, manual JD import, networking CRM, company profiles, basic analytics, BYOK AI (OpenAI-compatible + Ollama), Smart Router Gmail integration, Docker self-hosting.
-
-**Next (months 6–12):** Automated job discovery pipeline, Ghostwriter, browser extension, offer comparison, advanced analytics, cloud hosted version.
-
-**Later (months 12–18):** B2B institutional tier — cohort dashboards, SSO, white-label branding, placement outcome reports for bootcamps and university career centres.
 
 ---
 

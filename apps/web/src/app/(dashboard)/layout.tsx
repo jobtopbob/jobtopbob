@@ -1,9 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { Sidebar } from "@/components/app-shell/sidebar";
-import { TopBar } from "@/components/app-shell/top-bar";
-import { Toaster } from "sonner";
+import { AppShell } from "@/components/app-shell/app-shell";
 
 export default async function DashboardLayout({
   children,
@@ -20,14 +18,5 @@ export default async function DashboardLayout({
 
   const userName = session.user.name || session.user.email || "User";
 
-  return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex flex-col flex-1 min-w-0">
-        <TopBar userName={userName} />
-        <main className="flex-1 overflow-hidden">{children}</main>
-      </div>
-      <Toaster position="bottom-right" />
-    </div>
-  );
+  return <AppShell userName={userName}>{children}</AppShell>;
 }
