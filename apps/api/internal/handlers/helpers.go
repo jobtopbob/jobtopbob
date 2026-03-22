@@ -3,11 +3,31 @@ package handlers
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const dateOnlyFormat = "2006-01-02"
+
+// parseFlexibleTime tries RFC3339 first, then date-only (YYYY-MM-DD).
+// When endOfDay is true and the input is date-only, it returns 23:59:59 UTC
+// to make the range inclusive of the entire day.
+func parseFlexibleTime(s string, endOfDay bool) (time.Time, error) {
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t, nil
+	}
+	t, err := time.Parse(dateOnlyFormat, s)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if endOfDay {
+		t = t.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+	}
+	return t, nil
+}
 
 // getTx extracts the per-request transaction from the Gin context.
 // Set by the RLS middleware.

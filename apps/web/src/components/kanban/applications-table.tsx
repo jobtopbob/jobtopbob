@@ -13,6 +13,7 @@ import type { Job } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
 import { formatSalary } from "./job-card";
 import { PaginationControls } from "./pagination-controls";
+import { StageIcon } from "./stage-icons";
 
 interface ApplicationsTableProps {
   jobs: Job[];
@@ -195,12 +196,16 @@ export function ApplicationsTable({
                 </TableCell>
                 <TableCell>
                   <span
-                    className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-medium"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
                     style={{
                       backgroundColor: pillStyle.bg,
                       color: pillStyle.text,
                     }}
                   >
+                    <StageIcon
+                      stageName={stage?.name ?? "default"}
+                      className="w-3.5 h-3.5 shrink-0"
+                    />
                     {stage?.name ?? "—"}
                   </span>
                 </TableCell>

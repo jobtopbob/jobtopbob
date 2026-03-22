@@ -13,6 +13,7 @@ import { useStages, type Stage } from "@/hooks/use-stages";
 import { useTags, type Tag } from "@/hooks/use-tags";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { JobFilters } from "@/hooks/use-job-filters";
+import { StageIcon } from "./stage-icons";
 
 const STATUS_OPTIONS = [
   { value: "applied", label: "Applied" },
@@ -298,6 +299,7 @@ function FilterContent({
                   checked={draft.stageIds.includes(stage.id)}
                   onToggle={() => toggleArrayValue("stageIds", stage.id)}
                   colorDot={stage.color}
+                  stageName={stage.name}
                 />
               ))}
             </div>
@@ -421,11 +423,13 @@ function CheckboxRow({
   checked,
   onToggle,
   colorDot,
+  stageName,
 }: {
   label: string;
   checked: boolean;
   onToggle: () => void;
   colorDot?: string | null;
+  stageName?: string;
 }) {
   return (
     <button
@@ -436,12 +440,14 @@ function CheckboxRow({
         checked={checked}
         className="data-checked:border-[#FF8400] data-checked:bg-[#FF8400] pointer-events-none"
       />
-      {colorDot && (
+      {stageName && colorDot ? (
+        <StageIcon stageName={stageName} className="w-4 h-4 shrink-0" color={colorDot} />
+      ) : colorDot ? (
         <span
           className="w-2 h-2 rounded-full shrink-0"
           style={{ backgroundColor: colorDot }}
         />
-      )}
+      ) : null}
       <span className="text-[13px] font-medium text-[#1A1A2E] group-hover:text-[#FF8400] transition-colors truncate">
         {label}
       </span>

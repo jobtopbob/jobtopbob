@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useJobs } from "@/hooks/use-jobs";
-import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StageIcon } from "@/components/kanban/stage-icons";
 
 const statusStyles: Record<string, { bg: string; text: string }> = {
   applied: { bg: "#E8F0FE", text: "#2A85FF" },
@@ -38,17 +38,9 @@ function getLogoColor(name: string): string {
 }
 
 export function RecentApplications() {
-  const { data: jobsData, isLoading } = useJobs();
+  const { data: jobsData, isLoading } = useJobs({ perPage: 3 });
 
-  const recentJobs = useMemo(() => {
-    if (!jobsData?.data) return [];
-    return [...jobsData.data]
-      .sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )
-      .slice(0, 3);
-  }, [jobsData]);
+  const recentJobs = jobsData?.data ?? [];
 
   if (isLoading) {
     return (
@@ -107,9 +99,14 @@ export function RecentApplications() {
                   </span>
                 </div>
                 <div
-                  className="rounded-md px-2 py-0.5 shrink-0"
+                  className="flex items-center gap-1 rounded-md px-2 py-0.5 shrink-0"
                   style={{ backgroundColor: style.bg }}
                 >
+                  <StageIcon
+                    stageName={job.stage_name ?? "applied"}
+                    className="w-3.5 h-3.5 shrink-0"
+                    color={style.text}
+                  />
                   <span
                     className="text-[10px] font-semibold capitalize"
                     style={{ color: style.text }}

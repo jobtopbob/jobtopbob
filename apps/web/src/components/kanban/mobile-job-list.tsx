@@ -7,6 +7,7 @@ import type { Job } from "@/hooks/use-jobs";
 import { useUpdateJob } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
 import { getDotColor } from "./kanban-column";
+import { StageIcon } from "./stage-icons";
 import { formatRelativeDate, formatSalary } from "./job-card";
 import {
   Select,
@@ -67,10 +68,7 @@ export function MobileJobList({
               onClick={() => toggleStage(stage.id)}
               className="flex items-center gap-2 w-full h-11 px-4 text-left"
             >
-              <div
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: dotColor }}
-              />
+              <StageIcon stageName={stage.name} className="w-5 h-5 shrink-0" color={dotColor} />
               <span className="text-sm font-semibold text-[#1A1A2E] flex-1">
                 {stage.name}
               </span>
@@ -183,10 +181,7 @@ function MobileJobRow({ job, stages, onClick }: MobileJobRowProps) {
           <SelectContent align="end">
             {stages.map((stage) => (
               <SelectItem key={stage.id} value={stage.id}>
-                <div
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ backgroundColor: getDotColor(stage.name) }}
-                />
+                <StageIcon stageName={stage.name} className="w-3.5 h-3.5 shrink-0" color={getDotColor(stage.name)} />
                 {stage.name}
               </SelectItem>
             ))}

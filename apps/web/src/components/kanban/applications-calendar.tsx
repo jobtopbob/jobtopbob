@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Job } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
+import { StageIcon } from "./stage-icons";
 
 interface ApplicationsCalendarProps {
   jobs: Job[];
@@ -374,9 +375,10 @@ export function ApplicationsCalendar({
                     onClick={() => onJobClick(job)}
                     className="flex items-center gap-3 p-3 rounded-[10px] bg-white border border-[#EBEBEF] text-left hover:border-[#D0D0D8] transition-colors"
                   >
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: stage?.color ?? "#8B8FA3" }}
+                    <StageIcon
+                      stageName={stage?.name ?? "default"}
+                      className="w-4 h-4 shrink-0"
+                      color={stage?.color ?? "#8B8FA3"}
                     />
                     <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                       <span className="text-sm font-medium text-[#1A1A2E] truncate">

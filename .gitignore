@@ -43,3 +43,5 @@ pnpm-debug.log*
 
 # Internal documentation
 documentation/internal/
+
+apps/web/public/Reference/

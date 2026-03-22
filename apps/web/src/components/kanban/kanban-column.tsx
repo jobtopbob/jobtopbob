@@ -4,6 +4,7 @@ import { useDroppable } from "@dnd-kit/react";
 import type { Job } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
 import { JobCard } from "./job-card";
+import { StageIcon } from "./stage-icons";
 
 export const STAGE_DOT_COLORS: Record<string, string> = {
   saved: "#7B8494",
@@ -45,10 +46,7 @@ export function KanbanColumn({ stage, jobs, onJobClick }: KanbanColumnProps) {
     >
       {/* Header */}
       <div className="flex items-center gap-2 h-10 px-3 shrink-0">
-        <div
-          className="w-2 h-2 rounded-full shrink-0"
-          style={{ backgroundColor: dotColor }}
-        />
+        <StageIcon stageName={stage.name} className="w-5 h-5 shrink-0" color={dotColor} />
         <span className="text-[13px] font-semibold text-[#1A1A2E] flex-1 truncate">
           {stage.name}
         </span>

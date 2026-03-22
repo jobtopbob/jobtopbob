@@ -40,12 +40,12 @@ func ListJobs() gin.HandlerFunc {
 			params.TagIDs = parseUUIDs(s)
 		}
 		if s := c.Query("created_after"); s != "" {
-			if t, err := time.Parse(time.RFC3339, s); err == nil {
+			if t, err := parseFlexibleTime(s, false); err == nil {
 				params.CreatedAfter = pgtype.Timestamptz{Time: t, Valid: true}
 			}
 		}
 		if s := c.Query("created_before"); s != "" {
-			if t, err := time.Parse(time.RFC3339, s); err == nil {
+			if t, err := parseFlexibleTime(s, true); err == nil {
 				params.CreatedBefore = pgtype.Timestamptz{Time: t, Valid: true}
 			}
 		}
