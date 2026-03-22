@@ -17,7 +17,7 @@ func ListResumes(rxClient *rxresume.Client) gin.HandlerFunc {
 		q := db.New(getTx(c))
 		userID := getUserID(c)
 
-		resumes, err := services.ListResumes(c.Request.Context(), q, userID)
+		resumes, err := services.ListResumes(c.Request.Context(), q, userID, rxClient)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list resumes"})
 			return
@@ -70,7 +70,7 @@ func GetResume(rxClient *rxresume.Client) gin.HandlerFunc {
 		q := db.New(getTx(c))
 		userID := getUserID(c)
 
-		resume, err := services.GetResume(c.Request.Context(), q, userID, id)
+		resume, err := services.GetResume(c.Request.Context(), q, userID, rxClient, id)
 		if errors.Is(err, services.ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "resume not found"})
 			return
@@ -170,6 +170,22 @@ func ExportResumePDF(rxClient *rxresume.Client) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"url": url})
+	}
+}
+
+// SyncResumes handles POST /api/v1/resumes/sync
+func SyncResumes(rxClient *rxresume.Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		q := db.New(getTx(c))
+		userID := getUserID(c)
+
+		resumes, err := services.SyncResumes(c.Request.Context(), q, userID, rxClient)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to sync resumes"})
+			return
+		}
+
+		c.JSON(http.StatusOK, resumes)
 	}
 }
 

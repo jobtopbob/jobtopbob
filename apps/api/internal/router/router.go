@@ -53,14 +53,18 @@ func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxr
 		// Stats
 		v1.GET("/stats", handlers.GetStats())
 
-		// Resumes
-		v1.GET("/resumes", handlers.ListResumes(rxClient))
-		v1.POST("/resumes", handlers.CreateResume(rxClient))
-		v1.GET("/resumes/:id", handlers.GetResume(rxClient))
-		v1.PUT("/resumes/:id", handlers.UpdateResume(rxClient))
-		v1.DELETE("/resumes/:id", handlers.DeleteResume(rxClient))
-		v1.GET("/resumes/:id/pdf", handlers.ExportResumePDF(rxClient))
-		v1.PUT("/resumes/:id/base", handlers.SetBaseResume())
+		// Resumes — sync must be registered before :id wildcard routes
+		resumes := v1.Group("/resumes")
+		{
+			resumes.GET("", handlers.ListResumes(rxClient))
+			resumes.POST("", handlers.CreateResume(rxClient))
+			resumes.POST("/sync", handlers.SyncResumes(rxClient))
+			resumes.GET("/:id", handlers.GetResume(rxClient))
+			resumes.PUT("/:id", handlers.UpdateResume(rxClient))
+			resumes.DELETE("/:id", handlers.DeleteResume(rxClient))
+			resumes.GET("/:id/pdf", handlers.ExportResumePDF(rxClient))
+			resumes.PUT("/:id/base", handlers.SetBaseResume())
+		}
 	}
 
 	return r

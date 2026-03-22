@@ -911,6 +911,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/resumes/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Force sync all resumes from RxResume */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Synced resume list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Resume"][];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/resumes/{id}": {
         parameters: {
             query?: never;
@@ -1325,6 +1361,26 @@ export interface components {
             name: string;
             rxresume_id?: string | null;
             is_base?: boolean;
+            template?: string | null;
+            headline?: string | null;
+            full_name?: string | null;
+            email?: string | null;
+            picture_url?: string | null;
+            latest_role?: string | null;
+            primary_color?: string | null;
+            /** Format: int32 */
+            experience_count: number;
+            /** Format: int32 */
+            education_count: number;
+            /** Format: int32 */
+            skills_count: number;
+            /** Format: int32 */
+            projects_count: number;
+            /** Format: int32 */
+            certs_count: number;
+            top_skills?: string[] | null;
+            /** Format: date-time */
+            synced_at?: string | null;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */

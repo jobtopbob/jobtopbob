@@ -1,33 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useResumes,
   useExportResumePDF,
   useSetBaseResume,
-  useCreateResume,
+  useSyncResumes,
   type Resume,
 } from "@/hooks/use-resumes";
 import { ResumeGrid } from "@/components/resumes/resume-grid";
-import { CreateResumeDialog } from "@/components/resumes/create-resume-dialog";
 import { DeleteResumeDialog } from "@/components/resumes/delete-resume-dialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const BUILDER_URL =
   process.env.NEXT_PUBLIC_RESUME_BUILDER_URL ?? "http://localhost:3010";
 
 export default function ResumesPage() {
+  const queryClient = useQueryClient();
   const { data: resumes, isLoading } = useResumes();
-  const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Resume | null>(null);
 
   const exportPDF = useExportResumePDF();
   const setBase = useSetBaseResume();
-  const createResume = useCreateResume();
+  const syncResumes = useSyncResumes();
 
   const baseResume = resumes?.find((r) => r.is_base);
+
+  // Auto-refresh when user returns to this tab (e.g., after editing in RxResume)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        queryClient.invalidateQueries({ queryKey: ["resumes"] });
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, [queryClient]);
+
+  const openBuilder = () => {
+    window.open(BUILDER_URL, "_blank");
+  };
 
   const handleEdit = (resume: Resume) => {
     const url = resume.rxresume_id
@@ -37,13 +54,12 @@ export default function ResumesPage() {
   };
 
   const handleDuplicate = (resume: Resume) => {
-    createResume.mutate(
-      { name: `${resume.name} (copy)` },
-      {
-        onSuccess: () => toast.success("Resume duplicated"),
-        onError: () => toast.error("Failed to duplicate resume"),
-      }
-    );
+    // Duplicate opens the builder — user can duplicate from within RxResume
+    if (resume.rxresume_id) {
+      window.open(`${BUILDER_URL}/builder/${resume.rxresume_id}`, "_blank");
+    } else {
+      window.open(BUILDER_URL, "_blank");
+    }
   };
 
   const handleExportPDF = (resume: Resume) => {
@@ -63,6 +79,13 @@ export default function ResumesPage() {
     });
   };
 
+  const handleSync = () => {
+    syncResumes.mutate(undefined, {
+      onSuccess: () => toast.success("Resumes synced"),
+      onError: () => toast.error("Failed to sync resumes"),
+    });
+  };
+
   return (
     <div className="flex h-full bg-background">
       <div className="flex-1 flex flex-col gap-6 p-7 pt-7 overflow-y-auto">
@@ -79,10 +102,26 @@ export default function ResumesPage() {
               Manage and tailor your resumes for different job applications.
             </p>
           </div>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="w-4 h-4 mr-1.5" />
-            Create Resume
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleSync}
+              disabled={syncResumes.isPending}
+              title="Sync from Resume Builder"
+            >
+              <RefreshCw
+                className={cn(
+                  "w-4 h-4",
+                  syncResumes.isPending && "animate-spin"
+                )}
+              />
+            </Button>
+            <Button onClick={openBuilder} className="gap-1.5">
+              <ExternalLink className="w-4 h-4" />
+              Open Builder
+            </Button>
+          </div>
         </div>
 
         {/* Stats bar */}
@@ -109,7 +148,7 @@ export default function ResumesPage() {
         <ResumeGrid
           resumes={resumes ?? []}
           isLoading={isLoading}
-          onCreateClick={() => setCreateOpen(true)}
+          onCreateClick={openBuilder}
           onEdit={handleEdit}
           onDuplicate={handleDuplicate}
           onExportPDF={handleExportPDF}
@@ -118,7 +157,6 @@ export default function ResumesPage() {
         />
 
         {/* Dialogs */}
-        <CreateResumeDialog open={createOpen} onOpenChange={setCreateOpen} />
         <DeleteResumeDialog
           open={!!deleteTarget}
           onOpenChange={(open) => !open && setDeleteTarget(null)}

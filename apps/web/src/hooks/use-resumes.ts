@@ -114,6 +114,21 @@ export function useExportResumePDF() {
   });
 }
 
+export function useSyncResumes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await api.POST("/api/v1/resumes/sync");
+      if (error) throw new Error(getErrorMessage(error));
+      return data as Resume[];
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(resumeKeys.all, data);
+    },
+  });
+}
+
 export function useSetBaseResume() {
   const queryClient = useQueryClient();
 

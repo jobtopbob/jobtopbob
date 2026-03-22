@@ -182,13 +182,27 @@ type Offer struct {
 }
 
 type Resume struct {
-	ID         pgtype.UUID        `json:"id"`
-	UserID     string             `json:"user_id"`
-	Name       string             `json:"name"`
-	RxresumeID pgtype.Text        `json:"rxresume_id"`
-	IsBase     pgtype.Bool        `json:"is_base"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID              pgtype.UUID        `json:"id"`
+	UserID          string             `json:"user_id"`
+	Name            string             `json:"name"`
+	RxresumeID      pgtype.Text        `json:"rxresume_id"`
+	IsBase          pgtype.Bool        `json:"is_base"`
+	Template        pgtype.Text        `json:"template"`
+	Headline        pgtype.Text        `json:"headline"`
+	FullName        pgtype.Text        `json:"full_name"`
+	Email           pgtype.Text        `json:"email"`
+	PictureUrl      pgtype.Text        `json:"picture_url"`
+	LatestRole      pgtype.Text        `json:"latest_role"`
+	PrimaryColor    pgtype.Text        `json:"primary_color"`
+	ExperienceCount int32              `json:"experience_count"`
+	EducationCount  int32              `json:"education_count"`
+	SkillsCount     int32              `json:"skills_count"`
+	ProjectsCount   int32              `json:"projects_count"`
+	CertsCount      int32              `json:"certs_count"`
+	TopSkills       []string           `json:"top_skills"`
+	SyncedAt        pgtype.Timestamptz `json:"synced_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 type ResumeVersion struct {

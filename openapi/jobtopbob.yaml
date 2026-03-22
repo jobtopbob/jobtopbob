@@ -449,7 +449,7 @@ components:
 
     Resume:
       type: object
-      required: [id, name, created_at, updated_at]
+      required: [id, name, experience_count, education_count, skills_count, projects_count, certs_count, created_at, updated_at]
       properties:
         id:
           type: string
@@ -461,6 +461,51 @@ components:
           nullable: true
         is_base:
           type: boolean
+        template:
+          type: string
+          nullable: true
+        headline:
+          type: string
+          nullable: true
+        full_name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        picture_url:
+          type: string
+          nullable: true
+        latest_role:
+          type: string
+          nullable: true
+        primary_color:
+          type: string
+          nullable: true
+        experience_count:
+          type: integer
+          format: int32
+        education_count:
+          type: integer
+          format: int32
+        skills_count:
+          type: integer
+          format: int32
+        projects_count:
+          type: integer
+          format: int32
+        certs_count:
+          type: integer
+          format: int32
+        top_skills:
+          type: array
+          items:
+            type: string
+          nullable: true
+        synced_at:
+          type: string
+          format: date-time
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -1031,6 +1076,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/resumes/sync:
+    post:
+      summary: Force sync all resumes from RxResume
+      responses:
+        "200":
+          description: Synced resume list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Resume"
 
   /api/v1/resumes/{id}:
     get:

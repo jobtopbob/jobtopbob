@@ -22,6 +22,36 @@ func (q *Queries) ClearBaseResume(ctx context.Context, userID string) error {
 	return err
 }
 
+const clearResumeSync = `-- name: ClearResumeSync :exec
+UPDATE resumes
+SET rxresume_id      = NULL,
+    template         = NULL,
+    headline         = NULL,
+    full_name        = NULL,
+    email            = NULL,
+    picture_url      = NULL,
+    latest_role      = NULL,
+    primary_color    = NULL,
+    experience_count = 0,
+    education_count  = 0,
+    skills_count     = 0,
+    projects_count   = 0,
+    certs_count      = 0,
+    top_skills       = NULL,
+    synced_at        = NULL
+WHERE id = $1 AND user_id = $2
+`
+
+type ClearResumeSyncParams struct {
+	ID     pgtype.UUID `json:"id"`
+	UserID string      `json:"user_id"`
+}
+
+func (q *Queries) ClearResumeSync(ctx context.Context, arg ClearResumeSyncParams) error {
+	_, err := q.db.Exec(ctx, clearResumeSync, arg.ID, arg.UserID)
+	return err
+}
+
 const countResumes = `-- name: CountResumes :one
 SELECT count(*) FROM resumes
 WHERE user_id = $1
@@ -35,9 +65,9 @@ func (q *Queries) CountResumes(ctx context.Context, userID string) (int64, error
 }
 
 const createResume = `-- name: CreateResume :one
-INSERT INTO resumes (user_id, name, rxresume_id, is_base)
-VALUES ($1, $2, $3, $4)
-RETURNING id, user_id, name, rxresume_id, is_base, created_at, updated_at
+INSERT INTO resumes (user_id, name, rxresume_id, is_base, template)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, user_id, name, rxresume_id, is_base, template, headline, full_name, email, picture_url, latest_role, primary_color, experience_count, education_count, skills_count, projects_count, certs_count, top_skills, synced_at, created_at, updated_at
 `
 
 type CreateResumeParams struct {
@@ -45,6 +75,7 @@ type CreateResumeParams struct {
 	Name       string      `json:"name"`
 	RxresumeID pgtype.Text `json:"rxresume_id"`
 	IsBase     pgtype.Bool `json:"is_base"`
+	Template   pgtype.Text `json:"template"`
 }
 
 func (q *Queries) CreateResume(ctx context.Context, arg CreateResumeParams) (Resume, error) {
@@ -53,6 +84,7 @@ func (q *Queries) CreateResume(ctx context.Context, arg CreateResumeParams) (Res
 		arg.Name,
 		arg.RxresumeID,
 		arg.IsBase,
+		arg.Template,
 	)
 	var i Resume
 	err := row.Scan(
@@ -61,6 +93,20 @@ func (q *Queries) CreateResume(ctx context.Context, arg CreateResumeParams) (Res
 		&i.Name,
 		&i.RxresumeID,
 		&i.IsBase,
+		&i.Template,
+		&i.Headline,
+		&i.FullName,
+		&i.Email,
+		&i.PictureUrl,
+		&i.LatestRole,
+		&i.PrimaryColor,
+		&i.ExperienceCount,
+		&i.EducationCount,
+		&i.SkillsCount,
+		&i.ProjectsCount,
+		&i.CertsCount,
+		&i.TopSkills,
+		&i.SyncedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -86,7 +132,7 @@ func (q *Queries) DeleteResume(ctx context.Context, arg DeleteResumeParams) (int
 }
 
 const getBaseResume = `-- name: GetBaseResume :one
-SELECT id, user_id, name, rxresume_id, is_base, created_at, updated_at FROM resumes
+SELECT id, user_id, name, rxresume_id, is_base, template, headline, full_name, email, picture_url, latest_role, primary_color, experience_count, education_count, skills_count, projects_count, certs_count, top_skills, synced_at, created_at, updated_at FROM resumes
 WHERE user_id = $1 AND is_base = true
 LIMIT 1
 `
@@ -100,6 +146,20 @@ func (q *Queries) GetBaseResume(ctx context.Context, userID string) (Resume, err
 		&i.Name,
 		&i.RxresumeID,
 		&i.IsBase,
+		&i.Template,
+		&i.Headline,
+		&i.FullName,
+		&i.Email,
+		&i.PictureUrl,
+		&i.LatestRole,
+		&i.PrimaryColor,
+		&i.ExperienceCount,
+		&i.EducationCount,
+		&i.SkillsCount,
+		&i.ProjectsCount,
+		&i.CertsCount,
+		&i.TopSkills,
+		&i.SyncedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -107,7 +167,7 @@ func (q *Queries) GetBaseResume(ctx context.Context, userID string) (Resume, err
 }
 
 const getResume = `-- name: GetResume :one
-SELECT id, user_id, name, rxresume_id, is_base, created_at, updated_at FROM resumes
+SELECT id, user_id, name, rxresume_id, is_base, template, headline, full_name, email, picture_url, latest_role, primary_color, experience_count, education_count, skills_count, projects_count, certs_count, top_skills, synced_at, created_at, updated_at FROM resumes
 WHERE id = $1 AND user_id = $2
 `
 
@@ -125,6 +185,20 @@ func (q *Queries) GetResume(ctx context.Context, arg GetResumeParams) (Resume, e
 		&i.Name,
 		&i.RxresumeID,
 		&i.IsBase,
+		&i.Template,
+		&i.Headline,
+		&i.FullName,
+		&i.Email,
+		&i.PictureUrl,
+		&i.LatestRole,
+		&i.PrimaryColor,
+		&i.ExperienceCount,
+		&i.EducationCount,
+		&i.SkillsCount,
+		&i.ProjectsCount,
+		&i.CertsCount,
+		&i.TopSkills,
+		&i.SyncedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -132,7 +206,7 @@ func (q *Queries) GetResume(ctx context.Context, arg GetResumeParams) (Resume, e
 }
 
 const listResumes = `-- name: ListResumes :many
-SELECT id, user_id, name, rxresume_id, is_base, created_at, updated_at FROM resumes
+SELECT id, user_id, name, rxresume_id, is_base, template, headline, full_name, email, picture_url, latest_role, primary_color, experience_count, education_count, skills_count, projects_count, certs_count, top_skills, synced_at, created_at, updated_at FROM resumes
 WHERE user_id = $1
 ORDER BY updated_at DESC
 `
@@ -152,6 +226,70 @@ func (q *Queries) ListResumes(ctx context.Context, userID string) ([]Resume, err
 			&i.Name,
 			&i.RxresumeID,
 			&i.IsBase,
+			&i.Template,
+			&i.Headline,
+			&i.FullName,
+			&i.Email,
+			&i.PictureUrl,
+			&i.LatestRole,
+			&i.PrimaryColor,
+			&i.ExperienceCount,
+			&i.EducationCount,
+			&i.SkillsCount,
+			&i.ProjectsCount,
+			&i.CertsCount,
+			&i.TopSkills,
+			&i.SyncedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStaleResumes = `-- name: ListStaleResumes :many
+SELECT id, user_id, name, rxresume_id, is_base, template, headline, full_name, email, picture_url, latest_role, primary_color, experience_count, education_count, skills_count, projects_count, certs_count, top_skills, synced_at, created_at, updated_at FROM resumes
+WHERE user_id = $1
+  AND rxresume_id IS NOT NULL
+  AND (synced_at IS NULL OR synced_at < now() - interval '5 minutes')
+ORDER BY updated_at DESC
+`
+
+func (q *Queries) ListStaleResumes(ctx context.Context, userID string) ([]Resume, error) {
+	rows, err := q.db.Query(ctx, listStaleResumes, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Resume{}
+	for rows.Next() {
+		var i Resume
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.RxresumeID,
+			&i.IsBase,
+			&i.Template,
+			&i.Headline,
+			&i.FullName,
+			&i.Email,
+			&i.PictureUrl,
+			&i.LatestRole,
+			&i.PrimaryColor,
+			&i.ExperienceCount,
+			&i.EducationCount,
+			&i.SkillsCount,
+			&i.ProjectsCount,
+			&i.CertsCount,
+			&i.TopSkills,
+			&i.SyncedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -171,7 +309,7 @@ SET name        = COALESCE($3, name),
     is_base     = COALESCE($4, is_base),
     rxresume_id = COALESCE($5, rxresume_id)
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, name, rxresume_id, is_base, created_at, updated_at
+RETURNING id, user_id, name, rxresume_id, is_base, template, headline, full_name, email, picture_url, latest_role, primary_color, experience_count, education_count, skills_count, projects_count, certs_count, top_skills, synced_at, created_at, updated_at
 `
 
 type UpdateResumeParams struct {
@@ -197,8 +335,80 @@ func (q *Queries) UpdateResume(ctx context.Context, arg UpdateResumeParams) (Res
 		&i.Name,
 		&i.RxresumeID,
 		&i.IsBase,
+		&i.Template,
+		&i.Headline,
+		&i.FullName,
+		&i.Email,
+		&i.PictureUrl,
+		&i.LatestRole,
+		&i.PrimaryColor,
+		&i.ExperienceCount,
+		&i.EducationCount,
+		&i.SkillsCount,
+		&i.ProjectsCount,
+		&i.CertsCount,
+		&i.TopSkills,
+		&i.SyncedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateResumeSnapshot = `-- name: UpdateResumeSnapshot :exec
+UPDATE resumes
+SET template         = $3,
+    headline         = $4,
+    full_name        = $5,
+    email            = $6,
+    picture_url      = $7,
+    latest_role      = $8,
+    primary_color    = $9,
+    experience_count = $10,
+    education_count  = $11,
+    skills_count     = $12,
+    projects_count   = $13,
+    certs_count      = $14,
+    top_skills       = $15,
+    synced_at        = now()
+WHERE id = $1 AND user_id = $2
+`
+
+type UpdateResumeSnapshotParams struct {
+	ID              pgtype.UUID `json:"id"`
+	UserID          string      `json:"user_id"`
+	Template        pgtype.Text `json:"template"`
+	Headline        pgtype.Text `json:"headline"`
+	FullName        pgtype.Text `json:"full_name"`
+	Email           pgtype.Text `json:"email"`
+	PictureUrl      pgtype.Text `json:"picture_url"`
+	LatestRole      pgtype.Text `json:"latest_role"`
+	PrimaryColor    pgtype.Text `json:"primary_color"`
+	ExperienceCount int32       `json:"experience_count"`
+	EducationCount  int32       `json:"education_count"`
+	SkillsCount     int32       `json:"skills_count"`
+	ProjectsCount   int32       `json:"projects_count"`
+	CertsCount      int32       `json:"certs_count"`
+	TopSkills       []string    `json:"top_skills"`
+}
+
+func (q *Queries) UpdateResumeSnapshot(ctx context.Context, arg UpdateResumeSnapshotParams) error {
+	_, err := q.db.Exec(ctx, updateResumeSnapshot,
+		arg.ID,
+		arg.UserID,
+		arg.Template,
+		arg.Headline,
+		arg.FullName,
+		arg.Email,
+		arg.PictureUrl,
+		arg.LatestRole,
+		arg.PrimaryColor,
+		arg.ExperienceCount,
+		arg.EducationCount,
+		arg.SkillsCount,
+		arg.ProjectsCount,
+		arg.CertsCount,
+		arg.TopSkills,
+	)
+	return err
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Plus } from "lucide-react";
+import { FileText, Plus, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResumeCard } from "./resume-card";
 import { ResumeCardSkeleton } from "./resume-card-skeleton";
@@ -47,12 +47,12 @@ export function ResumeGrid({
           No resumes yet
         </h3>
         <p className="text-sm text-text-muted mt-1 mb-6 max-w-sm">
-          Create your first resume to start tailoring applications and tracking
-          which version gets the best results.
+          Create your first resume in the Resume Builder. Once created, it will
+          appear here automatically when you sync.
         </p>
-        <Button onClick={onCreateClick}>
-          <Plus className="w-4 h-4 mr-1.5" />
-          Create Resume
+        <Button onClick={onCreateClick} className="gap-1.5">
+          <ExternalLink className="w-4 h-4" />
+          Open Resume Builder
         </Button>
       </div>
     );
@@ -68,7 +68,7 @@ export function ResumeGrid({
         <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center">
           <Plus className="w-6 h-6" />
         </div>
-        <span className="text-sm font-medium">Create New Resume</span>
+        <span className="text-sm font-medium">Create in Builder</span>
       </button>
 
       {/* Resume cards */}

@@ -23,6 +23,11 @@ import {
   Star,
   Trash2,
   Pencil,
+  Briefcase,
+  GraduationCap,
+  Wrench,
+  FolderOpen,
+  Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Resume } from "@/hooks/use-resumes";
@@ -57,6 +62,14 @@ function formatRelativeTime(dateStr: string): string {
   return date.toLocaleDateString();
 }
 
+const SECTION_ICONS = [
+  { key: "experience_count", icon: Briefcase, label: "roles" },
+  { key: "education_count", icon: GraduationCap, label: "degrees" },
+  { key: "skills_count", icon: Wrench, label: "skills" },
+  { key: "projects_count", icon: FolderOpen, label: "projects" },
+  { key: "certs_count", icon: Award, label: "certs" },
+] as const;
+
 interface ResumeCardProps {
   resume: Resume;
   onEdit: () => void;
@@ -74,31 +87,100 @@ export function ResumeCard({
   onSetBase,
   onDelete,
 }: ResumeCardProps) {
+  const hasSyncedData = !!resume.synced_at;
+  const templateKey = resume.template ?? "onyx";
   const gradient =
-    TEMPLATE_GRADIENTS[resume.rxresume_id ? "onyx" : "onyx"] ??
-    "from-stone-400/25 to-stone-600/10";
+    TEMPLATE_GRADIENTS[templateKey] ?? "from-stone-400/25 to-stone-600/10";
 
   return (
     <div className="group rounded-xl border border-border-subtle bg-card overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
       {/* Thumbnail / Preview Area */}
       <div className="relative h-44 overflow-hidden">
         <div
-          className={cn(
-            "absolute inset-0 bg-gradient-to-br",
-            gradient
-          )}
+          className={cn("absolute inset-0 bg-gradient-to-br", gradient)}
+          style={
+            resume.primary_color
+              ? {
+                  borderBottom: `3px solid ${resume.primary_color}`,
+                }
+              : undefined
+          }
         />
 
-        {/* Document lines decoration */}
-        <div className="absolute inset-4 flex flex-col gap-2 opacity-30">
-          <div className="h-3 w-2/3 rounded-sm bg-text-primary/20" />
-          <div className="h-2 w-full rounded-sm bg-text-primary/10" />
-          <div className="h-2 w-full rounded-sm bg-text-primary/10" />
-          <div className="h-2 w-4/5 rounded-sm bg-text-primary/10" />
-          <div className="mt-2 h-2.5 w-1/2 rounded-sm bg-text-primary/15" />
-          <div className="h-2 w-full rounded-sm bg-text-primary/10" />
-          <div className="h-2 w-3/4 rounded-sm bg-text-primary/10" />
-        </div>
+        {hasSyncedData ? (
+          /* Synced content preview */
+          <div className="absolute inset-4 flex flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              {resume.picture_url && (
+                <img
+                  src={resume.picture_url}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover border border-white/20"
+                />
+              )}
+              <div className="min-w-0">
+                {resume.full_name && (
+                  <p className="text-[13px] font-semibold text-text-primary truncate">
+                    {resume.full_name}
+                  </p>
+                )}
+                {resume.headline && (
+                  <p className="text-[11px] text-text-muted truncate">
+                    {resume.headline}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {resume.latest_role && (
+              <p className="text-[11px] text-text-muted/80 truncate mt-1">
+                {resume.latest_role}
+              </p>
+            )}
+
+            {/* Section counts */}
+            <div className="flex flex-wrap gap-1.5 mt-auto">
+              {SECTION_ICONS.map(({ key, icon: Icon, label }) => {
+                const count = resume[key] as number;
+                if (!count) return null;
+                return (
+                  <span
+                    key={key}
+                    className="inline-flex items-center gap-1 rounded-md bg-background/60 backdrop-blur-sm px-1.5 py-0.5 text-[10px] text-text-muted"
+                  >
+                    <Icon className="w-3 h-3" />
+                    {count} {label}
+                  </span>
+                );
+              })}
+            </div>
+
+            {/* Top skills */}
+            {resume.top_skills && resume.top_skills.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {resume.top_skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="rounded-full bg-background/50 backdrop-blur-sm px-2 py-0.5 text-[10px] text-text-muted"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Fallback: document lines decoration */
+          <div className="absolute inset-4 flex flex-col gap-2 opacity-30">
+            <div className="h-3 w-2/3 rounded-sm bg-text-primary/20" />
+            <div className="h-2 w-full rounded-sm bg-text-primary/10" />
+            <div className="h-2 w-full rounded-sm bg-text-primary/10" />
+            <div className="h-2 w-4/5 rounded-sm bg-text-primary/10" />
+            <div className="mt-2 h-2.5 w-1/2 rounded-sm bg-text-primary/15" />
+            <div className="h-2 w-full rounded-sm bg-text-primary/10" />
+            <div className="h-2 w-3/4 rounded-sm bg-text-primary/10" />
+          </div>
+        )}
 
         {/* Hover overlay with quick actions */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
@@ -141,6 +223,11 @@ export function ResumeCard({
           {resume.is_base && (
             <Badge variant="default" className="text-[10px] shadow-sm">
               Base
+            </Badge>
+          )}
+          {resume.template && (
+            <Badge variant="secondary" className="text-[10px] shadow-sm capitalize">
+              {resume.template}
             </Badge>
           )}
         </div>
