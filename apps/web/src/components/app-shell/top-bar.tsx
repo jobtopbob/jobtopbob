@@ -21,7 +21,7 @@ export function TopBar({ userName }: TopBarProps) {
 
   const handleSignOut = async () => {
     await authClient.signOut();
-    router.push("/sign-in");
+    router.push("/login");
   };
 
   return (

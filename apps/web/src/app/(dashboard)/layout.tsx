@@ -13,7 +13,7 @@ export default async function DashboardLayout({
   });
 
   if (!session) {
-    redirect("/sign-in");
+    redirect("/login");
   }
 
   const userName = session.user.name || session.user.email || "User";

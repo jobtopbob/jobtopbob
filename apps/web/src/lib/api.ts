@@ -20,7 +20,7 @@ api.use({
     if (response.status === 401 && typeof window !== "undefined") {
       const session = await authClient.getSession();
       if (!session.data) {
-        window.location.href = "/sign-in";
+        window.location.href = "/login";
       }
     }
     return response;
