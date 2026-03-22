@@ -478,28 +478,31 @@ paths:
     get:
       summary: List jobs with filters and pagination
       parameters:
-        - name: status
+        - name: statuses
           in: query
+          description: Comma-separated list of statuses to filter by
           schema:
             type: string
-        - name: stage_id
+        - name: stage_ids
           in: query
+          description: Comma-separated list of stage UUIDs to filter by
           schema:
             type: string
-            format: uuid
-        - name: location_type
+        - name: location_types
           in: query
+          description: Comma-separated list of location types to filter by
           schema:
             type: string
-        - name: source
+        - name: sources
           in: query
+          description: Comma-separated list of sources to filter by
           schema:
             type: string
-        - name: tag_id
+        - name: tag_ids
           in: query
+          description: Comma-separated list of tag UUIDs to filter by
           schema:
             type: string
-            format: uuid
         - name: search
           in: query
           schema:
@@ -529,7 +532,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [created_at, updated_at, title]
+            enum: [created_at, updated_at, title, applied_at, salary_min]
             default: created_at
         - name: sort_order
           in: query

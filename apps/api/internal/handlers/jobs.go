@@ -23,21 +23,21 @@ func ListJobs() gin.HandlerFunc {
 		perPage, _ := strconv.Atoi(c.DefaultQuery("per_page", "25"))
 
 		params := services.ListJobsParams{
-			Status:       pgtextValid(c.Query("status")),
-			LocationType: pgtextValid(c.Query("location_type")),
-			Source:       pgtextValid(c.Query("source")),
-			Search:       pgtextValid(c.Query("search")),
-			SortBy:       c.DefaultQuery("sort_by", "created_at"),
-			SortOrder:    c.DefaultQuery("sort_order", "desc"),
-			Page:         int32(page),
-			PerPage:      int32(perPage),
+			Statuses:      splitCSV(c.Query("statuses")),
+			LocationTypes: splitCSV(c.Query("location_types")),
+			Sources:       splitCSV(c.Query("sources")),
+			Search:        pgtextValid(c.Query("search")),
+			SortBy:        c.DefaultQuery("sort_by", "created_at"),
+			SortOrder:     c.DefaultQuery("sort_order", "desc"),
+			Page:          int32(page),
+			PerPage:       int32(perPage),
 		}
 
-		if s := c.Query("stage_id"); s != "" {
-			params.StageID = parseUUID(s)
+		if s := c.Query("stage_ids"); s != "" {
+			params.StageIDs = parseUUIDs(s)
 		}
-		if s := c.Query("tag_id"); s != "" {
-			params.TagID = parseUUID(s)
+		if s := c.Query("tag_ids"); s != "" {
+			params.TagIDs = parseUUIDs(s)
 		}
 		if s := c.Query("created_after"); s != "" {
 			if t, err := time.Parse(time.RFC3339, s); err == nil {

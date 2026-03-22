@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, Suspense } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useStages } from "@/hooks/use-stages";
 import { useJobs, type Job } from "@/hooks/use-jobs";
+import { useTags } from "@/hooks/use-tags";
+import { useJobFilters } from "@/hooks/use-job-filters";
 import { Toolbar } from "./toolbar";
 import { BoardDndProvider } from "./board-dnd-provider";
 import { KanbanColumn } from "./kanban-column";
@@ -14,14 +16,32 @@ import { ApplicationsTable } from "./applications-table";
 import { ApplicationsCalendar } from "./applications-calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function KanbanBoard() {
+function KanbanBoardInner() {
   const { data: stages, isLoading: stagesLoading, error: stagesError } = useStages();
-  const { data: jobsData, isLoading: jobsLoading, error: jobsError } = useJobs();
+  const { data: tags } = useTags();
+  const {
+    filters,
+    setFilter,
+    applyFilters,
+    resetFilters,
+    activeFilterCount,
+  } = useJobFilters();
   const [addJobOpen, setAddJobOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [activeView, setActiveView] = useState<"kanban" | "table" | "calendar">(
     "kanban"
   );
+
+  // View-specific filter overrides
+  const viewFilters = useMemo(() => {
+    if (activeView === "table") {
+      return { ...filters, perPage: 25 };
+    }
+    // Kanban and calendar load all filtered jobs
+    return { ...filters, perPage: 500, page: 1 };
+  }, [filters, activeView]);
+
+  const { data: jobsData, isLoading: jobsLoading, error: jobsError } = useJobs(viewFilters);
 
   const jobsByStage = useMemo(() => {
     const map = new Map<string, Job[]>();
@@ -48,6 +68,26 @@ export function KanbanBoard() {
     queryClient.invalidateQueries({ queryKey: ["jobs"] });
   }, [queryClient]);
 
+  const handleSearchChange = useCallback(
+    (search: string) => setFilter("search", search),
+    [setFilter]
+  );
+
+  const handleSortByChange = useCallback(
+    (sortBy: string) => setFilter("sortBy", sortBy),
+    [setFilter]
+  );
+
+  const handleSortOrderChange = useCallback(
+    (sortOrder: string) => setFilter("sortOrder", sortOrder),
+    [setFilter]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => setFilter("page", page),
+    [setFilter]
+  );
+
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Page Header */}
@@ -65,9 +105,18 @@ export function KanbanBoard() {
         activeView={activeView}
         onViewChange={setActiveView}
         onAddJob={() => setAddJobOpen(true)}
+        filters={filters}
+        activeFilterCount={activeFilterCount}
+        onApplyFilters={applyFilters}
+        onResetFilters={resetFilters}
+        onSearchChange={handleSearchChange}
+        onSortByChange={handleSortByChange}
+        onSortOrderChange={handleSortOrderChange}
+        stages={stages}
+        tags={tags}
       />
 
-      {/* Kanban Columns */}
+      {/* Content */}
       <div className="flex-1 overflow-hidden px-4 lg:px-7 pb-4 pt-4">
         {isLoading ? (
           <div className="flex gap-4 h-full">
@@ -108,6 +157,10 @@ export function KanbanBoard() {
             jobs={jobsData?.data ?? []}
             stages={stages!}
             onJobClick={setSelectedJob}
+            page={filters.page}
+            perPage={filters.perPage}
+            total={jobsData?.total ?? 0}
+            onPageChange={handlePageChange}
           />
         ) : activeView === "calendar" ? (
           <ApplicationsCalendar
@@ -155,5 +208,29 @@ export function KanbanBoard() {
         stages={stages ?? []}
       />
     </div>
+  );
+}
+
+export function KanbanBoard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col h-full bg-white">
+          <div className="px-4 lg:px-7 pt-5">
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-4 w-64 mt-2" />
+          </div>
+          <div className="flex-1 px-4 lg:px-7 pt-8">
+            <div className="flex gap-4 h-full">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="flex-1 rounded-xl h-full" />
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <KanbanBoardInner />
+    </Suspense>
   );
 }

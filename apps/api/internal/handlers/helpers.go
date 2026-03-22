@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -44,4 +45,42 @@ func pgtextValid(s string) pgtype.Text {
 		return pgtype.Text{}
 	}
 	return pgtype.Text{String: s, Valid: true}
+}
+
+// splitCSV splits a comma-separated string into a slice. Returns nil for empty input.
+func splitCSV(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
+// parseUUIDs parses a comma-separated string of UUIDs into a slice.
+func parseUUIDs(s string) []pgtype.UUID {
+	parts := splitCSV(s)
+	if parts == nil {
+		return nil
+	}
+	uuids := make([]pgtype.UUID, 0, len(parts))
+	for _, p := range parts {
+		u := parseUUID(p)
+		if u.Valid {
+			uuids = append(uuids, u)
+		}
+	}
+	if len(uuids) == 0 {
+		return nil
+	}
+	return uuids
 }

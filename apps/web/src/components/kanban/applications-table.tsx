@@ -12,11 +12,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { Job } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
 import { formatSalary } from "./job-card";
+import { PaginationControls } from "./pagination-controls";
 
 interface ApplicationsTableProps {
   jobs: Job[];
   stages: Stage[];
   onJobClick: (job: Job) => void;
+  page?: number;
+  perPage?: number;
+  total?: number;
+  onPageChange?: (page: number) => void;
 }
 
 function getStagePillStyle(stage: Stage | undefined): {
@@ -83,6 +88,10 @@ export function ApplicationsTable({
   jobs,
   stages,
   onJobClick,
+  page = 1,
+  perPage = 25,
+  total = 0,
+  onPageChange,
 }: ApplicationsTableProps) {
   const stageMap = new Map(stages.map((s) => [s.id, s]));
 
@@ -240,6 +249,14 @@ export function ApplicationsTable({
           })}
         </TableBody>
       </Table>
+      {onPageChange && total > 0 && (
+        <PaginationControls
+          page={page}
+          perPage={perPage}
+          total={total}
+          onPageChange={onPageChange}
+        />
+      )}
     </div>
   );
 }

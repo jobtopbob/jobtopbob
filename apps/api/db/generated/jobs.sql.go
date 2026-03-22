@@ -69,10 +69,10 @@ const countJobs = `-- name: CountJobs :one
 SELECT count(*) FROM jobs j
 LEFT JOIN companies c ON c.id = j.company_id
 WHERE j.user_id = $1
-  AND ($2::text IS NULL OR j.status = $2)
-  AND ($3::uuid IS NULL OR j.stage_id = $3)
-  AND ($4::text IS NULL OR j.location_type = $4)
-  AND ($5::text IS NULL OR j.source = $5)
+  AND ($2::text[] IS NULL OR j.status = ANY($2::text[]))
+  AND ($3::uuid[] IS NULL OR j.stage_id = ANY($3::uuid[]))
+  AND ($4::text[] IS NULL OR j.location_type = ANY($4::text[]))
+  AND ($5::text[] IS NULL OR j.source = ANY($5::text[]))
   AND ($6::text IS NULL OR (
       j.title ILIKE '%' || $6 || '%'
       OR c.name ILIKE '%' || $6 || '%'
@@ -80,35 +80,35 @@ WHERE j.user_id = $1
   ))
   AND ($7::timestamptz IS NULL OR j.created_at >= $7)
   AND ($8::timestamptz IS NULL OR j.created_at <= $8)
-  AND ($9::uuid IS NULL OR EXISTS (
+  AND ($9::uuid[] IS NULL OR EXISTS (
       SELECT 1 FROM taggings t
-      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = $9
+      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = ANY($9::uuid[])
   ))
 `
 
 type CountJobsParams struct {
 	UserID        string             `json:"user_id"`
-	Status        pgtype.Text        `json:"status"`
-	StageID       pgtype.UUID        `json:"stage_id"`
-	LocationType  pgtype.Text        `json:"location_type"`
-	Source        pgtype.Text        `json:"source"`
+	Statuses      []string           `json:"statuses"`
+	StageIds      []pgtype.UUID      `json:"stage_ids"`
+	LocationTypes []string           `json:"location_types"`
+	Sources       []string           `json:"sources"`
 	Search        pgtype.Text        `json:"search"`
 	CreatedAfter  pgtype.Timestamptz `json:"created_after"`
 	CreatedBefore pgtype.Timestamptz `json:"created_before"`
-	TagID         pgtype.UUID        `json:"tag_id"`
+	TagIds        []pgtype.UUID      `json:"tag_ids"`
 }
 
 func (q *Queries) CountJobs(ctx context.Context, arg CountJobsParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countJobs,
 		arg.UserID,
-		arg.Status,
-		arg.StageID,
-		arg.LocationType,
-		arg.Source,
+		arg.Statuses,
+		arg.StageIds,
+		arg.LocationTypes,
+		arg.Sources,
 		arg.Search,
 		arg.CreatedAfter,
 		arg.CreatedBefore,
-		arg.TagID,
+		arg.TagIds,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -331,10 +331,10 @@ FROM jobs j
 LEFT JOIN companies c ON c.id = j.company_id
 LEFT JOIN stages s ON s.id = j.stage_id
 WHERE j.user_id = $1
-  AND ($4::text IS NULL OR j.status = $4)
-  AND ($5::uuid IS NULL OR j.stage_id = $5)
-  AND ($6::text IS NULL OR j.location_type = $6)
-  AND ($7::text IS NULL OR j.source = $7)
+  AND ($4::text[] IS NULL OR j.status = ANY($4::text[]))
+  AND ($5::uuid[] IS NULL OR j.stage_id = ANY($5::uuid[]))
+  AND ($6::text[] IS NULL OR j.location_type = ANY($6::text[]))
+  AND ($7::text[] IS NULL OR j.source = ANY($7::text[]))
   AND ($8::text IS NULL OR (
       j.title ILIKE '%' || $8 || '%'
       OR c.name ILIKE '%' || $8 || '%'
@@ -342,15 +342,19 @@ WHERE j.user_id = $1
   ))
   AND ($9::timestamptz IS NULL OR j.created_at >= $9)
   AND ($10::timestamptz IS NULL OR j.created_at <= $10)
-  AND ($11::uuid IS NULL OR EXISTS (
+  AND ($11::uuid[] IS NULL OR EXISTS (
       SELECT 1 FROM taggings t
-      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = $11
+      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = ANY($11::uuid[])
   ))
 ORDER BY
   CASE WHEN $12::text = 'title' AND $13::text = 'asc' THEN j.title END ASC,
   CASE WHEN $12::text = 'title' AND $13::text = 'desc' THEN j.title END DESC,
   CASE WHEN $12::text = 'updated_at' AND $13::text = 'asc' THEN j.updated_at END ASC,
   CASE WHEN $12::text = 'updated_at' AND $13::text = 'desc' THEN j.updated_at END DESC,
+  CASE WHEN $12::text = 'applied_at' AND $13::text = 'asc' THEN j.applied_at END ASC NULLS LAST,
+  CASE WHEN $12::text = 'applied_at' AND $13::text = 'desc' THEN j.applied_at END DESC NULLS LAST,
+  CASE WHEN $12::text = 'salary_min' AND $13::text = 'asc' THEN j.salary_min END ASC NULLS LAST,
+  CASE WHEN $12::text = 'salary_min' AND $13::text = 'desc' THEN j.salary_min END DESC NULLS LAST,
   CASE WHEN $12::text = 'created_at' AND $13::text = 'asc' THEN j.created_at END ASC,
   j.created_at DESC
 LIMIT $2 OFFSET $3
@@ -360,14 +364,14 @@ type ListJobsParams struct {
 	UserID        string             `json:"user_id"`
 	Limit         int32              `json:"limit"`
 	Offset        int32              `json:"offset"`
-	Status        pgtype.Text        `json:"status"`
-	StageID       pgtype.UUID        `json:"stage_id"`
-	LocationType  pgtype.Text        `json:"location_type"`
-	Source        pgtype.Text        `json:"source"`
+	Statuses      []string           `json:"statuses"`
+	StageIds      []pgtype.UUID      `json:"stage_ids"`
+	LocationTypes []string           `json:"location_types"`
+	Sources       []string           `json:"sources"`
 	Search        pgtype.Text        `json:"search"`
 	CreatedAfter  pgtype.Timestamptz `json:"created_after"`
 	CreatedBefore pgtype.Timestamptz `json:"created_before"`
-	TagID         pgtype.UUID        `json:"tag_id"`
+	TagIds        []pgtype.UUID      `json:"tag_ids"`
 	SortBy        string             `json:"sort_by"`
 	SortOrder     string             `json:"sort_order"`
 }
@@ -408,14 +412,14 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]ListJobsR
 		arg.UserID,
 		arg.Limit,
 		arg.Offset,
-		arg.Status,
-		arg.StageID,
-		arg.LocationType,
-		arg.Source,
+		arg.Statuses,
+		arg.StageIds,
+		arg.LocationTypes,
+		arg.Sources,
 		arg.Search,
 		arg.CreatedAfter,
 		arg.CreatedBefore,
-		arg.TagID,
+		arg.TagIds,
 		arg.SortBy,
 		arg.SortOrder,
 	)

@@ -49,18 +49,23 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    status?: string;
-                    stage_id?: string;
-                    location_type?: string;
-                    source?: string;
-                    tag_id?: string;
+                    /** @description Comma-separated list of statuses to filter by */
+                    statuses?: string;
+                    /** @description Comma-separated list of stage UUIDs to filter by */
+                    stage_ids?: string;
+                    /** @description Comma-separated list of location types to filter by */
+                    location_types?: string;
+                    /** @description Comma-separated list of sources to filter by */
+                    sources?: string;
+                    /** @description Comma-separated list of tag UUIDs to filter by */
+                    tag_ids?: string;
                     /** @description Search in title, company name, location */
                     search?: string;
                     created_after?: string;
                     created_before?: string;
                     page?: number;
                     per_page?: number;
-                    sort_by?: "created_at" | "updated_at" | "title";
+                    sort_by?: "created_at" | "updated_at" | "title" | "applied_at" | "salary_min";
                     sort_order?: "asc" | "desc";
                 };
                 header?: never;

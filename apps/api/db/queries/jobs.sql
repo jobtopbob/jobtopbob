@@ -17,10 +17,10 @@ FROM jobs j
 LEFT JOIN companies c ON c.id = j.company_id
 LEFT JOIN stages s ON s.id = j.stage_id
 WHERE j.user_id = $1
-  AND (sqlc.narg('status')::text IS NULL OR j.status = sqlc.narg('status'))
-  AND (sqlc.narg('stage_id')::uuid IS NULL OR j.stage_id = sqlc.narg('stage_id'))
-  AND (sqlc.narg('location_type')::text IS NULL OR j.location_type = sqlc.narg('location_type'))
-  AND (sqlc.narg('source')::text IS NULL OR j.source = sqlc.narg('source'))
+  AND (sqlc.narg('statuses')::text[] IS NULL OR j.status = ANY(sqlc.narg('statuses')::text[]))
+  AND (sqlc.narg('stage_ids')::uuid[] IS NULL OR j.stage_id = ANY(sqlc.narg('stage_ids')::uuid[]))
+  AND (sqlc.narg('location_types')::text[] IS NULL OR j.location_type = ANY(sqlc.narg('location_types')::text[]))
+  AND (sqlc.narg('sources')::text[] IS NULL OR j.source = ANY(sqlc.narg('sources')::text[]))
   AND (sqlc.narg('search')::text IS NULL OR (
       j.title ILIKE '%' || sqlc.narg('search') || '%'
       OR c.name ILIKE '%' || sqlc.narg('search') || '%'
@@ -28,15 +28,19 @@ WHERE j.user_id = $1
   ))
   AND (sqlc.narg('created_after')::timestamptz IS NULL OR j.created_at >= sqlc.narg('created_after'))
   AND (sqlc.narg('created_before')::timestamptz IS NULL OR j.created_at <= sqlc.narg('created_before'))
-  AND (sqlc.narg('tag_id')::uuid IS NULL OR EXISTS (
+  AND (sqlc.narg('tag_ids')::uuid[] IS NULL OR EXISTS (
       SELECT 1 FROM taggings t
-      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = sqlc.narg('tag_id')
+      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = ANY(sqlc.narg('tag_ids')::uuid[])
   ))
 ORDER BY
   CASE WHEN @sort_by::text = 'title' AND @sort_order::text = 'asc' THEN j.title END ASC,
   CASE WHEN @sort_by::text = 'title' AND @sort_order::text = 'desc' THEN j.title END DESC,
   CASE WHEN @sort_by::text = 'updated_at' AND @sort_order::text = 'asc' THEN j.updated_at END ASC,
   CASE WHEN @sort_by::text = 'updated_at' AND @sort_order::text = 'desc' THEN j.updated_at END DESC,
+  CASE WHEN @sort_by::text = 'applied_at' AND @sort_order::text = 'asc' THEN j.applied_at END ASC NULLS LAST,
+  CASE WHEN @sort_by::text = 'applied_at' AND @sort_order::text = 'desc' THEN j.applied_at END DESC NULLS LAST,
+  CASE WHEN @sort_by::text = 'salary_min' AND @sort_order::text = 'asc' THEN j.salary_min END ASC NULLS LAST,
+  CASE WHEN @sort_by::text = 'salary_min' AND @sort_order::text = 'desc' THEN j.salary_min END DESC NULLS LAST,
   CASE WHEN @sort_by::text = 'created_at' AND @sort_order::text = 'asc' THEN j.created_at END ASC,
   j.created_at DESC
 LIMIT $2 OFFSET $3;
@@ -45,10 +49,10 @@ LIMIT $2 OFFSET $3;
 SELECT count(*) FROM jobs j
 LEFT JOIN companies c ON c.id = j.company_id
 WHERE j.user_id = $1
-  AND (sqlc.narg('status')::text IS NULL OR j.status = sqlc.narg('status'))
-  AND (sqlc.narg('stage_id')::uuid IS NULL OR j.stage_id = sqlc.narg('stage_id'))
-  AND (sqlc.narg('location_type')::text IS NULL OR j.location_type = sqlc.narg('location_type'))
-  AND (sqlc.narg('source')::text IS NULL OR j.source = sqlc.narg('source'))
+  AND (sqlc.narg('statuses')::text[] IS NULL OR j.status = ANY(sqlc.narg('statuses')::text[]))
+  AND (sqlc.narg('stage_ids')::uuid[] IS NULL OR j.stage_id = ANY(sqlc.narg('stage_ids')::uuid[]))
+  AND (sqlc.narg('location_types')::text[] IS NULL OR j.location_type = ANY(sqlc.narg('location_types')::text[]))
+  AND (sqlc.narg('sources')::text[] IS NULL OR j.source = ANY(sqlc.narg('sources')::text[]))
   AND (sqlc.narg('search')::text IS NULL OR (
       j.title ILIKE '%' || sqlc.narg('search') || '%'
       OR c.name ILIKE '%' || sqlc.narg('search') || '%'
@@ -56,9 +60,9 @@ WHERE j.user_id = $1
   ))
   AND (sqlc.narg('created_after')::timestamptz IS NULL OR j.created_at >= sqlc.narg('created_after'))
   AND (sqlc.narg('created_before')::timestamptz IS NULL OR j.created_at <= sqlc.narg('created_before'))
-  AND (sqlc.narg('tag_id')::uuid IS NULL OR EXISTS (
+  AND (sqlc.narg('tag_ids')::uuid[] IS NULL OR EXISTS (
       SELECT 1 FROM taggings t
-      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = sqlc.narg('tag_id')
+      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = ANY(sqlc.narg('tag_ids')::uuid[])
   ));
 
 -- name: CreateJob :one

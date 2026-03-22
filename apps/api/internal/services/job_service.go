@@ -24,14 +24,14 @@ func GetJob(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID) (
 
 // ListJobsParams holds all filter/pagination parameters for listing jobs.
 type ListJobsParams struct {
-	Status        pgtype.Text
-	StageID       pgtype.UUID
-	LocationType  pgtype.Text
-	Source        pgtype.Text
+	Statuses      []string
+	StageIDs      []pgtype.UUID
+	LocationTypes []string
+	Sources       []string
 	Search        pgtype.Text
 	CreatedAfter  pgtype.Timestamptz
 	CreatedBefore pgtype.Timestamptz
-	TagID         pgtype.UUID
+	TagIDs        []pgtype.UUID
 	SortBy        string
 	SortOrder     string
 	Page          int32
@@ -51,8 +51,10 @@ func ListJobs(ctx context.Context, q *db.Queries, userID string, p ListJobsParam
 	if p.Page < 1 {
 		p.Page = 1
 	}
-	if p.PerPage < 1 || p.PerPage > 100 {
+	if p.PerPage < 1 {
 		p.PerPage = 25
+	} else if p.PerPage > 500 {
+		p.PerPage = 500
 	}
 	if p.SortBy == "" {
 		p.SortBy = "created_at"
@@ -65,14 +67,14 @@ func ListJobs(ctx context.Context, q *db.Queries, userID string, p ListJobsParam
 
 	filterParams := db.CountJobsParams{
 		UserID:        userID,
-		Status:        p.Status,
-		StageID:       p.StageID,
-		LocationType:  p.LocationType,
-		Source:        p.Source,
+		Statuses:      p.Statuses,
+		StageIds:      p.StageIDs,
+		LocationTypes: p.LocationTypes,
+		Sources:       p.Sources,
 		Search:        p.Search,
 		CreatedAfter:  p.CreatedAfter,
 		CreatedBefore: p.CreatedBefore,
-		TagID:         p.TagID,
+		TagIds:        p.TagIDs,
 	}
 
 	total, err := q.CountJobs(ctx, filterParams)
@@ -84,14 +86,14 @@ func ListJobs(ctx context.Context, q *db.Queries, userID string, p ListJobsParam
 		UserID:        userID,
 		Limit:         p.PerPage,
 		Offset:        offset,
-		Status:        p.Status,
-		StageID:       p.StageID,
-		LocationType:  p.LocationType,
-		Source:        p.Source,
+		Statuses:      p.Statuses,
+		StageIds:      p.StageIDs,
+		LocationTypes: p.LocationTypes,
+		Sources:       p.Sources,
 		Search:        p.Search,
 		CreatedAfter:  p.CreatedAfter,
 		CreatedBefore: p.CreatedBefore,
-		TagID:         p.TagID,
+		TagIds:        p.TagIDs,
 		SortBy:        p.SortBy,
 		SortOrder:     p.SortOrder,
 	})
