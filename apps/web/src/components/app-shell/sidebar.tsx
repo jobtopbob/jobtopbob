@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 
 interface NavItem {
   label: string;
@@ -90,6 +91,11 @@ function TreeIndicator({ isLast }: { isLast: boolean }) {
 export function Sidebar() {
   const pathname = usePathname();
   const { collapsed, setCollapsed } = useSidebar();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
   const [expandedGroups, setExpandedGroups] = useState<
     Record<string, boolean>
   >({ "Job Tracking": true, Tools: true });
@@ -277,13 +283,29 @@ export function Sidebar() {
 
         {/* Theme Toggle */}
         <div className="flex rounded-full bg-sidebar-accent p-1">
-          <button className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full bg-sidebar-border shadow-sm">
-            <Sun className="w-4 h-4 text-sidebar-accent-foreground" />
-            <span className="text-sidebar-accent-foreground text-xs font-medium">Light</span>
+          <button
+            onClick={() => setTheme("light")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full",
+              mounted && resolvedTheme === "light"
+                ? "bg-sidebar-border shadow-sm"
+                : "bg-sidebar"
+            )}
+          >
+            <Sun className={cn("w-4 h-4", mounted && resolvedTheme === "light" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
+            <span className={cn("text-xs font-medium", mounted && resolvedTheme === "light" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Light</span>
           </button>
-          <button className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full bg-sidebar">
-            <Moon className="w-4 h-4 text-sidebar-foreground" />
-            <span className="text-sidebar-foreground text-xs font-medium">Dark</span>
+          <button
+            onClick={() => setTheme("dark")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full",
+              mounted && resolvedTheme === "dark"
+                ? "bg-sidebar-border shadow-sm"
+                : "bg-sidebar"
+            )}
+          >
+            <Moon className={cn("w-4 h-4", mounted && resolvedTheme === "dark" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
+            <span className={cn("text-xs font-medium", mounted && resolvedTheme === "dark" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Dark</span>
           </button>
         </div>
       </div>
