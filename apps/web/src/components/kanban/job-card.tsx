@@ -59,7 +59,7 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
     <div
       ref={ref}
       onClick={onClick}
-      className="flex flex-col gap-2 p-3 rounded-[10px] bg-white border border-[#EBEBEF] shadow-[0_1px_3px_rgba(0,0,0,0.04)] cursor-pointer hover:border-[#D0D0D8] transition-colors"
+      className="flex flex-col gap-2 p-3 rounded-[10px] bg-card border border-border-subtle shadow-[0_1px_3px_rgba(0,0,0,0.04)] cursor-pointer hover:border-border-dashed transition-colors"
       style={{ opacity: isDragging ? 0.5 : isClosedColumn ? 0.6 : 1 }}
     >
       {/* Company */}
@@ -71,19 +71,19 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
             className="w-4 h-4 rounded-sm object-contain"
           />
         )}
-        <span className="text-xs font-medium text-[#8B8FA3]">
+        <span className="text-xs font-medium text-text-muted">
           {job.company_name ?? "Unknown Company"}
         </span>
       </div>
 
       {/* Title */}
-      <span className="text-sm font-medium text-[#1A1A2E] leading-tight">
+      <span className="text-sm font-medium text-text-primary leading-tight">
         {job.title}
       </span>
 
       {/* Meta: location · salary */}
       {(job.location || salary) && (
-        <div className="flex items-center gap-1.5 text-[10px] text-[#8B8FA3]">
+        <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
           {job.location && <span>{job.location}</span>}
           {job.location && salary && <span>·</span>}
           {salary && <span>{salary}</span>}
@@ -96,13 +96,13 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
           {displayTags.map((tag) => (
             <span
               key={tag.id}
-              className="px-[7px] py-[2px] rounded-full bg-[#F5F5F7] text-[9px] text-[#8B8FA3]"
+              className="px-[7px] py-[2px] rounded-full bg-surface text-[9px] text-text-muted"
             >
               {tag.name}
             </span>
           ))}
           {tags.length > 3 && (
-            <span className="px-[7px] py-[2px] rounded-full bg-[#F5F5F7] text-[9px] text-[#8B8FA3]">
+            <span className="px-[7px] py-[2px] rounded-full bg-surface text-[9px] text-text-muted">
               +{tags.length - 3}
             </span>
           )}
@@ -111,8 +111,8 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
           <span
             className={
               date.isToday
-                ? "text-[9px] font-medium text-[#FF8400]"
-                : "text-[9px] text-[#8B8FA3]"
+                ? "text-[9px] font-medium text-brand"
+                : "text-[9px] text-text-muted"
             }
           >
             {date.text}

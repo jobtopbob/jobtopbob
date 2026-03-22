@@ -18,10 +18,10 @@ function StatCard({
   changeColor?: string;
 }) {
   return (
-    <div className="flex-1 flex flex-col gap-2 rounded-xl bg-white border border-[#EBEBEF] p-5">
-      <span className="text-[13px] font-medium text-[#8B8FA3]">{label}</span>
+    <div className="flex-1 flex flex-col gap-2 rounded-xl bg-card border border-border-subtle p-5">
+      <span className="text-[13px] font-medium text-text-muted">{label}</span>
       <div className="flex items-end gap-2">
-        <span className="text-[28px] font-bold leading-none text-[#1A1A2E]">
+        <span className="text-[28px] font-bold leading-none text-text-primary">
           {value}
         </span>
         {change && (

@@ -61,7 +61,7 @@ export function MobileJobList({
         return (
           <div
             key={stage.id}
-            className="rounded-xl bg-[#F5F5F7] border border-[#EBEBEF] overflow-hidden"
+            className="rounded-xl bg-surface border border-border-subtle overflow-hidden"
           >
             {/* Stage header */}
             <button
@@ -69,15 +69,15 @@ export function MobileJobList({
               className="flex items-center gap-2 w-full h-11 px-4 text-left"
             >
               <StageIcon stageName={stage.name} className="w-5 h-5 shrink-0" color={dotColor} />
-              <span className="text-sm font-semibold text-[#1A1A2E] flex-1">
+              <span className="text-sm font-semibold text-text-primary flex-1">
                 {stage.name}
               </span>
-              <span className="flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-white text-xs font-medium text-[#8B8FA3]">
+              <span className="flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-card text-xs font-medium text-text-muted">
                 {jobs.length}
               </span>
               <ChevronDown
                 className={cn(
-                  "w-4 h-4 text-[#8B8FA3] transition-transform",
+                  "w-4 h-4 text-text-muted transition-transform",
                   isExpanded && "rotate-180"
                 )}
               />
@@ -87,7 +87,7 @@ export function MobileJobList({
             {isExpanded && (
               <div className="px-2.5 pb-2.5 space-y-2">
                 {jobs.length === 0 ? (
-                  <p className="text-center text-xs text-[#8B8FA3] py-6">
+                  <p className="text-center text-xs text-text-muted py-6">
                     No jobs in this stage
                   </p>
                 ) : (
@@ -137,16 +137,16 @@ function MobileJobRow({ job, stages, onClick }: MobileJobRowProps) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-[10px] bg-white border border-[#EBEBEF] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <div className="flex items-center gap-3 p-3 rounded-[10px] bg-card border border-border-subtle shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       {/* Job info — tappable */}
       <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
-        <span className="text-xs font-medium text-[#8B8FA3] block truncate">
+        <span className="text-xs font-medium text-text-muted block truncate">
           {job.company_name ?? "Unknown Company"}
         </span>
-        <span className="text-sm font-medium text-[#1A1A2E] block truncate mt-0.5">
+        <span className="text-sm font-medium text-text-primary block truncate mt-0.5">
           {job.title}
         </span>
-        <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#8B8FA3]">
+        <div className="flex items-center gap-1.5 mt-1 text-[11px] text-text-muted">
           {job.location && <span className="truncate">{job.location}</span>}
           {job.location && salary && <span>·</span>}
           {salary && <span className="shrink-0">{salary}</span>}
@@ -156,7 +156,7 @@ function MobileJobRow({ job, stages, onClick }: MobileJobRowProps) {
               <span
                 className={cn(
                   "shrink-0",
-                  date.isToday && "text-[#FF8400] font-medium"
+                  date.isToday && "text-brand font-medium"
                 )}
               >
                 {date.text}

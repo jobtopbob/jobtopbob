@@ -89,13 +89,13 @@ function KanbanBoardInner() {
   );
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-background">
       {/* Page Header */}
       <div className="px-4 lg:px-7 pt-5">
-        <h1 className="text-2xl font-bold text-[#1A1A2E] tracking-tight">
+        <h1 className="text-2xl font-bold text-text-primary tracking-tight">
           Applications
         </h1>
-        <p className="text-[13px] text-[#8B8FA3] mt-1.5">
+        <p className="text-[13px] text-text-muted mt-1.5">
           Track and manage your job applications across stages.
         </p>
       </div>
@@ -127,15 +127,15 @@ function KanbanBoardInner() {
         ) : hasError ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <p className="text-sm text-[#1A1A2E] font-medium">
+              <p className="text-sm text-text-primary font-medium">
                 Unable to load your pipeline
               </p>
-              <p className="text-xs text-[#8B8FA3] mt-1">
+              <p className="text-xs text-text-muted mt-1">
                 Check that the API server is running and try again.
               </p>
               <button
                 onClick={handleRetry}
-                className="mt-4 px-4 py-2 rounded-full bg-[#FF8400] text-sm font-medium text-[#111111] hover:bg-[#FF8400]/90"
+                className="mt-4 px-4 py-2 rounded-full bg-brand text-sm font-medium text-background hover:bg-brand/90"
               >
                 Retry
               </button>
@@ -144,10 +144,10 @@ function KanbanBoardInner() {
         ) : (stages ?? []).length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <p className="text-sm text-[#1A1A2E] font-medium">
+              <p className="text-sm text-text-primary font-medium">
                 No stages found
               </p>
-              <p className="text-xs text-[#8B8FA3] mt-1">
+              <p className="text-xs text-text-muted mt-1">
                 Stages could not be loaded. Please refresh or contact support.
               </p>
             </div>
@@ -215,7 +215,7 @@ export function KanbanBoard() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col h-full bg-white">
+        <div className="flex flex-col h-full bg-background">
           <div className="px-4 lg:px-7 pt-5">
             <Skeleton className="h-8 w-40" />
             <Skeleton className="h-4 w-64 mt-2" />

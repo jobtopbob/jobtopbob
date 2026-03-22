@@ -78,7 +78,7 @@ function getStagePillStyle(stage: Stage | undefined): {
   text: string;
   border: string;
 } {
-  if (!stage?.color) return { bg: "#F5F5F7", text: "#8B8FA3", border: "#D0D0D8" };
+  if (!stage?.color) return { bg: "var(--surface)", text: "var(--text-muted)", border: "var(--border-dashed)" };
   const hex = stage.color.replace("#", "");
   const r = parseInt(hex.slice(0, 2), 16);
   const g = parseInt(hex.slice(2, 4), 16);
@@ -143,10 +143,10 @@ export function ApplicationsCalendar({
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-sm text-[#1A1A2E] font-medium">
+          <p className="text-sm text-text-primary font-medium">
             No applications yet
           </p>
-          <p className="text-xs text-[#8B8FA3] mt-1">
+          <p className="text-xs text-text-muted mt-1">
             Add a job to start tracking your applications.
           </p>
         </div>
@@ -158,29 +158,29 @@ export function ApplicationsCalendar({
     <div className="flex flex-col h-full">
       {/* Calendar Header */}
       <div className="flex items-center justify-between pb-4">
-        <h2 className="text-lg font-semibold text-[#1A1A2E] font-[family-name:var(--font-space-grotesk)]">
+        <h2 className="text-lg font-semibold text-text-primary font-[family-name:var(--font-space-grotesk)]">
           {formatMonthYear(currentMonth)}
         </h2>
         <div className="flex items-center gap-1">
           <button
             onClick={goToToday}
-            className="px-3 py-1.5 rounded-full border border-[#EBEBEF] text-xs font-medium text-[#1A1A2E] hover:bg-[#F5F5F7] transition-colors mr-1"
+            className="px-3 py-1.5 rounded-full border border-border-subtle text-xs font-medium text-text-primary hover:bg-surface-hover transition-colors mr-1"
           >
             Today
           </button>
           <button
             onClick={previousMonth}
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-[#EBEBEF] hover:bg-[#F5F5F7] transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-border-subtle hover:bg-surface-hover transition-colors"
             aria-label="Previous month"
           >
-            <ChevronLeft className="w-4 h-4 text-[#1A1A2E]" />
+            <ChevronLeft className="w-4 h-4 text-text-primary" />
           </button>
           <button
             onClick={nextMonth}
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-[#EBEBEF] hover:bg-[#F5F5F7] transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-border-subtle hover:bg-surface-hover transition-colors"
             aria-label="Next month"
           >
-            <ChevronRight className="w-4 h-4 text-[#1A1A2E]" />
+            <ChevronRight className="w-4 h-4 text-text-primary" />
           </button>
         </div>
       </div>
@@ -192,7 +192,7 @@ export function ApplicationsCalendar({
           {WEEKDAYS.map((day) => (
             <div
               key={day}
-              className="text-center text-xs font-semibold text-[#8B8FA3] py-2"
+              className="text-center text-xs font-semibold text-text-muted py-2"
             >
               {day}
             </div>
@@ -214,9 +214,9 @@ export function ApplicationsCalendar({
                 onClick={() => setSelectedDay(day)}
                 className={`
                   flex flex-col rounded-[10px] border p-2 min-h-[100px] cursor-pointer transition-colors
-                  ${isCurrentMonth ? "bg-white border-[#EBEBEF]" : "bg-[#FAFAFA] border-[#F0F0F0] opacity-40"}
-                  ${isSelected && isCurrentMonth ? "ring-1 ring-[#FF8400]/40 border-[#FF8400]/30" : ""}
-                  ${isCurrentMonth ? "hover:bg-[#FAFAFA]" : ""}
+                  ${isCurrentMonth ? "bg-card border-border-subtle" : "bg-surface border-border-subtle opacity-40"}
+                  ${isSelected && isCurrentMonth ? "ring-1 ring-brand/40 border-brand/30" : ""}
+                  ${isCurrentMonth ? "hover:bg-surface-hover" : ""}
                 `}
               >
                 {/* Day number */}
@@ -224,13 +224,13 @@ export function ApplicationsCalendar({
                   <span
                     className={`
                       flex items-center justify-center w-6 h-6 text-xs font-medium rounded-full
-                      ${isToday ? "bg-[#FF8400] text-white" : isCurrentMonth ? "text-[#1A1A2E]" : "text-[#8B8FA3]"}
+                      ${isToday ? "bg-brand text-white" : isCurrentMonth ? "text-text-primary" : "text-text-muted"}
                     `}
                   >
                     {day.getDate()}
                   </span>
                   {dayJobs.length > 0 && (
-                    <span className="text-[9px] text-[#8B8FA3] font-medium mt-1">
+                    <span className="text-[9px] text-text-muted font-medium mt-1">
                       {dayJobs.length}
                     </span>
                   )}
@@ -255,10 +255,10 @@ export function ApplicationsCalendar({
                         style={{ backgroundColor: style.bg }}
                       >
                         <div className="flex flex-col min-w-0 flex-1">
-                          <span className="text-[10px] font-medium text-[#1A1A2E] truncate leading-tight">
+                          <span className="text-[10px] font-medium text-text-primary truncate leading-tight">
                             {job.title}
                           </span>
-                          <span className="text-[9px] text-[#8B8FA3] truncate leading-tight">
+                          <span className="text-[9px] text-text-muted truncate leading-tight">
                             {job.company_name ?? "Unknown"}
                           </span>
                         </div>
@@ -266,7 +266,7 @@ export function ApplicationsCalendar({
                     );
                   })}
                   {dayJobs.length > 2 && (
-                    <span className="text-[9px] text-[#8B8FA3] font-medium pl-1">
+                    <span className="text-[9px] text-text-muted font-medium pl-1">
                       +{dayJobs.length - 2} more
                     </span>
                   )}
@@ -284,7 +284,7 @@ export function ApplicationsCalendar({
           {WEEKDAYS.map((day) => (
             <div
               key={day}
-              className="text-center text-[10px] font-semibold text-[#8B8FA3] py-1.5"
+              className="text-center text-[10px] font-semibold text-text-muted py-1.5"
             >
               {day.charAt(0)}
             </div>
@@ -318,17 +318,17 @@ export function ApplicationsCalendar({
                 className={`
                   flex flex-col items-center py-2 rounded-lg transition-colors
                   ${!isCurrentMonth ? "opacity-30" : ""}
-                  ${isSelected && !isToday ? "bg-[#F5F5F7]" : ""}
+                  ${isSelected && !isToday ? "bg-surface" : ""}
                 `}
               >
                 <span
                   className={`
                     flex items-center justify-center w-7 h-7 text-xs font-medium rounded-full
-                    ${isToday && isSelected ? "bg-[#FF8400] text-white" : ""}
-                    ${isToday && !isSelected ? "bg-[#FF8400]/15 text-[#FF8400] font-semibold" : ""}
-                    ${!isToday && isSelected ? "bg-[#1A1A2E] text-white" : ""}
-                    ${!isToday && !isSelected && isCurrentMonth ? "text-[#1A1A2E]" : ""}
-                    ${!isCurrentMonth ? "text-[#8B8FA3]" : ""}
+                    ${isToday && isSelected ? "bg-brand text-white" : ""}
+                    ${isToday && !isSelected ? "bg-brand/15 text-brand font-semibold" : ""}
+                    ${!isToday && isSelected ? "bg-primary text-primary-foreground" : ""}
+                    ${!isToday && !isSelected && isCurrentMonth ? "text-text-primary" : ""}
+                    ${!isCurrentMonth ? "text-text-muted" : ""}
                   `}
                 >
                   {day.getDate()}
@@ -350,7 +350,7 @@ export function ApplicationsCalendar({
 
         {/* Selected day job list */}
         <div className="mt-4 flex-1 min-h-0 overflow-y-auto">
-          <h3 className="text-xs font-semibold text-[#8B8FA3] mb-2">
+          <h3 className="text-xs font-semibold text-text-muted mb-2">
             {selectedDay.toLocaleDateString("en-US", {
               weekday: "long",
               month: "long",
@@ -358,7 +358,7 @@ export function ApplicationsCalendar({
             })}
           </h3>
           {selectedDayJobs.length === 0 ? (
-            <p className="text-xs text-[#8B8FA3] py-4 text-center">
+            <p className="text-xs text-text-muted py-4 text-center">
               No applications on this day
             </p>
           ) : (
@@ -373,7 +373,7 @@ export function ApplicationsCalendar({
                   <button
                     key={job.id}
                     onClick={() => onJobClick(job)}
-                    className="flex items-center gap-3 p-3 rounded-[10px] bg-white border border-[#EBEBEF] text-left hover:border-[#D0D0D8] transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-[10px] bg-card border border-border-subtle text-left hover:border-border-dashed transition-colors"
                   >
                     <StageIcon
                       stageName={stage?.name ?? "default"}
@@ -381,11 +381,11 @@ export function ApplicationsCalendar({
                       color={stage?.color ?? "#8B8FA3"}
                     />
                     <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                      <span className="text-sm font-medium text-[#1A1A2E] truncate">
+                      <span className="text-sm font-medium text-text-primary truncate">
                         {job.title}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-[#8B8FA3] truncate">
+                        <span className="text-xs text-text-muted truncate">
                           {job.company_name ?? "Unknown"}
                         </span>
                         {stage && (

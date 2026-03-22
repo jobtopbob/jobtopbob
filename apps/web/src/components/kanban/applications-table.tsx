@@ -29,7 +29,7 @@ function getStagePillStyle(stage: Stage | undefined): {
   bg: string;
   text: string;
 } {
-  if (!stage?.color) return { bg: "#F5F5F7", text: "#8B8FA3" };
+  if (!stage?.color) return { bg: "var(--surface)", text: "var(--text-muted)" };
   const hex = stage.color.replace("#", "");
   const r = parseInt(hex.slice(0, 2), 16);
   const g = parseInt(hex.slice(2, 4), 16);
@@ -100,10 +100,10 @@ export function ApplicationsTable({
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-sm text-[#1A1A2E] font-medium">
+          <p className="text-sm text-text-primary font-medium">
             No applications yet
           </p>
-          <p className="text-xs text-[#8B8FA3] mt-1">
+          <p className="text-xs text-text-muted mt-1">
             Add a job to start tracking your applications.
           </p>
         </div>
@@ -115,29 +115,29 @@ export function ApplicationsTable({
     <div className="h-full overflow-auto">
       <Table className="min-w-[1000px]">
         <TableHeader>
-          <TableRow className="border-b border-[#EBEBEF] hover:bg-transparent">
-            <TableHead className="w-10 bg-[#F5F5F7] pl-4">
+          <TableRow className="border-b border-border-subtle hover:bg-transparent">
+            <TableHead className="w-10 bg-surface pl-4">
               <Checkbox aria-label="Select all" />
             </TableHead>
-            <TableHead className="bg-[#F5F5F7] text-[#8B8FA3] text-xs font-semibold">
+            <TableHead className="bg-surface text-text-muted text-xs font-semibold">
               Product / Job
             </TableHead>
-            <TableHead className="bg-[#F5F5F7] text-[#8B8FA3] text-xs font-semibold w-[80px]">
+            <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[80px]">
               Stage
             </TableHead>
-            <TableHead className="bg-[#F5F5F7] text-[#8B8FA3] text-xs font-semibold w-[120px]">
+            <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[120px]">
               Salary
             </TableHead>
-            <TableHead className="bg-[#F5F5F7] text-[#8B8FA3] text-xs font-semibold">
+            <TableHead className="bg-surface text-text-muted text-xs font-semibold">
               Location
             </TableHead>
-            <TableHead className="bg-[#F5F5F7] text-[#8B8FA3] text-xs font-semibold w-[90px]">
+            <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[90px]">
               Source
             </TableHead>
-            <TableHead className="bg-[#F5F5F7] text-[#8B8FA3] text-xs font-semibold w-[90px]">
+            <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[90px]">
               Applied
             </TableHead>
-            <TableHead className="bg-[#F5F5F7] text-[#8B8FA3] text-xs font-semibold w-[90px] pr-4">
+            <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[90px] pr-4">
               Added
             </TableHead>
           </TableRow>
@@ -160,7 +160,7 @@ export function ApplicationsTable({
               <TableRow
                 key={job.id}
                 onClick={() => onJobClick(job)}
-                className="border-b border-[#EBEBEF] cursor-pointer hover:bg-[#FAFAFA]"
+                className="border-b border-border-subtle cursor-pointer hover:bg-surface-hover"
               >
                 <TableCell
                   className="pl-4"
@@ -185,10 +185,10 @@ export function ApplicationsTable({
                       </div>
                     )}
                     <div className="flex flex-col gap-0.5 min-w-0">
-                      <span className="text-xs font-medium text-[#1A1A2E] truncate">
+                      <span className="text-xs font-medium text-text-primary truncate">
                         {job.title}
                       </span>
-                      <span className="text-[11px] text-[#8B8FA3] truncate">
+                      <span className="text-[11px] text-text-muted truncate">
                         {companyName}
                       </span>
                     </div>
@@ -209,30 +209,30 @@ export function ApplicationsTable({
                     {stage?.name ?? "—"}
                   </span>
                 </TableCell>
-                <TableCell className="text-xs text-[#1A1A2E]">
+                <TableCell className="text-xs text-text-primary">
                   {salary ?? "—"}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-[#8B8FA3]">
+                    <span className="text-xs text-text-muted">
                       {job.location ?? "—"}
                     </span>
                     {job.location_type && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#F5F5F7] text-[#8B8FA3] capitalize">
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface text-text-muted capitalize">
                         {job.location_type}
                       </span>
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-xs text-[#8B8FA3]">
+                <TableCell className="text-xs text-text-muted">
                   {formatSource(job.source)}
                 </TableCell>
                 <TableCell>
                   <span
                     className={
                       appliedDate.isToday
-                        ? "text-[11px] font-medium text-[#FF8400]"
-                        : "text-[11px] text-[#8B8FA3]"
+                        ? "text-[11px] font-medium text-brand"
+                        : "text-[11px] text-text-muted"
                     }
                   >
                     {appliedDate.text}
@@ -242,8 +242,8 @@ export function ApplicationsTable({
                   <span
                     className={
                       addedDate.isToday
-                        ? "text-[11px] font-medium text-[#FF8400]"
-                        : "text-[11px] text-[#8B8FA3]"
+                        ? "text-[11px] font-medium text-brand"
+                        : "text-[11px] text-text-muted"
                     }
                   >
                     {addedDate.text}

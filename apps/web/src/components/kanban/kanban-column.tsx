@@ -38,19 +38,19 @@ export function KanbanColumn({ stage, jobs, onJobClick }: KanbanColumnProps) {
   return (
     <div
       ref={ref}
-      className="flex flex-col rounded-xl bg-[#F5F5F7] border border-[#EBEBEF] w-[280px] min-w-[280px] shrink-0 overflow-hidden"
+      className="flex flex-col rounded-xl bg-surface border border-border-subtle w-[280px] min-w-[280px] shrink-0 overflow-hidden"
       style={{
-        outline: isDropTarget ? "2px solid #FF8400" : undefined,
+        outline: isDropTarget ? "2px solid var(--brand)" : undefined,
         outlineOffset: -2,
       }}
     >
       {/* Header */}
       <div className="flex items-center gap-2 h-10 px-3 shrink-0">
         <StageIcon stageName={stage.name} className="w-5 h-5 shrink-0" color={dotColor} />
-        <span className="text-[13px] font-semibold text-[#1A1A2E] flex-1 truncate">
+        <span className="text-[13px] font-semibold text-text-primary flex-1 truncate">
           {stage.name}
         </span>
-        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#F5F5F7] text-[11px] font-medium text-[#8B8FA3]">
+        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-surface-hover text-[11px] font-medium text-text-muted">
           {jobs.length}
         </span>
       </div>
@@ -58,7 +58,7 @@ export function KanbanColumn({ stage, jobs, onJobClick }: KanbanColumnProps) {
       {/* Cards */}
       <div className="flex-1 overflow-y-auto px-2.5 pb-3 pt-2 space-y-2.5">
         {jobs.length === 0 ? (
-          <p className="text-center text-xs text-[#8B8FA3] py-8">
+          <p className="text-center text-xs text-text-muted py-8">
             No jobs in this stage
           </p>
         ) : (

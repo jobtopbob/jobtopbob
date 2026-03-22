@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useJobs } from "@/hooks/use-jobs";
+import { useTheme } from "next-themes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StageIcon } from "@/components/kanban/stage-icons";
 
-const statusStyles: Record<string, { bg: string; text: string }> = {
+const statusStylesLight: Record<string, { bg: string; text: string }> = {
   applied: { bg: "#E8F0FE", text: "#2A85FF" },
   screening: { bg: "#F0EBFE", text: "#8E59FF" },
   interviewing: { bg: "#EAFBE7", text: "#83BF6E" },
@@ -16,6 +17,19 @@ const statusStyles: Record<string, { bg: string; text: string }> = {
   wishlist: { bg: "#F5F5F7", text: "#8B8FA3" },
   saved: { bg: "#F5F5F7", text: "#8B8FA3" },
   withdrawn: { bg: "#FEE8E8", text: "#E53E3E" },
+};
+
+const statusStylesDark: Record<string, { bg: string; text: string }> = {
+  applied: { bg: "rgba(91,168,255,0.15)", text: "#5BA8FF" },
+  screening: { bg: "rgba(142,89,255,0.15)", text: "#A87EFF" },
+  interviewing: { bg: "rgba(140,201,122,0.15)", text: "#8CC97A" },
+  offer: { bg: "rgba(255,144,32,0.15)", text: "#FF9020" },
+  accepted: { bg: "rgba(140,201,122,0.15)", text: "#8CC97A" },
+  rejected: { bg: "rgba(255,117,99,0.15)", text: "#FF7563" },
+  closed: { bg: "rgba(139,144,165,0.12)", text: "#8B90A5" },
+  wishlist: { bg: "rgba(139,144,165,0.12)", text: "#8B90A5" },
+  saved: { bg: "rgba(139,144,165,0.12)", text: "#8B90A5" },
+  withdrawn: { bg: "rgba(255,117,99,0.15)", text: "#FF7563" },
 };
 
 const logoColors = [
@@ -39,12 +53,15 @@ function getLogoColor(name: string): string {
 
 export function RecentApplications() {
   const { data: jobsData, isLoading } = useJobs({ perPage: 3 });
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const statusStyles = isDark ? statusStylesDark : statusStylesLight;
 
   const recentJobs = jobsData?.data ?? [];
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col gap-4 rounded-xl bg-white border border-[#EBEBEF] p-5">
+      <div className="flex-1 flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
         <Skeleton className="h-5 w-40" />
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-12 w-full rounded-lg" />
@@ -54,13 +71,13 @@ export function RecentApplications() {
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-4 rounded-xl bg-white border border-[#EBEBEF] p-5">
-      <span className="text-sm font-semibold text-[#1A1A2E]">
+    <div className="flex-1 flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
+      <span className="text-sm font-semibold text-text-primary">
         Recent Applications
       </span>
       <div className="flex-1 flex flex-col">
         {recentJobs.length === 0 ? (
-          <p className="text-sm text-[#8B8FA3] py-4">No applications yet.</p>
+          <p className="text-sm text-text-muted py-4">No applications yet.</p>
         ) : (
           recentJobs.map((job) => {
             const stageName = job.stage_name?.toLowerCase() ?? "applied";
@@ -72,7 +89,7 @@ export function RecentApplications() {
             return (
               <div
                 key={job.id}
-                className="flex items-center gap-3 py-2.5 border-b border-[#EBEBEF] last:border-b-0"
+                className="flex items-center gap-3 py-2.5 border-b border-border-subtle last:border-b-0"
               >
                 {job.company_logo_url ? (
                   <img
@@ -91,10 +108,10 @@ export function RecentApplications() {
                   </div>
                 )}
                 <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                  <span className="text-[13px] font-medium text-[#1A1A2E] truncate">
+                  <span className="text-[13px] font-medium text-text-primary truncate">
                     {job.title}
                   </span>
-                  <span className="text-[11px] text-[#8B8FA3]">
+                  <span className="text-[11px] text-text-muted">
                     {companyName}
                   </span>
                 </div>
@@ -121,7 +138,7 @@ export function RecentApplications() {
       </div>
       <Link
         href="/applications"
-        className="text-xs font-medium text-[#FF8400] hover:underline self-start"
+        className="text-xs font-medium text-brand hover:underline self-start"
       >
         View all
       </Link>

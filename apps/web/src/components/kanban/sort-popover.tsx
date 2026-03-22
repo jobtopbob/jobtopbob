@@ -54,9 +54,9 @@ export function SortPopover({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="flex items-center gap-1.5 h-9 lg:h-10 px-3 lg:px-4 rounded-full border border-[#EBEBEF] text-xs lg:text-sm font-medium text-[#1A1A2E] hover:bg-[#F5F5F7] transition-colors outline-none"
+        className="flex items-center gap-1.5 h-9 lg:h-10 px-3 lg:px-4 rounded-full border border-border-subtle text-xs lg:text-sm font-medium text-text-primary hover:bg-surface-hover transition-colors outline-none"
       >
-        <ArrowUpDown className="w-3.5 h-3.5 text-[#8B8FA3]" />
+        <ArrowUpDown className="w-3.5 h-3.5 text-text-muted" />
         <span className="hidden sm:inline">
           {isNonDefault ? getSortLabel(sortBy) : "Sort"}
         </span>

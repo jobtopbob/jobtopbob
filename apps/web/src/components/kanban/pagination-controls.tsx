@@ -28,19 +28,19 @@ export function PaginationControls({
 
   return (
     <div className="flex items-center justify-between pt-4 pb-1">
-      <p className="text-xs text-[#8B8FA3]">
+      <p className="text-xs text-text-muted">
         Showing{" "}
-        <span className="font-medium text-[#1A1A2E]">
+        <span className="font-medium text-text-primary">
           {start}-{end}
         </span>{" "}
-        of <span className="font-medium text-[#1A1A2E]">{total}</span>
+        of <span className="font-medium text-text-primary">{total}</span>
       </p>
 
       <div className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="flex items-center justify-center w-8 h-8 rounded-full border border-[#EBEBEF] text-[#1A1A2E] hover:bg-[#F5F5F7] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          className="flex items-center justify-center w-8 h-8 rounded-full border border-border-subtle text-text-primary hover:bg-surface-hover disabled:opacity-30 disabled:pointer-events-none transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -49,7 +49,7 @@ export function PaginationControls({
           p === "..." ? (
             <span
               key={`ellipsis-${i}`}
-              className="w-8 h-8 flex items-center justify-center text-xs text-[#8B8FA3]"
+              className="w-8 h-8 flex items-center justify-center text-xs text-text-muted"
             >
               ...
             </span>
@@ -60,8 +60,8 @@ export function PaginationControls({
               className={cn(
                 "w-8 h-8 rounded-full text-xs font-medium transition-colors",
                 p === page
-                  ? "bg-[#1A1A2E] text-white"
-                  : "text-[#1A1A2E] hover:bg-[#F5F5F7]"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-text-primary hover:bg-surface-hover"
               )}
             >
               {p}
@@ -72,7 +72,7 @@ export function PaginationControls({
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          className="flex items-center justify-center w-8 h-8 rounded-full border border-[#EBEBEF] text-[#1A1A2E] hover:bg-[#F5F5F7] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+          className="flex items-center justify-center w-8 h-8 rounded-full border border-border-subtle text-text-primary hover:bg-surface-hover disabled:opacity-30 disabled:pointer-events-none transition-colors"
         >
           <ChevronRight className="w-4 h-4" />
         </button>

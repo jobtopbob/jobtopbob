@@ -14,15 +14,15 @@ export default function DashboardPage() {
     "there";
 
   return (
-    <div className="flex h-full bg-white">
+    <div className="flex h-full bg-background">
       {/* Main Content */}
       <div className="flex-1 flex flex-col gap-6 p-7 pt-7 overflow-y-auto">
         {/* Page Header */}
         <div>
-          <h1 className="text-4xl font-bold text-[#1A1A2E] tracking-tight" style={{ letterSpacing: -1 }}>
+          <h1 className="text-4xl font-bold text-text-primary tracking-tight" style={{ letterSpacing: -1 }}>
             Dashboard
           </h1>
-          <p className="text-sm text-[#8B8FA3] mt-1.5">
+          <p className="text-sm text-text-muted mt-1.5">
             Welcome back, {firstName}. Here is your job search overview.
           </p>
         </div>

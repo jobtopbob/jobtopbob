@@ -25,21 +25,21 @@ export function TopBar({ userName }: TopBarProps) {
   };
 
   return (
-    <header className="flex items-center h-14 px-3 sm:px-6 bg-white shrink-0">
+    <header className="flex items-center h-14 px-3 sm:px-6 bg-background border-b border-border-subtle shrink-0">
       {/* Expand button (shown when sidebar is collapsed) */}
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
           className="flex items-center justify-center w-7 h-7 rounded-lg mr-3 shrink-0"
         >
-          <PanelLeftOpen className="w-[18px] h-[18px] text-[#A0A3B1]" />
+          <PanelLeftOpen className="w-[18px] h-[18px] text-text-tertiary" />
         </button>
       )}
 
       {/* Search */}
-      <div className="flex items-center gap-2 w-full max-w-[280px] px-3 py-2 rounded-xl bg-[#F5F5F7] border border-[#EBEBEF]">
-        <Search className="w-4 h-4 text-[#8B8FA3] shrink-0" />
-        <span className="text-sm text-[#8B8FA3]">
+      <div className="flex items-center gap-2 w-full max-w-[280px] px-3 py-2 rounded-xl bg-surface border border-border-subtle">
+        <Search className="w-4 h-4 text-text-muted shrink-0" />
+        <span className="text-sm text-text-muted">
           Search or type a command...
         </span>
       </div>
@@ -48,7 +48,7 @@ export function TopBar({ userName }: TopBarProps) {
       <div className="flex-1" />
 
       {/* Bell */}
-      <Bell className="w-5 h-5 text-[#8B8FA3]" />
+      <Bell className="w-5 h-5 text-text-muted" />
 
       {/* User Section */}
       <DropdownMenu>
@@ -56,7 +56,7 @@ export function TopBar({ userName }: TopBarProps) {
           className="flex items-center gap-3 pl-4 outline-none cursor-pointer"
           render={
             <button>
-              <div className="w-8 h-8 rounded-full bg-[#2E2E45] flex items-center justify-center text-white text-xs font-medium">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-medium">
                 {userName
                   .split(" ")
                   .map((n) => n[0])
@@ -64,10 +64,10 @@ export function TopBar({ userName }: TopBarProps) {
                   .slice(0, 2)
                   .toUpperCase()}
               </div>
-              <span className="hidden sm:inline text-sm font-medium text-[#1A1A2E]">
+              <span className="hidden sm:inline text-sm font-medium text-text-primary">
                 {userName}
               </span>
-              <ChevronDown className="hidden sm:block w-4 h-4 text-[#8B8FA3]" />
+              <ChevronDown className="hidden sm:block w-4 h-4 text-text-muted" />
             </button>
           }
         />

@@ -132,7 +132,7 @@ function DesktopFilterPopover({
   return (
     <div
       ref={panelRef}
-      className="absolute right-0 top-full mt-2 z-50 w-[380px] bg-white rounded-2xl border border-[#EBEBEF] shadow-xl animate-in fade-in-0 zoom-in-95 duration-150"
+      className="absolute right-0 top-full mt-2 z-50 w-[380px] bg-card rounded-2xl border border-border-subtle shadow-xl animate-in fade-in-0 zoom-in-95 duration-150"
     >
       <FilterContent
         filters={filters}
@@ -162,7 +162,7 @@ function MobileFilterSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl p-0">
         <SheetHeader className="px-5 pt-5 pb-0">
-          <SheetTitle className="text-base font-semibold text-[#1A1A2E]">
+          <SheetTitle className="text-base font-semibold text-text-primary">
             Filters
           </SheetTitle>
         </SheetHeader>
@@ -256,20 +256,20 @@ function FilterContent({
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5 max-h-[70vh]">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8B8FA3]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
           <input
             type="text"
             value={draft.search}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search jobs..."
-            className="w-full h-9 pl-9 pr-3 rounded-lg border border-[#EBEBEF] bg-[#F9F9FB] text-sm text-[#1A1A2E] placeholder:text-[#8B8FA3] focus:outline-none focus:border-[#FF8400] focus:ring-1 focus:ring-[#FF8400]/20 transition-colors"
+            className="w-full h-9 pl-9 pr-3 rounded-lg border border-border-subtle bg-surface text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-colors"
           />
           {draft.search && (
             <button
               onClick={() => handleSearchChange("")}
               className="absolute right-3 top-1/2 -translate-y-1/2"
             >
-              <X className="w-3.5 h-3.5 text-[#8B8FA3] hover:text-[#1A1A2E]" />
+              <X className="w-3.5 h-3.5 text-text-muted hover:text-text-primary" />
             </button>
           )}
         </div>
@@ -355,25 +355,25 @@ function FilterContent({
         <FilterSection title="Date Range">
           <div className="grid grid-cols-2 gap-3">
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8B8FA3] pointer-events-none" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
               <input
                 type="date"
                 value={draft.createdAfter}
                 onChange={(e) =>
                   setDraft((d) => ({ ...d, createdAfter: e.target.value }))
                 }
-                className="w-full h-9 pl-9 pr-2 rounded-lg border border-[#EBEBEF] bg-[#F9F9FB] text-xs text-[#1A1A2E] focus:outline-none focus:border-[#FF8400] focus:ring-1 focus:ring-[#FF8400]/20 transition-colors"
+                className="w-full h-9 pl-9 pr-2 rounded-lg border border-border-subtle bg-surface text-xs text-text-primary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-colors"
               />
             </div>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8B8FA3] pointer-events-none" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
               <input
                 type="date"
                 value={draft.createdBefore}
                 onChange={(e) =>
                   setDraft((d) => ({ ...d, createdBefore: e.target.value }))
                 }
-                className="w-full h-9 pl-9 pr-2 rounded-lg border border-[#EBEBEF] bg-[#F9F9FB] text-xs text-[#1A1A2E] focus:outline-none focus:border-[#FF8400] focus:ring-1 focus:ring-[#FF8400]/20 transition-colors"
+                className="w-full h-9 pl-9 pr-2 rounded-lg border border-border-subtle bg-surface text-xs text-text-primary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-colors"
               />
             </div>
           </div>
@@ -381,16 +381,16 @@ function FilterContent({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-3 px-5 py-4 border-t border-[#F0F0F3]">
+      <div className="flex items-center gap-3 px-5 py-4 border-t border-border-subtle">
         <button
           onClick={onReset}
-          className="flex-1 h-9 rounded-full border border-[#EBEBEF] text-sm font-medium text-[#1A1A2E] hover:bg-[#F5F5F7] transition-colors"
+          className="flex-1 h-9 rounded-full border border-border-subtle text-sm font-medium text-text-primary hover:bg-surface-hover transition-colors"
         >
           Reset
         </button>
         <button
           onClick={handleApply}
-          className="flex-1 h-9 rounded-full bg-[#FF8400] text-sm font-medium text-[#111111] hover:bg-[#FF8400]/90 transition-colors"
+          className="flex-1 h-9 rounded-full bg-brand text-sm font-medium text-background hover:bg-brand/90 transition-colors"
         >
           Apply Filters
         </button>
@@ -408,8 +408,8 @@ function FilterSection({
 }) {
   return (
     <div className="space-y-2.5 pt-1">
-      <div className="border-t border-[#F0F0F3] pt-4">
-        <h4 className="text-[11px] font-semibold text-[#8B8FA3] uppercase tracking-wider mb-2.5">
+      <div className="border-t border-border-subtle pt-4">
+        <h4 className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-2.5">
           {title}
         </h4>
         {children}
@@ -438,7 +438,7 @@ function CheckboxRow({
     >
       <Checkbox
         checked={checked}
-        className="data-checked:border-[#FF8400] data-checked:bg-[#FF8400] pointer-events-none"
+        className="data-checked:border-brand data-checked:bg-brand pointer-events-none"
       />
       {stageName && colorDot ? (
         <StageIcon stageName={stageName} className="w-4 h-4 shrink-0" color={colorDot} />
@@ -448,7 +448,7 @@ function CheckboxRow({
           style={{ backgroundColor: colorDot }}
         />
       ) : null}
-      <span className="text-[13px] font-medium text-[#1A1A2E] group-hover:text-[#FF8400] transition-colors truncate">
+      <span className="text-[13px] font-medium text-text-primary group-hover:text-brand transition-colors truncate">
         {label}
       </span>
     </button>

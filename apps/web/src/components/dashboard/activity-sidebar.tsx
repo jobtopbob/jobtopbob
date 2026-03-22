@@ -99,7 +99,7 @@ export function ActivitySidebar() {
 
   if (statsLoading || jobsLoading) {
     return (
-      <div className="flex flex-col gap-6 border-l border-[#EBEBEF] p-6 w-[380px] shrink-0">
+      <div className="flex flex-col gap-6 border-l border-border-subtle p-6 w-[380px] shrink-0">
         <Skeleton className="h-5 w-20" />
         <div className="flex gap-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -112,45 +112,45 @@ export function ActivitySidebar() {
   }
 
   return (
-    <div className="flex flex-col gap-6 border-l border-[#EBEBEF] p-6 w-[380px] shrink-0 bg-white">
+    <div className="flex flex-col gap-6 border-l border-border-subtle p-6 w-[380px] shrink-0 bg-background">
       {/* Panel Header */}
-      <span className="text-base font-semibold text-[#1A1A2E]">Activity</span>
+      <span className="text-base font-semibold text-text-primary">Activity</span>
 
       {/* Quick Stats */}
       <div className="flex gap-3">
-        <div className="flex-1 flex flex-col gap-1 rounded-xl bg-[#F5F5F7] p-4">
-          <span className="text-2xl font-bold text-[#1A1A2E]">
+        <div className="flex-1 flex flex-col gap-1 rounded-xl bg-surface p-4">
+          <span className="text-2xl font-bold text-text-primary">
             {appliedCount}
           </span>
-          <span className="text-xs text-[#8B8FA3]">Applied</span>
+          <span className="text-xs text-text-muted">Applied</span>
         </div>
-        <div className="flex-1 flex flex-col gap-1 rounded-xl bg-[#F5F5F7] p-4">
-          <span className="text-2xl font-bold text-[#1A1A2E]">
+        <div className="flex-1 flex flex-col gap-1 rounded-xl bg-surface p-4">
+          <span className="text-2xl font-bold text-text-primary">
             {interviewCount}
           </span>
-          <span className="text-xs text-[#8B8FA3]">Interviews</span>
+          <span className="text-xs text-text-muted">Interviews</span>
         </div>
-        <div className="flex-1 flex flex-col gap-1 rounded-xl bg-[#F5F5F7] p-4">
-          <span className="text-2xl font-bold text-[#83BF6E]">
+        <div className="flex-1 flex flex-col gap-1 rounded-xl bg-surface p-4">
+          <span className="text-2xl font-bold text-brand-green">
             {offerCount}
           </span>
-          <span className="text-xs text-[#8B8FA3]">Offers</span>
+          <span className="text-xs text-text-muted">Offers</span>
         </div>
       </div>
 
       {/* Recent Activity */}
       <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
         <div className="flex items-center">
-          <span className="flex-1 text-[13px] font-semibold text-[#8B8FA3]">
+          <span className="flex-1 text-[13px] font-semibold text-text-muted">
             Recent
           </span>
-          <span className="text-xs font-medium text-[#FF8400] cursor-pointer hover:underline">
+          <span className="text-xs font-medium text-brand cursor-pointer hover:underline">
             View all
           </span>
         </div>
         <div className="flex flex-col">
           {recentActivity.length === 0 ? (
-            <p className="text-[13px] text-[#8B8FA3] py-3">
+            <p className="text-[13px] text-text-muted py-3">
               No recent activity.
             </p>
           ) : (
@@ -164,10 +164,10 @@ export function ActivitySidebar() {
                   style={{ backgroundColor: item.dotColor }}
                 />
                 <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="text-[13px] text-[#1A1A2E] leading-snug">
+                  <span className="text-[13px] text-text-primary leading-snug">
                     {item.text}
                   </span>
-                  <span className="text-[11px] text-[#8B8FA3]">
+                  <span className="text-[11px] text-text-muted">
                     {item.time}
                   </span>
                 </div>
@@ -179,28 +179,28 @@ export function ActivitySidebar() {
 
       {/* Upcoming */}
       <div className="flex flex-col gap-3">
-        <span className="text-[13px] font-semibold text-[#8B8FA3]">
+        <span className="text-[13px] font-semibold text-text-muted">
           Upcoming
         </span>
         {upcoming.length === 0 ? (
-          <p className="text-[13px] text-[#8B8FA3] rounded-xl bg-[#F5F5F7] p-3">
+          <p className="text-[13px] text-text-muted rounded-xl bg-surface p-3">
             No upcoming events.
           </p>
         ) : (
           upcoming.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-3 rounded-xl bg-[#F5F5F7] p-3"
+              className="flex items-center gap-3 rounded-xl bg-surface p-3"
             >
               <Calendar
                 className="w-4 h-4 shrink-0"
                 style={{ color: item.color }}
               />
               <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="text-[13px] font-medium text-[#1A1A2E]">
+                <span className="text-[13px] font-medium text-text-primary">
                   {item.title}
                 </span>
-                <span className="text-[11px] text-[#8B8FA3]">
+                <span className="text-[11px] text-text-muted">
                   {item.time}
                 </span>
               </div>
