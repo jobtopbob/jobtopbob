@@ -15,7 +15,7 @@ export function AppShell({ userName, children }: AppShellProps) {
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden">
         <Sidebar />
-        <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex flex-col flex-1 min-w-0 transition-[margin] duration-300 ease-out">
           <TopBar userName={userName} />
           <main className="flex-1 overflow-hidden">{children}</main>
         </div>

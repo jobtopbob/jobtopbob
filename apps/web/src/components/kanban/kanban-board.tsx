@@ -152,47 +152,51 @@ function KanbanBoardInner() {
               </p>
             </div>
           </div>
-        ) : activeView === "table" ? (
-          <ApplicationsTable
-            jobs={jobsData?.data ?? []}
-            stages={stages!}
-            onJobClick={setSelectedJob}
-            page={filters.page}
-            perPage={filters.perPage}
-            total={jobsData?.total ?? 0}
-            onPageChange={handlePageChange}
-          />
-        ) : activeView === "calendar" ? (
-          <ApplicationsCalendar
-            jobs={jobsData?.data ?? []}
-            stages={stages!}
-            onJobClick={setSelectedJob}
-          />
         ) : (
-          <>
-            {/* Desktop: kanban columns with horizontal scroll */}
-            <BoardDndProvider>
-              <div className="hidden lg:flex gap-4 h-full overflow-x-auto pr-2">
-                {stages!.map((stage) => (
-                  <KanbanColumn
-                    key={stage.id}
-                    stage={stage}
-                    jobs={jobsByStage.get(stage.id) ?? []}
-                    onJobClick={setSelectedJob}
-                  />
-                ))}
-              </div>
-            </BoardDndProvider>
-
-            {/* Mobile: grouped list view */}
-            <div className="lg:hidden h-full overflow-y-auto">
-              <MobileJobList
+          <div key={activeView} className="h-full animate-in fade-in-0 duration-150">
+            {activeView === "table" ? (
+              <ApplicationsTable
+                jobs={jobsData?.data ?? []}
                 stages={stages!}
-                jobsByStage={jobsByStage}
+                onJobClick={setSelectedJob}
+                page={filters.page}
+                perPage={filters.perPage}
+                total={jobsData?.total ?? 0}
+                onPageChange={handlePageChange}
+              />
+            ) : activeView === "calendar" ? (
+              <ApplicationsCalendar
+                jobs={jobsData?.data ?? []}
+                stages={stages!}
                 onJobClick={setSelectedJob}
               />
-            </div>
-          </>
+            ) : (
+              <>
+                {/* Desktop: kanban columns with horizontal scroll */}
+                <BoardDndProvider>
+                  <div className="hidden lg:flex gap-4 h-full overflow-x-auto pr-2">
+                    {stages!.map((stage) => (
+                      <KanbanColumn
+                        key={stage.id}
+                        stage={stage}
+                        jobs={jobsByStage.get(stage.id) ?? []}
+                        onJobClick={setSelectedJob}
+                      />
+                    ))}
+                  </div>
+                </BoardDndProvider>
+
+                {/* Mobile: grouped list view */}
+                <div className="lg:hidden h-full overflow-y-auto">
+                  <MobileJobList
+                    stages={stages!}
+                    jobsByStage={jobsByStage}
+                    onJobClick={setSelectedJob}
+                  />
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 

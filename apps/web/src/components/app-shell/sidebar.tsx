@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-context";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
 
 interface NavItem {
@@ -89,13 +89,59 @@ function TreeIndicator({ isLast }: { isLast: boolean }) {
   );
 }
 
+function ThemeToggle({ collapsed }: { collapsed: boolean }) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lightRef = useRef<HTMLButtonElement>(null);
+  const darkRef = useRef<HTMLButtonElement>(null);
+  const [pillStyle, setPillStyle] = useState<{ left: number; width: number } | null>(null);
+
+  const measure = useCallback(() => {
+    const container = containerRef.current;
+    const activeBtn = resolvedTheme === "light" ? lightRef.current : darkRef.current;
+    if (!container || !activeBtn) return;
+    const cRect = container.getBoundingClientRect();
+    const bRect = activeBtn.getBoundingClientRect();
+    setPillStyle({ left: bRect.left - cRect.left, width: bRect.width });
+  }, [resolvedTheme]);
+
+  useEffect(() => {
+    measure();
+  }, [measure]);
+
+  if (collapsed) return null;
+
+  return (
+    <div ref={containerRef} className="relative flex rounded-full bg-sidebar-accent p-1">
+      {pillStyle && (
+        <span
+          className="absolute top-1 bottom-1 rounded-full bg-sidebar-border shadow-sm transition-[left,width] duration-200 ease-out"
+          style={{ left: pillStyle.left, width: pillStyle.width }}
+        />
+      )}
+      <button
+        ref={lightRef}
+        onClick={() => setTheme("light")}
+        className="relative z-10 flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full"
+      >
+        <Sun className={cn("w-4 h-4 transition-colors duration-200", resolvedTheme === "light" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
+        <span className={cn("text-xs font-medium transition-colors duration-200", resolvedTheme === "light" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Light</span>
+      </button>
+      <button
+        ref={darkRef}
+        onClick={() => setTheme("dark")}
+        className="relative z-10 flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full"
+      >
+        <Moon className={cn("w-4 h-4 transition-colors duration-200", resolvedTheme === "dark" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
+        <span className={cn("text-xs font-medium transition-colors duration-200", resolvedTheme === "dark" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Dark</span>
+      </button>
+    </div>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const { collapsed, setCollapsed } = useSidebar();
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
 
   const [expandedGroups, setExpandedGroups] = useState<
     Record<string, boolean>
@@ -105,212 +151,221 @@ export function Sidebar() {
     setExpandedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
-  if (collapsed) {
-    return (
-      <aside className="hidden lg:flex flex-col w-16 h-full bg-sidebar border-r border-sidebar-border shrink-0">
-        {/* Header - logo icon only */}
-        <div className="flex items-center justify-center h-[60px] border-b border-sidebar-border">
-          <AppLogo size={28} />
+  return (
+    <>
+      {/* Mobile backdrop */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/40 lg:hidden transition-opacity duration-300",
+          collapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+        )}
+        onClick={() => setCollapsed(true)}
+      />
+
+      <aside
+        className={cn(
+          "flex flex-col h-full bg-sidebar border-r border-sidebar-border shrink-0 overflow-hidden transition-[width] duration-300 ease-out",
+          // Mobile: fixed overlay, slides in/out
+          collapsed
+            ? "fixed inset-y-0 left-0 z-50 w-60 -translate-x-full lg:translate-x-0 lg:static lg:z-auto lg:w-16"
+            : "fixed inset-y-0 left-0 z-50 w-60 translate-x-0 lg:static lg:z-auto lg:w-60",
+          // Mobile slide transition
+          "transition-[width,transform] duration-300 ease-out"
+        )}
+      >
+        {/* Header */}
+        <div className={cn(
+          "flex items-center h-[60px] border-b border-sidebar-border shrink-0 transition-[padding] duration-300",
+          collapsed ? "lg:justify-center lg:px-0 px-4 justify-between gap-2" : "justify-between gap-2 px-4"
+        )}>
+          <div className={cn(
+            "flex items-center min-w-0",
+            collapsed ? "lg:gap-0 gap-2.5" : "gap-2.5"
+          )}>
+            <AppLogo size={28} />
+            <span className={cn(
+              "text-sidebar-accent-foreground text-[15px] font-bold leading-none truncate transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
+              collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[120px] opacity-100" : "max-w-[120px] opacity-100"
+            )}>
+              JobTopBob
+            </span>
+          </div>
+          <button
+            onClick={() => setCollapsed(true)}
+            className={cn(
+              "flex items-center justify-center w-7 h-7 rounded-lg shrink-0 transition-opacity duration-200",
+              collapsed ? "lg:hidden" : ""
+            )}
+          >
+            <PanelLeftClose className="w-[18px] h-[18px] text-sidebar-foreground" />
+          </button>
         </div>
 
-        {/* Navigation - icon only */}
-        <nav className="flex-1 flex flex-col items-center gap-2 py-3 overflow-y-auto">
+        {/* Navigation */}
+        <nav className={cn(
+          "flex-1 overflow-y-auto py-3 transition-[padding] duration-300",
+          collapsed ? "lg:px-[10px] px-4 space-y-2" : "px-4 space-y-2"
+        )}>
+          {/* Dashboard */}
           <Link
             href="/dashboard"
             className={cn(
-              "flex items-center justify-center w-11 h-11 rounded-xl shrink-0",
+              "flex items-center rounded-xl transition-colors duration-200",
+              collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 lg:gap-0 gap-3 px-3 py-3" : "gap-3 px-3 py-3",
               pathname === "/dashboard"
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-sidebar-foreground hover:bg-sidebar-accent/50"
             )}
             title="Dashboard"
           >
-            <LayoutDashboard className="w-6 h-6" />
+            <LayoutDashboard className="w-5 h-5 shrink-0" />
+            <span className={cn(
+              "leading-6 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
+              collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
+            )}>
+              Dashboard
+            </span>
           </Link>
 
-          {navGroups.map((group) =>
-            group.items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
+          {/* Nav Groups */}
+          {navGroups.map((group) => (
+            <div key={group.label}>
+              {/* Group header — shows as icon-only button when collapsed on desktop */}
+              <button
+                onClick={() => !collapsed && toggleGroup(group.label)}
                 className={cn(
-                  "flex items-center justify-center w-11 h-11 rounded-xl shrink-0",
-                  pathname === item.href
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  "flex items-center w-full rounded-xl text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors duration-200",
+                  collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 lg:gap-0 gap-3 px-3 py-3" : "gap-3 px-3 py-3"
                 )}
-                title={item.label}
+                title={group.label}
               >
-                <item.icon className="w-[18px] h-[18px]" />
-              </Link>
-            ))
-          )}
+                <group.icon className="w-5 h-5 shrink-0" />
+                <span className={cn(
+                  "flex-1 text-left text-sm font-semibold leading-5 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
+                  collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
+                )}>
+                  {group.label}
+                </span>
+                <span className={cn(
+                  "transition-[opacity,max-width] duration-200 ease-out overflow-hidden",
+                  collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[16px] opacity-100" : "max-w-[16px] opacity-100"
+                )}>
+                  {expandedGroups[group.label] ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </span>
+              </button>
 
+              {/* Collapsed desktop: show flat icon links */}
+              <div className={cn(
+                "hidden",
+                collapsed && "lg:flex lg:flex-col lg:items-center lg:gap-1"
+              )}>
+                {group.items.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center justify-center w-full py-2.5 rounded-xl shrink-0 transition-colors duration-200",
+                      pathname === item.href
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                    )}
+                    title={item.label}
+                  >
+                    <item.icon className="w-5 h-5" />
+                  </Link>
+                ))}
+              </div>
+
+              {/* Expanded: tree items with grid-rows animation */}
+              <div
+                className={cn(
+                  "grid transition-[grid-template-rows] duration-200 ease-out",
+                  collapsed ? "lg:hidden" : "",
+                  expandedGroups[group.label] ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                )}
+              >
+                <div className="overflow-hidden">
+                  {group.items.map((item, index) => (
+                    <div key={item.href} className="flex items-center h-11">
+                      <TreeIndicator
+                        isLast={index === group.items.length - 1}
+                      />
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-3 flex-1 px-3 py-3 rounded-xl text-sm transition-colors duration-200",
+                          pathname === item.href
+                            ? "text-sidebar-accent-foreground"
+                            : "text-sidebar-foreground hover:text-sidebar-accent-foreground/80"
+                        )}
+                      >
+                        <item.icon className="w-[18px] h-[18px] shrink-0" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Settings */}
           <Link
             href="/settings"
             className={cn(
-              "flex items-center justify-center w-11 h-11 rounded-xl shrink-0",
+              "flex items-center rounded-xl transition-colors duration-200",
+              collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 lg:gap-0 gap-3 px-3 py-3" : "gap-3 px-3 py-3",
               pathname === "/settings"
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-sidebar-foreground hover:bg-sidebar-accent/50"
             )}
             title="Settings"
           >
-            <Settings className="w-6 h-6" />
+            <Settings className="w-5 h-5 shrink-0" />
+            <span className={cn(
+              "leading-6 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
+              collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
+            )}>
+              Settings
+            </span>
           </Link>
         </nav>
 
         {/* Footer */}
-        <div className="flex flex-col items-center gap-3 pb-4">
-          <div className="w-6 h-px bg-sidebar-border" />
-          <div className="flex items-center justify-center w-11 h-11 rounded-xl text-sidebar-foreground">
-            <LifeBuoy className="w-5 h-5" />
+        <div className={cn(
+          "pb-4 space-y-4 transition-[padding] duration-300",
+          collapsed ? "lg:px-[10px] px-4" : "px-4"
+        )}>
+          <div className="h-px bg-sidebar-border" />
+
+          {/* Help */}
+          <div className={cn(
+            "flex items-center rounded-xl text-sidebar-foreground",
+            collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 lg:gap-0 gap-2.5 px-3 py-3" : "gap-2.5 px-3 py-3"
+          )}>
+            <LifeBuoy className="w-5 h-5 shrink-0" />
+            <span className={cn(
+              "flex-1 text-sm transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
+              collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
+            )}>
+              Help
+            </span>
+            <span className={cn(
+              "flex items-center justify-center px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold transition-[opacity,max-width] duration-200 ease-out overflow-hidden",
+              collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[30px] opacity-100" : "max-w-[30px] opacity-100"
+            )}>
+              3
+            </span>
           </div>
+
+          {/* Theme Toggle */}
+          <ThemeToggle collapsed={collapsed} />
         </div>
       </aside>
-    );
-  }
-
-  return (
-    <>
-      {/* Mobile backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-        onClick={() => setCollapsed(true)}
-      />
-    <aside className="fixed inset-y-0 left-0 z-50 lg:static lg:z-auto flex flex-col w-60 h-full bg-sidebar border-r border-sidebar-border shrink-0">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2 h-[60px] px-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <AppLogo size={28} />
-          <span className="text-sidebar-accent-foreground text-[15px] font-bold leading-none truncate">
-            JobTopBob
-          </span>
-        </div>
-        <button
-          onClick={() => setCollapsed(true)}
-          className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0"
-        >
-          <PanelLeftClose className="w-[18px] h-[18px] text-sidebar-foreground" />
-        </button>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-        {/* Dashboard */}
-        <Link
-          href="/dashboard"
-          className={cn(
-            "flex items-center gap-3 px-3 py-3 rounded-xl text-base",
-            pathname === "/dashboard"
-              ? "bg-sidebar-accent text-sidebar-accent-foreground"
-              : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-          )}
-        >
-          <LayoutDashboard className="w-6 h-6 shrink-0" />
-          <span className="leading-6">Dashboard</span>
-        </Link>
-
-        {/* Nav Groups */}
-        {navGroups.map((group) => (
-          <div key={group.label}>
-            <button
-              onClick={() => toggleGroup(group.label)}
-              className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent/50"
-            >
-              <group.icon className="w-5 h-5 shrink-0" />
-              <span className="flex-1 text-left text-sm font-semibold leading-5">
-                {group.label}
-              </span>
-              {expandedGroups[group.label] ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
-            </button>
-            {expandedGroups[group.label] && (
-              <div>
-                {group.items.map((item, index) => (
-                  <div key={item.href} className="flex items-center h-11">
-                    <TreeIndicator
-                      isLast={index === group.items.length - 1}
-                    />
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        "flex items-center gap-3 flex-1 px-3 py-3 rounded-xl text-sm",
-                        pathname === item.href
-                          ? "text-sidebar-accent-foreground"
-                          : "text-sidebar-foreground hover:text-sidebar-accent-foreground/80"
-                      )}
-                    >
-                      <item.icon className="w-[18px] h-[18px] shrink-0" />
-                      <span>{item.label}</span>
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-
-        {/* Settings */}
-        <Link
-          href="/settings"
-          className={cn(
-            "flex items-center gap-3 px-3 py-3 rounded-xl text-base",
-            pathname === "/settings"
-              ? "bg-sidebar-accent text-sidebar-accent-foreground"
-              : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-          )}
-        >
-          <Settings className="w-6 h-6 shrink-0" />
-          <span className="leading-6">Settings</span>
-        </Link>
-      </nav>
-
-      {/* Footer */}
-      <div className="px-4 pb-4 space-y-4">
-        <div className="h-px bg-sidebar-border" />
-
-        {/* Help */}
-        <div className="flex items-center gap-2.5 px-3 py-3 rounded-xl text-sidebar-foreground">
-          <LifeBuoy className="w-5 h-5 shrink-0" />
-          <span className="flex-1 text-sm">Help</span>
-          <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold">
-            3
-          </span>
-        </div>
-
-        {/* Theme Toggle */}
-        <div className="flex rounded-full bg-sidebar-accent p-1">
-          <button
-            onClick={() => setTheme("light")}
-            className={cn(
-              "flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full",
-              mounted && resolvedTheme === "light"
-                ? "bg-sidebar-border shadow-sm"
-                : "bg-sidebar"
-            )}
-          >
-            <Sun className={cn("w-4 h-4", mounted && resolvedTheme === "light" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
-            <span className={cn("text-xs font-medium", mounted && resolvedTheme === "light" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Light</span>
-          </button>
-          <button
-            onClick={() => setTheme("dark")}
-            className={cn(
-              "flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full",
-              mounted && resolvedTheme === "dark"
-                ? "bg-sidebar-border shadow-sm"
-                : "bg-sidebar"
-            )}
-          >
-            <Moon className={cn("w-4 h-4", mounted && resolvedTheme === "dark" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
-            <span className={cn("text-xs font-medium", mounted && resolvedTheme === "dark" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Dark</span>
-          </button>
-        </div>
-      </div>
-    </aside>
     </>
   );
 }

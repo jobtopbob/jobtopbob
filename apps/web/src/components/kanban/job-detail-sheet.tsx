@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
@@ -120,6 +120,25 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
   const [activeTab, setActiveTab] = useState<TabId>("details");
   const [editingDescription, setEditingDescription] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState("");
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const tabButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [tabIndicator, setTabIndicator] = useState<{ left: number; width: number } | null>(null);
+
+  const measureTabIndicator = useCallback(() => {
+    const bar = tabBarRef.current;
+    const btn = tabButtonRefs.current.get(activeTab);
+    if (!bar || !btn) return;
+    const barRect = bar.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    setTabIndicator({
+      left: btnRect.left - barRect.left + 8,
+      width: btnRect.width - 16,
+    });
+  }, [activeTab]);
+
+  useEffect(() => {
+    measureTabIndicator();
+  }, [measureTabIndicator]);
 
   const {
     data: activityEntries,
@@ -203,7 +222,7 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
               <img
                 src={job.company_logo_url}
                 alt=""
-                className="w-9 h-9 rounded-xl object-contain bg-white border border-border-subtle p-0.5"
+                className="w-9 h-9 rounded-xl object-contain bg-card border border-border-subtle p-0.5"
               />
             ) : (
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-surface-hover to-surface-active flex items-center justify-center text-sm font-semibold text-text-tertiary">
@@ -282,13 +301,22 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
         </SheetHeader>
 
         {/* Tab bar */}
-        <div className="flex gap-0 mx-6 mt-5 border-b border-border-subtle">
+        <div ref={tabBarRef} className="relative flex gap-0 mx-6 mt-5 border-b border-border-subtle">
+          {tabIndicator && (
+            <span
+              className="absolute bottom-[-1px] h-[2px] bg-text-primary rounded-full transition-[left,width] duration-200 ease-out"
+              style={{ left: tabIndicator.left, width: tabIndicator.width }}
+            />
+          )}
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              ref={(el) => {
+                if (el) tabButtonRefs.current.set(tab.id, el);
+              }}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-all relative ${
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-colors duration-200 ${
                 activeTab === tab.id
                   ? "text-text-primary"
                   : "text-text-tertiary hover:text-text-secondary"
@@ -296,15 +324,12 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
             >
               <tab.icon className="w-3.5 h-3.5" />
               {tab.label}
-              {activeTab === tab.id && (
-                <span className="absolute bottom-[-1px] left-2 right-2 h-[2px] bg-text-primary rounded-full" />
-              )}
             </button>
           ))}
         </div>
 
         {/* Tab content */}
-        <div className="flex-1 px-6 py-5">
+        <div key={activeTab} className="flex-1 px-6 py-5 animate-in fade-in-0 duration-150">
           {activeTab === "details" && (
             <DetailsTab
               job={job}

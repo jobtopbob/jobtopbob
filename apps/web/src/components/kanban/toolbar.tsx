@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Plus, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FilterPanel } from "./filter-panel";
@@ -47,21 +47,50 @@ export function Toolbar({
   tags,
 }: ToolbarProps) {
   const [filterOpen, setFilterOpen] = useState(false);
+  const viewContainerRef = useRef<HTMLDivElement>(null);
+  const viewButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [pillStyle, setPillStyle] = useState<{ left: number; width: number } | null>(null);
+
+  useEffect(() => {
+    const container = viewContainerRef.current;
+    const activeBtn = viewButtonRefs.current.get(activeView);
+    if (!container || !activeBtn) return;
+    const containerRect = container.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    setPillStyle({
+      left: btnRect.left - containerRect.left,
+      width: btnRect.width,
+    });
+  }, [activeView]);
 
   return (
     <div className="space-y-0">
       <div className="flex items-center justify-between h-[52px] px-4 lg:px-7">
         {/* Left: View Switcher */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-full bg-surface p-1 h-9">
+          <div ref={viewContainerRef} className="relative flex items-center gap-1 rounded-full bg-surface p-1 h-9">
+            {pillStyle && (
+              <span
+                className="absolute rounded-full bg-card shadow-sm transition-[left,width] duration-200 ease-out"
+                style={{
+                  left: pillStyle.left,
+                  width: pillStyle.width,
+                  top: 4,
+                  bottom: 4,
+                }}
+              />
+            )}
             {views.map((view) => (
               <button
                 key={view.id}
+                ref={(el) => {
+                  if (el) viewButtonRefs.current.set(view.id, el);
+                }}
                 onClick={() => onViewChange(view.id)}
                 className={cn(
-                  "px-4 py-1.5 rounded-full text-xs font-medium transition-all",
+                  "relative z-10 px-4 py-1.5 rounded-full text-xs font-medium transition-colors duration-200",
                   activeView === view.id
-                    ? "bg-card text-text-primary shadow-sm"
+                    ? "text-text-primary"
                     : "text-text-muted hover:text-text-primary"
                 )}
               >

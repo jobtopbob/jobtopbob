@@ -22,7 +22,8 @@
       "Bash(grep -E \"\\\\.\\(sql|go\\)$\")",
       "Bash(pnpm tsc:*)",
       "Bash(pnpm --filter web exec tsc --noEmit)",
-      "Bash(grep -E \"\\\\.go$\")"
+      "Bash(grep -E \"\\\\.go$\")",
+      "Bash(npm ls:*)"
     ]
   }
 }
