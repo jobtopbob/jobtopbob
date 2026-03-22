@@ -21,7 +21,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(grep -E \"\\\\.\\(sql|go\\)$\")",
       "Bash(pnpm tsc:*)",
-      "Bash(pnpm --filter web exec tsc --noEmit)"
+      "Bash(pnpm --filter web exec tsc --noEmit)",
+      "Bash(grep -E \"\\\\.go$\")"
     ]
   }
 }

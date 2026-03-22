@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { useCreateJob } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
+import { SOURCES, LOCATION_TYPES, CURRENCIES } from "@/lib/constants";
 import { toast } from "sonner";
 
 interface AddJobSheetProps {
@@ -28,246 +32,328 @@ interface AddJobSheetProps {
   stages: Stage[];
 }
 
-const SOURCES = [
-  "LinkedIn",
-  "Indeed",
-  "Glassdoor",
-  "Company Website",
-  "Referral",
-  "Other",
-];
+interface FormState {
+  title: string;
+  companyName: string;
+  stageId: string;
+  source: string;
+  sourceUrl: string;
+  location: string;
+  locationType: string;
+  salaryCurrency: string;
+  salaryMin: string;
+  salaryMax: string;
+  appliedAt: string;
+  followUpAt: string;
+  interest: string;
+  jdRaw: string;
+}
 
-const LOCATION_TYPES = ["Remote", "Hybrid", "Onsite"];
+const initialForm: FormState = {
+  title: "",
+  companyName: "",
+  stageId: "",
+  source: "",
+  sourceUrl: "",
+  location: "",
+  locationType: "",
+  salaryCurrency: "USD",
+  salaryMin: "",
+  salaryMax: "",
+  appliedAt: "",
+  followUpAt: "",
+  interest: "",
+  jdRaw: "",
+};
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="text-[13px] font-semibold text-text-tertiary uppercase tracking-wide">
+      {children}
+    </h3>
+  );
+}
+
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium">
+        {label}
+        {required && <span className="text-brand-red ml-0.5">*</span>}
+      </Label>
+      {children}
+    </div>
+  );
+}
 
 export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
   const createJob = useCreateJob();
-  const [title, setTitle] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [stageId, setStageId] = useState("");
-  const [source, setSource] = useState("");
-  const [sourceUrl, setSourceUrl] = useState("");
-  const [location, setLocation] = useState("");
-  const [locationType, setLocationType] = useState("");
-  const [salaryMin, setSalaryMin] = useState("");
-  const [salaryMax, setSalaryMax] = useState("");
-  const [interest, setInterest] = useState("");
-  const [jdRaw, setJdRaw] = useState("");
+  const [form, setForm] = useState<FormState>(initialForm);
 
-  const resetForm = () => {
-    setTitle("");
-    setCompanyName("");
-    setStageId("");
-    setSource("");
-    setSourceUrl("");
-    setLocation("");
-    setLocationType("");
-    setSalaryMin("");
-    setSalaryMax("");
-    setInterest("");
-    setJdRaw("");
-  };
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!form.title.trim()) return;
 
     createJob.mutate(
       {
-        title: title.trim(),
-        stage_id: stageId || undefined,
-        source: source || undefined,
-        source_url: sourceUrl || undefined,
-        location: location || undefined,
-        location_type: locationType || undefined,
-        salary_min: salaryMin ? parseInt(salaryMin) : undefined,
-        salary_max: salaryMax ? parseInt(salaryMax) : undefined,
-        interest: interest ? parseInt(interest) : undefined,
-        jd_raw: jdRaw || undefined,
+        title: form.title.trim(),
+        stage_id: form.stageId || undefined,
+        source: form.source || undefined,
+        source_url: form.sourceUrl || undefined,
+        location: form.location || undefined,
+        location_type: form.locationType || undefined,
+        salary_currency: form.salaryCurrency || undefined,
+        salary_min: form.salaryMin ? parseInt(form.salaryMin) : undefined,
+        salary_max: form.salaryMax ? parseInt(form.salaryMax) : undefined,
+        interest: form.interest ? parseInt(form.interest) : undefined,
+        jd_raw: form.jdRaw || undefined,
+        applied_at: form.appliedAt
+          ? new Date(form.appliedAt).toISOString()
+          : undefined,
+        follow_up_at: form.followUpAt
+          ? new Date(form.followUpAt).toISOString()
+          : undefined,
       },
       {
         onSuccess: () => {
           toast.success("Job added successfully");
-          resetForm();
+          setForm(initialForm);
           onOpenChange(false);
         },
-        onError: () => {
-          toast.error("Failed to add job");
-        },
+        onError: () => toast.error("Failed to add job"),
       }
     );
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[440px] sm:max-w-[440px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Add Job Application</SheetTitle>
-        </SheetHeader>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) setForm(initialForm);
+        onOpenChange(nextOpen);
+      }}
+    >
+      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add Job Application</DialogTitle>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-          <div className="space-y-2">
-            <Label htmlFor="title">Job Title *</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Senior Frontend Engineer"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="company">Company</Label>
-            <Input
-              id="company"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="e.g. Stripe"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Stage</Label>
-            <Select value={stageId} onValueChange={(v) => setStageId(v ?? "")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select stage" />
-              </SelectTrigger>
-              <SelectContent>
-                {stages.map((stage) => (
-                  <SelectItem key={stage.id} value={stage.id}>
-                    {stage.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>Source</Label>
-              <Select value={source} onValueChange={(v) => setSource(v ?? "")}>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Role */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="sm:col-span-2">
+              <Field label="Job Title" required>
+                <Input
+                  value={form.title}
+                  onChange={(e) => set("title", e.target.value)}
+                  placeholder="e.g. Senior Frontend Engineer"
+                  required
+                />
+              </Field>
+            </div>
+            <Field label="Company">
+              <Input
+                value={form.companyName}
+                onChange={(e) => set("companyName", e.target.value)}
+                placeholder="e.g. Stripe"
+              />
+            </Field>
+            <Field label="Stage">
+              <Select
+                value={form.stageId}
+                onValueChange={(v) => set("stageId", v ?? "")}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select stage" />
                 </SelectTrigger>
                 <SelectContent>
-                  {SOURCES.map((s) => (
-                    <SelectItem key={s} value={s.toLowerCase()}>
-                      {s}
+                  {stages.map((stage) => (
+                    <SelectItem key={stage.id} value={stage.id}>
+                      {stage.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Location Type</Label>
-              <Select value={locationType} onValueChange={(v) => setLocationType(v ?? "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOCATION_TYPES.map((lt) => (
-                    <SelectItem key={lt} value={lt.toLowerCase()}>
-                      {lt}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            </Field>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="sourceUrl">Source URL</Label>
-            <Input
-              id="sourceUrl"
-              value={sourceUrl}
-              onChange={(e) => setSourceUrl(e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
+          <Separator />
 
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. San Francisco, CA"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="salaryMin">Salary Min</Label>
-              <Input
-                id="salaryMin"
-                type="number"
-                value={salaryMin}
-                onChange={(e) => setSalaryMin(e.target.value)}
-                placeholder="e.g. 150000"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="salaryMax">Salary Max</Label>
-              <Input
-                id="salaryMax"
-                type="number"
-                value={salaryMax}
-                onChange={(e) => setSalaryMax(e.target.value)}
-                placeholder="e.g. 200000"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Interest (1-5)</Label>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setInterest(String(n))}
-                  className={`w-8 h-8 rounded-full text-sm font-medium ${
-                    parseInt(interest) >= n
-                      ? "bg-[#FF8400] text-white"
-                      : "bg-[#F5F5F7] text-[#8B8FA3]"
-                  }`}
+          {/* Source & Location */}
+          <div className="space-y-3">
+            <SectionHeading>Source & Location</SectionHeading>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Source">
+                <Select
+                  value={form.source}
+                  onValueChange={(v) => set("source", v ?? "")}
                 >
-                  {n}
-                </button>
-              ))}
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Location Type">
+                <Select
+                  value={form.locationType}
+                  onValueChange={(v) => set("locationType", v ?? "")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOCATION_TYPES.map((lt) => (
+                      <SelectItem key={lt.value} value={lt.value}>
+                        {lt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Source URL">
+                <Input
+                  value={form.sourceUrl}
+                  onChange={(e) => set("sourceUrl", e.target.value)}
+                  placeholder="https://..."
+                />
+              </Field>
+              <Field label="Location">
+                <Input
+                  value={form.location}
+                  onChange={(e) => set("location", e.target.value)}
+                  placeholder="e.g. San Francisco, CA"
+                />
+              </Field>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="jdRaw">Job Description</Label>
-            <Textarea
-              id="jdRaw"
-              value={jdRaw}
-              onChange={(e) => setJdRaw(e.target.value)}
-              placeholder="Paste the job description here..."
-              rows={5}
-            />
+          <Separator />
+
+          {/* Compensation + Dates side by side */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="space-y-3">
+              <SectionHeading>Compensation</SectionHeading>
+              <Field label="Currency">
+                <Select
+                  value={form.salaryCurrency}
+                  onValueChange={(v) => set("salaryCurrency", v ?? "USD")}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Min">
+                  <Input
+                    type="number"
+                    value={form.salaryMin}
+                    onChange={(e) => set("salaryMin", e.target.value)}
+                    placeholder="150k"
+                  />
+                </Field>
+                <Field label="Max">
+                  <Input
+                    type="number"
+                    value={form.salaryMax}
+                    onChange={(e) => set("salaryMax", e.target.value)}
+                    placeholder="200k"
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <SectionHeading>Dates</SectionHeading>
+              <Field label="Applied Date">
+                <Input
+                  type="date"
+                  value={form.appliedAt}
+                  onChange={(e) => set("appliedAt", e.target.value)}
+                />
+              </Field>
+              <Field label="Follow Up">
+                <Input
+                  type="date"
+                  value={form.followUpAt}
+                  onChange={(e) => set("followUpAt", e.target.value)}
+                />
+              </Field>
+            </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
+          <Separator />
+
+          {/* Details */}
+          <div className="space-y-3">
+            <SectionHeading>Details</SectionHeading>
+            <Field label="Interest">
+              <div className="flex gap-1.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => set("interest", String(n))}
+                    className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${
+                      parseInt(form.interest) >= n
+                        ? "bg-brand text-white"
+                        : "bg-surface-hover text-text-muted hover:bg-surface-active"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </Field>
+            <Field label="Job Description">
+              <Textarea
+                value={form.jdRaw}
+                onChange={(e) => set("jdRaw", e.target.value)}
+                placeholder="Paste the job description here..."
+                rows={4}
+              />
+            </Field>
+          </div>
+
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>
               Cancel
-            </Button>
+            </DialogClose>
             <Button
               type="submit"
-              className="flex-1 bg-[#FF8400] text-white hover:bg-[#FF8400]/90"
-              disabled={!title.trim() || createJob.isPending}
+              className="bg-brand text-white hover:bg-brand/90"
+              disabled={!form.title.trim() || createJob.isPending}
             >
-              {createJob.isPending ? "Adding..." : "Add Job"}
+              {createJob.isPending ? "Adding..." : "Add Application"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
