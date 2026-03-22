@@ -36,22 +36,24 @@ type company struct {
 }
 
 type job struct {
-	Title          string
-	CompanyName    string
-	StageName      string
-	Status         string
-	CloseReason    string
-	Source         string
-	SourceURL      string
-	Location       string
-	LocationType   string
-	SalaryMin      int
-	SalaryMax      int
-	Interest       int
-	DaysAgo        int
-	AppliedDaysAgo int // 0 means not applied
-	FollowUpDays   int // positive = days from now, 0 = no follow-up
-	Tags           []string
+	Title              string
+	CompanyName        string
+	StageName          string
+	Status             string
+	CloseReason        string
+	Source             string
+	SourceURL          string
+	Location           string
+	LocationType       string
+	SalaryMin          int
+	SalaryMax          int
+	Interest           int
+	MonthOffset        int // -3 to +3 relative to current month (0 = this month)
+	DayOfMonth         int // 1-28 (safe for all months)
+	AppliedMonthOffset int // month offset for applied_at (ignored if AppliedDayOfMonth == 0)
+	AppliedDayOfMonth  int // 0 means not applied
+	FollowUpDays       int // positive = days from now, 0 = no follow-up
+	Tags               []string
 }
 
 var demoStages = []stage{
@@ -96,32 +98,38 @@ var demoTags = []struct {
 }
 
 var demoJobs = []job{
-	// Wishlist (3)
-	{"Staff Frontend Engineer", "Vercel", "Wishlist", "", "", "linkedin", "", "Remote", "remote", 200000, 280000, 5, 2, 0, 0, []string{"Remote", "React", "TypeScript"}},
-	{"Senior Full Stack Developer", "GitHub", "Wishlist", "", "", "company_website", "", "San Francisco, CA", "onsite", 180000, 250000, 4, 5, 0, 0, []string{"React", "TypeScript"}},
-	{"Principal Engineer", "Linear", "Wishlist", "", "", "referral", "", "Remote", "remote", 220000, 300000, 5, 1, 0, 0, []string{"Remote", "Startup", "TypeScript"}},
+	// --- 3 months ago: closed applications ---
+	//                                                                                                                                          MonthOff Day  ApplMo ApplDay FollowUp
+	{"Software Engineer", "Meta", "Rejected", "", "rejected", "linkedin", "", "Menlo Park, CA", "onsite", 180000, 250000, 3, -3, 5, -3, 8, 0, []string{"FAANG"}},
+	{"Senior Engineer", "Coinbase", "Withdrawn", "", "withdrawn", "indeed", "", "Remote", "remote", 170000, 230000, 3, -3, 18, -3, 20, 0, []string{"Remote"}},
 
-	// Applied (5)
-	{"Senior Software Engineer", "Stripe", "Applied", "", "", "linkedin", "", "San Francisco, CA", "hybrid", 190000, 260000, 5, 12, 12, 0, []string{"TypeScript", "Senior"}},
-	{"Frontend Engineer", "Figma", "Applied", "", "", "linkedin", "", "New York, NY", "onsite", 170000, 230000, 4, 18, 18, 0, []string{"React", "TypeScript"}},
-	{"Software Engineer II", "Datadog", "Applied", "", "", "indeed", "", "Remote", "remote", 160000, 210000, 3, 8, 8, 0, []string{"Remote"}},
-	{"Full Stack Engineer", "Cloudflare", "Applied", "", "", "linkedin", "", "Austin, TX", "hybrid", 150000, 200000, 3, 15, 14, 0, []string{"TypeScript"}},
-	{"Senior Platform Engineer", "Shopify", "Applied", "", "", "company_website", "", "Remote", "remote", 175000, 240000, 4, 6, 5, 3, []string{"Remote", "Senior"}},
+	// --- 2 months ago: offers and late-stage interviews ---
+	{"Senior Software Engineer", "HashiCorp", "Offer", "", "", "linkedin", "", "San Francisco, CA", "hybrid", 195000, 265000, 5, -2, 3, -2, 6, 0, []string{"Senior", "TypeScript"}},
+	{"Lead Frontend Engineer", "Slack", "Offer", "", "", "company_website", "", "Remote", "remote", 185000, 255000, 4, -2, 12, -2, 15, 0, []string{"Remote", "React"}},
+	{"Staff Software Engineer", "Airbnb", "Interviewing", "", "", "referral", "", "San Francisco, CA", "onsite", 210000, 290000, 5, -2, 20, -2, 22, 0, []string{"Senior", "FAANG"}},
 
-	// Interviewing (3)
-	{"Staff Software Engineer", "Airbnb", "Interviewing", "", "", "referral", "", "San Francisco, CA", "onsite", 210000, 290000, 5, 22, 20, 0, []string{"Senior", "FAANG"}},
-	{"Senior Backend Engineer", "Twilio", "Interviewing", "", "", "linkedin", "", "Remote", "remote", 165000, 220000, 4, 25, 24, 0, []string{"Remote", "TypeScript"}},
-	{"Engineering Manager", "Atlassian", "Interviewing", "", "", "referral", "", "New York, NY", "hybrid", 200000, 270000, 5, 20, 18, 1, []string{"Senior"}},
+	// --- 1 month ago: active applications and interviews ---
+	{"Senior Backend Engineer", "Twilio", "Interviewing", "", "", "linkedin", "", "Remote", "remote", 165000, 220000, 4, -1, 4, -1, 7, 0, []string{"Remote", "TypeScript"}},
+	{"Engineering Manager", "Atlassian", "Interviewing", "", "", "referral", "", "New York, NY", "hybrid", 200000, 270000, 5, -1, 10, -1, 14, 5, []string{"Senior"}},
+	{"Senior Software Engineer", "Stripe", "Applied", "", "", "linkedin", "", "San Francisco, CA", "hybrid", 190000, 260000, 5, -1, 18, -1, 18, 0, []string{"TypeScript", "Senior"}},
+	{"Frontend Engineer", "Figma", "Applied", "", "", "linkedin", "", "New York, NY", "onsite", 170000, 230000, 4, -1, 25, -1, 26, 0, []string{"React", "TypeScript"}},
 
-	// Offer (2)
-	{"Senior Software Engineer", "HashiCorp", "Offer", "", "", "linkedin", "", "San Francisco, CA", "hybrid", 195000, 265000, 5, 28, 27, 0, []string{"Senior", "TypeScript"}},
-	{"Lead Frontend Engineer", "Slack", "Offer", "", "", "company_website", "", "Remote", "remote", 185000, 255000, 4, 26, 25, 0, []string{"Remote", "React"}},
+	// --- Current month: recent activity ---
+	{"Software Engineer II", "Datadog", "Applied", "", "", "indeed", "", "Remote", "remote", 160000, 210000, 3, 0, 3, 0, 5, 0, []string{"Remote"}},
+	{"Full Stack Engineer", "Cloudflare", "Applied", "", "", "linkedin", "", "Austin, TX", "hybrid", 150000, 200000, 3, 0, 8, 0, 10, 0, []string{"TypeScript"}},
+	{"Senior Platform Engineer", "Shopify", "Applied", "", "", "company_website", "", "Remote", "remote", 175000, 240000, 4, 0, 12, 0, 14, 3, []string{"Remote", "Senior"}},
 
-	// Rejected (1)
-	{"Software Engineer", "Meta", "Rejected", "", "rejected", "linkedin", "", "Menlo Park, CA", "onsite", 180000, 250000, 3, 29, 28, 0, []string{"FAANG"}},
+	// --- 1 month from now: upcoming targets ---
+	{"Staff Frontend Engineer", "Vercel", "Wishlist", "", "", "linkedin", "", "Remote", "remote", 200000, 280000, 5, 1, 5, 0, 0, 0, []string{"Remote", "React", "TypeScript"}},
+	{"Senior Full Stack Developer", "GitHub", "Wishlist", "", "", "company_website", "", "San Francisco, CA", "onsite", 180000, 250000, 4, 1, 18, 0, 0, 0, []string{"React", "TypeScript"}},
 
-	// Withdrawn (1)
-	{"Senior Engineer", "Coinbase", "Withdrawn", "", "withdrawn", "indeed", "", "Remote", "remote", 170000, 230000, 3, 27, 26, 0, []string{"Remote"}},
+	// --- 2 months from now: future targets ---
+	{"Principal Engineer", "Linear", "Wishlist", "", "", "referral", "", "Remote", "remote", 220000, 300000, 5, 2, 10, 0, 0, 0, []string{"Remote", "Startup", "TypeScript"}},
+}
+
+// dateInMonth returns a date in the month offset from now, on the given day (1-28).
+func dateInMonth(now time.Time, monthOffset, day int) time.Time {
+	return time.Date(now.Year(), now.Month()+time.Month(monthOffset), day, 9, 0, 0, 0, now.Location())
 }
 
 // SeedDemoData inserts demo data into the database for showcasing the application.
@@ -136,9 +144,20 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		return nil
 	}
 
-	// Check if demo data already exists
+	// Check if demo data already exists.
+	// Must set RLS context because stages has row-level security enabled.
 	var stageCount int
-	err = pool.QueryRow(ctx, `SELECT COUNT(*) FROM stages WHERE user_id = $1`, demoUserID).Scan(&stageCount)
+	checkTx, err := pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin check transaction: %w", err)
+	}
+	_, err = checkTx.Exec(ctx, fmt.Sprintf("SET LOCAL app.current_user_id = '%s'", demoUserID))
+	if err != nil {
+		_ = checkTx.Rollback(ctx)
+		return fmt.Errorf("set current_user_id for check: %w", err)
+	}
+	err = checkTx.QueryRow(ctx, `SELECT COUNT(*) FROM stages WHERE user_id = $1`, demoUserID).Scan(&stageCount)
+	_ = checkTx.Rollback(ctx) // read-only, no need to commit
 	if err != nil {
 		return fmt.Errorf("check existing demo data: %w", err)
 	}
@@ -152,6 +171,13 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		return fmt.Errorf("begin transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
+
+	// Set the RLS context so INSERT policies (user_id = current_user_id()) pass.
+	// The pool connects as jobtopbob_app which is subject to RLS.
+	_, err = tx.Exec(ctx, fmt.Sprintf("SET LOCAL app.current_user_id = '%s'", demoUserID))
+	if err != nil {
+		return fmt.Errorf("set current_user_id for seed: %w", err)
+	}
 
 	now := time.Now()
 
@@ -220,11 +246,11 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 	for _, j := range demoJobs {
 		stageID := stageIDs[j.StageName]
 		companyID := companyIDs[j.CompanyName]
-		createdAt := now.Add(-time.Duration(j.DaysAgo) * 24 * time.Hour)
+		createdAt := dateInMonth(now, j.MonthOffset, j.DayOfMonth)
 
 		var appliedAt *time.Time
-		if j.AppliedDaysAgo > 0 {
-			t := now.Add(-time.Duration(j.AppliedDaysAgo) * 24 * time.Hour)
+		if j.AppliedDayOfMonth > 0 {
+			t := dateInMonth(now, j.AppliedMonthOffset, j.AppliedDayOfMonth)
 			appliedAt = &t
 		}
 
