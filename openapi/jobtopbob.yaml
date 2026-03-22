@@ -447,6 +447,47 @@ components:
         color:
           type: string
 
+    Resume:
+      type: object
+      required: [id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        rxresume_id:
+          type: string
+          nullable: true
+        is_base:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateResumeRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        template:
+          type: string
+          enum: [azurill, bronzor, chikorita, ditgar, ditto, gengar, glalie, kakuna, lapras, leafish, onyx, pikachu, rhyhorn]
+        with_sample_data:
+          type: boolean
+
+    UpdateResumeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        is_base:
+          type: boolean
+
     Stats:
       type: object
       properties:
@@ -956,3 +997,159 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Stats"
+
+  /api/v1/resumes:
+    get:
+      summary: List all resumes for the current user
+      responses:
+        "200":
+          description: List of resumes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Resume"
+    post:
+      summary: Create a new resume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResumeRequest"
+      responses:
+        "201":
+          description: Resume created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/resumes/{id}:
+    get:
+      summary: Get a resume by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Resume details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+        "404":
+          description: Resume not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Update a resume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateResumeRequest"
+      responses:
+        "200":
+          description: Resume updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+        "404":
+          description: Resume not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Delete a resume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Resume deleted
+        "404":
+          description: Resume not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/resumes/{id}/pdf:
+    get:
+      summary: Export resume as PDF
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: PDF download URL
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url]
+                properties:
+                  url:
+                    type: string
+        "404":
+          description: Resume not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/resumes/{id}/base:
+    put:
+      summary: Set a resume as the base resume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Resume set as base
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+        "404":
+          description: Resume not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"

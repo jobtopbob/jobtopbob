@@ -23,7 +23,9 @@
       "Bash(pnpm tsc:*)",
       "Bash(pnpm --filter web exec tsc --noEmit)",
       "Bash(grep -E \"\\\\.go$\")",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:api.github.com)"
     ]
   }
 }

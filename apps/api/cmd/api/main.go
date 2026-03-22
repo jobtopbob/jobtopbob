@@ -17,6 +17,7 @@ import (
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/database"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/router"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/seed"
+	"github.com/jobtopbob/jobtopbob/apps/api/internal/services/rxresume"
 	"github.com/jobtopbob/jobtopbob/internal/storage"
 )
 
@@ -76,8 +77,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Create RxResume client
+	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.RxResumeAPIKey)
+
 	// Create router
-	engine := router.New(pool, cfg.JWKSURL, cfg.CORSOrigins)
+	engine := router.New(pool, cfg.JWKSURL, cfg.CORSOrigins, rxClient)
 
 	// Start HTTP server with graceful shutdown
 	srv := &http.Server{

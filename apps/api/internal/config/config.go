@@ -14,6 +14,10 @@ type Config struct {
 	CORSOrigins          []string
 	SeedDemoData         bool
 
+	// Resume Builder (Reactive Resume v5)
+	ResumeBuilderURL string
+	RxResumeAPIKey   string
+
 	// S3-compatible storage (RustFS in dev, any S3 provider in prod)
 	S3Bucket    string
 	S3Region    string
@@ -34,6 +38,8 @@ func Load() *Config {
 		JWKSURL:              getEnv("JWKS_URL", "http://localhost:3000/api/auth/jwks"),
 		CORSOrigins:          strings.Split(getEnv("CORS_ORIGINS", "http://localhost:3000"), ","),
 		SeedDemoData:         getEnv("SEED_DEMO_DATA", "false") == "true",
+		ResumeBuilderURL:    getEnv("RESUME_BUILDER_URL", "http://localhost:3010"),
+		RxResumeAPIKey:      getEnv("RXRESUME_API_KEY", ""),
 		S3Bucket:             getEnv("S3_BUCKET", "jobtopbob"),
 		S3Region:             getEnv("S3_REGION", "us-east-1"),
 		S3Endpoint:           getEnv("S3_ENDPOINT", "http://localhost:9000"),

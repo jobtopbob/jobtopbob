@@ -96,6 +96,20 @@ services:
       APP_URL: ${RESUME_BUILDER_PUBLIC_URL:-http://localhost:3010}
       PRINTER_APP_URL: http://resume-builder:3000
       PRINTER_ENDPOINT: ${RESUME_PRINTER_ENDPOINT:-ws://resume-printer:3000}
+      # Disable local auth — force SSO only
+      # Email/password auth is disabled; signups are allowed so OAuth/SSO
+      # can auto-create accounts for authenticated JobTopBob users.
+      FLAG_DISABLE_EMAIL_AUTH: "true"
+      # SSO via JobTopBob's OIDC provider
+      OAUTH_PROVIDER_NAME: JobTopBob
+      OAUTH_CLIENT_ID: ${RXRESUME_OAUTH_CLIENT_ID:-rxresume}
+      OAUTH_CLIENT_SECRET: ${RXRESUME_OAUTH_CLIENT_SECRET:-rxresume-secret}
+      # Authorization URL is browser-facing (user's browser navigates here)
+      OAUTH_AUTHORIZATION_URL: ${OAUTH_BROWSER_URL:-http://localhost:3000}/api/auth/oauth2/authorize
+      # Token + UserInfo URLs are server-to-server (RxResume backend → JobTopBob)
+      OAUTH_TOKEN_URL: ${OAUTH_INTERNAL_URL:-http://host.docker.internal:3000}/api/auth/oauth2/token
+      OAUTH_USER_INFO_URL: ${OAUTH_INTERNAL_URL:-http://host.docker.internal:3000}/api/auth/oauth2/userinfo
+      OAUTH_SCOPES: openid profile email
     ports:
       - "${RESUME_BUILDER_PORT:-3010}:3000"
     volumes:
