@@ -100,7 +100,7 @@ export function Sidebar() {
 
   if (collapsed) {
     return (
-      <aside className="flex flex-col w-16 h-full bg-sidebar border-r border-sidebar-border shrink-0">
+      <aside className="hidden lg:flex flex-col w-16 h-full bg-sidebar border-r border-sidebar-border shrink-0">
         {/* Header - logo icon only */}
         <div className="flex items-center justify-center h-[60px] border-b border-sidebar-border">
           <div className="w-7 h-7 rounded-lg bg-primary shrink-0" />
@@ -165,7 +165,13 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex flex-col w-60 h-full bg-sidebar border-r border-sidebar-border shrink-0">
+    <>
+      {/* Mobile backdrop */}
+      <div
+        className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+        onClick={() => setCollapsed(true)}
+      />
+    <aside className="fixed inset-y-0 left-0 z-50 lg:static lg:z-auto flex flex-col w-60 h-full bg-sidebar border-r border-sidebar-border shrink-0">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 h-[60px] px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -282,5 +288,6 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

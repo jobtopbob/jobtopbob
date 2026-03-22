@@ -19,7 +19,9 @@
       "Bash(ls:*)",
       "Bash(grep -E \"\\\\.\\(ts|yaml|json\\)$\")",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(grep -E \"\\\\.\\(sql|go\\)$\")"
+      "Bash(grep -E \"\\\\.\\(sql|go\\)$\")",
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm --filter web exec tsc --noEmit)"
     ]
   }
 }

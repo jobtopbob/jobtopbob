@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 interface SidebarContextValue {
   collapsed: boolean;
@@ -10,8 +10,20 @@ interface SidebarContextValue {
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
 
+function getIsMobile() {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < 1024;
+}
+
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => getIsMobile());
+
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 1023px)");
+    const handler = (e: MediaQueryListEvent) => setCollapsed(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
 
   return (
     <SidebarContext.Provider

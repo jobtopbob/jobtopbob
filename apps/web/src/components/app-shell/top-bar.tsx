@@ -25,7 +25,7 @@ export function TopBar({ userName }: TopBarProps) {
   };
 
   return (
-    <header className="flex items-center h-14 px-6 bg-white shrink-0">
+    <header className="flex items-center h-14 px-3 sm:px-6 bg-white shrink-0">
       {/* Expand button (shown when sidebar is collapsed) */}
       {collapsed && (
         <button
@@ -37,7 +37,7 @@ export function TopBar({ userName }: TopBarProps) {
       )}
 
       {/* Search */}
-      <div className="flex items-center gap-2 w-[280px] px-3 py-2 rounded-xl bg-[#F5F5F7] border border-[#EBEBEF]">
+      <div className="flex items-center gap-2 w-full max-w-[280px] px-3 py-2 rounded-xl bg-[#F5F5F7] border border-[#EBEBEF]">
         <Search className="w-4 h-4 text-[#8B8FA3] shrink-0" />
         <span className="text-sm text-[#8B8FA3]">
           Search or type a command...
@@ -64,10 +64,10 @@ export function TopBar({ userName }: TopBarProps) {
                   .slice(0, 2)
                   .toUpperCase()}
               </div>
-              <span className="text-sm font-medium text-[#1A1A2E]">
+              <span className="hidden sm:inline text-sm font-medium text-[#1A1A2E]">
                 {userName}
               </span>
-              <ChevronDown className="w-4 h-4 text-[#8B8FA3]" />
+              <ChevronDown className="hidden sm:block w-4 h-4 text-[#8B8FA3]" />
             </button>
           }
         />

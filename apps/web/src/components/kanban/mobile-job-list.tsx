@@ -176,7 +176,9 @@ function MobileJobRow({ job, stages, onClick }: MobileJobRowProps) {
             size="sm"
             className="text-xs h-7 px-2 max-w-[100px]"
           >
-            <SelectValue placeholder="Stage" />
+            <SelectValue placeholder="Stage">
+              {stages.find((s) => s.id === job.stage_id)?.name ?? "Stage"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent align="end">
             {stages.map((stage) => (
