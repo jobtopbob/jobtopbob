@@ -1,6 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { LoginForm } from "@/components/login-form"
+import { AppLogo } from "@/components/app-logo"
 
 export default function LoginPage() {
   return (
@@ -8,9 +9,7 @@ export default function LoginPage() {
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-medium">
-            <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <span className="text-xs font-bold">J</span>
-            </div>
+            <AppLogo size={24} />
             JobTopBob
           </Link>
         </div>
@@ -25,6 +24,7 @@ export default function LoginPage() {
           src="/login-cover.jpg"
           alt="Login cover"
           fill
+          sizes="50vw"
           className="object-cover dark:brightness-[0.2] dark:grayscale"
           priority
         />

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AppLogo } from "@/components/app-logo";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -109,7 +110,7 @@ export function Sidebar() {
       <aside className="hidden lg:flex flex-col w-16 h-full bg-sidebar border-r border-sidebar-border shrink-0">
         {/* Header - logo icon only */}
         <div className="flex items-center justify-center h-[60px] border-b border-sidebar-border">
-          <div className="w-7 h-7 rounded-lg bg-primary shrink-0" />
+          <AppLogo size={28} />
         </div>
 
         {/* Navigation - icon only */}
@@ -181,7 +182,7 @@ export function Sidebar() {
       {/* Header */}
       <div className="flex items-center justify-between gap-2 h-[60px] px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-7 h-7 rounded-lg bg-primary shrink-0" />
+          <AppLogo size={28} />
           <span className="text-sidebar-accent-foreground text-[15px] font-bold leading-none truncate">
             JobTopBob
           </span>
