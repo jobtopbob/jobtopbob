@@ -111,6 +111,11 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
 
   if (collapsed) return null;
 
+  // pillStyle is null on server / before first measure — use that as the "mounted" signal
+  // to avoid hydration mismatch. Both buttons render with the default color on the server.
+  const isLight = pillStyle !== null && resolvedTheme === "light";
+  const isDark = pillStyle !== null && resolvedTheme === "dark";
+
   return (
     <div ref={containerRef} className="relative flex rounded-full bg-sidebar-accent p-1">
       {pillStyle && (
@@ -124,16 +129,16 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
         onClick={() => setTheme("light")}
         className="relative z-10 flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full"
       >
-        <Sun className={cn("w-4 h-4 transition-colors duration-200", resolvedTheme === "light" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
-        <span className={cn("text-xs font-medium transition-colors duration-200", resolvedTheme === "light" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Light</span>
+        <Sun className={cn("w-4 h-4 transition-colors duration-200", isLight ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
+        <span className={cn("text-xs font-medium transition-colors duration-200", isLight ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Light</span>
       </button>
       <button
         ref={darkRef}
         onClick={() => setTheme("dark")}
         className="relative z-10 flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full"
       >
-        <Moon className={cn("w-4 h-4 transition-colors duration-200", resolvedTheme === "dark" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
-        <span className={cn("text-xs font-medium transition-colors duration-200", resolvedTheme === "dark" ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Dark</span>
+        <Moon className={cn("w-4 h-4 transition-colors duration-200", isDark ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
+        <span className={cn("text-xs font-medium transition-colors duration-200", isDark ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Dark</span>
       </button>
     </div>
   );
