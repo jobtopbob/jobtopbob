@@ -28,6 +28,7 @@ import {
   Wrench,
   FolderOpen,
   Award,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Resume } from "@/hooks/use-resumes";
@@ -48,7 +49,7 @@ const TEMPLATE_GRADIENTS: Record<string, string> = {
   rhyhorn: "from-red-400/25 to-red-600/10",
 };
 
-function formatRelativeTime(dateStr: string): string {
+export function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -72,6 +73,7 @@ const SECTION_ICONS = [
 
 interface ResumeCardProps {
   resume: Resume;
+  index?: number;
   onEdit: () => void;
   onDuplicate: () => void;
   onExportPDF: () => void;
@@ -81,6 +83,7 @@ interface ResumeCardProps {
 
 export function ResumeCard({
   resume,
+  index = 0,
   onEdit,
   onDuplicate,
   onExportPDF,
@@ -93,11 +96,17 @@ export function ResumeCard({
     TEMPLATE_GRADIENTS[templateKey] ?? "from-stone-400/25 to-stone-600/10";
 
   return (
-    <div className="group rounded-xl border border-border-subtle bg-card overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+    <div
+      className="group rounded-xl border border-border-subtle bg-card overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 animate-in fade-in-0 slide-in-from-bottom-2 duration-300 fill-mode-both"
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
       {/* Thumbnail / Preview Area */}
-      <div className="relative h-44 overflow-hidden">
+      <div className="relative h-52 overflow-hidden">
         <div
-          className={cn("absolute inset-0 bg-gradient-to-br", gradient)}
+          className={cn(
+            "absolute inset-0 bg-gradient-to-br shadow-[inset_0_-20px_40px_-20px_rgba(0,0,0,0.08)]",
+            gradient
+          )}
           style={
             resume.primary_color
               ? {
@@ -110,22 +119,22 @@ export function ResumeCard({
         {hasSyncedData ? (
           /* Synced content preview */
           <div className="absolute inset-4 flex flex-col gap-1.5">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               {resume.picture_url && (
                 <img
                   src={resume.picture_url}
                   alt=""
-                  className="w-8 h-8 rounded-full object-cover border border-white/20"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-white/30 shadow-sm"
                 />
               )}
               <div className="min-w-0">
                 {resume.full_name && (
-                  <p className="text-[13px] font-semibold text-text-primary truncate">
+                  <p className="text-sm font-semibold text-text-primary truncate">
                     {resume.full_name}
                   </p>
                 )}
                 {resume.headline && (
-                  <p className="text-[11px] text-text-muted truncate">
+                  <p className="text-[11px] text-text-secondary truncate">
                     {resume.headline}
                   </p>
                 )}
@@ -133,10 +142,13 @@ export function ResumeCard({
             </div>
 
             {resume.latest_role && (
-              <p className="text-[11px] text-text-muted/80 truncate mt-1">
+              <p className="text-[11px] text-text-muted/80 truncate mt-0.5">
                 {resume.latest_role}
               </p>
             )}
+
+            {/* Divider */}
+            <div className="h-px bg-text-primary/10 my-1" />
 
             {/* Section counts */}
             <div className="flex flex-wrap gap-1.5 mt-auto">
@@ -146,7 +158,7 @@ export function ResumeCard({
                 return (
                   <span
                     key={key}
-                    className="inline-flex items-center gap-1 rounded-md bg-background/60 backdrop-blur-sm px-1.5 py-0.5 text-[10px] text-text-muted"
+                    className="inline-flex items-center gap-1 rounded-md bg-white/70 dark:bg-white/10 backdrop-blur-md px-1.5 py-0.5 text-[11px] text-text-muted"
                   >
                     <Icon className="w-3 h-3" />
                     {count} {label}
@@ -161,7 +173,7 @@ export function ResumeCard({
                 {resume.top_skills.map((skill) => (
                   <span
                     key={skill}
-                    className="rounded-full bg-background/50 backdrop-blur-sm px-2 py-0.5 text-[10px] text-text-muted"
+                    className="rounded-full bg-white/60 dark:bg-white/10 backdrop-blur-md px-2 py-0.5 text-[10px] text-text-muted"
                   >
                     {skill}
                   </span>
@@ -172,6 +184,8 @@ export function ResumeCard({
         ) : (
           /* Fallback: document lines decoration */
           <div className="absolute inset-4 flex flex-col gap-2 opacity-30">
+            <div className="h-2.5 w-1/3 rounded-sm bg-text-primary/25" />
+            <div className="h-px w-full bg-text-primary/10 mt-1 mb-1" />
             <div className="h-3 w-2/3 rounded-sm bg-text-primary/20" />
             <div className="h-2 w-full rounded-sm bg-text-primary/10" />
             <div className="h-2 w-full rounded-sm bg-text-primary/10" />
@@ -182,21 +196,22 @@ export function ResumeCard({
           </div>
         )}
 
-        {/* Hover overlay with quick actions */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+        {/* Hover overlay with quick actions — frosted glass */}
+        <div className="absolute inset-0 backdrop-blur-0 group-hover:backdrop-blur-sm bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
           <TooltipProvider delay={0}>
             <Tooltip>
               <TooltipTrigger
                 render={
                   <Button
                     variant="secondary"
-                    size="icon-sm"
+                    size="sm"
                     onClick={onEdit}
-                    className="shadow-md"
+                    className="bg-white/90 dark:bg-white/20 text-text-primary backdrop-blur-sm shadow-lg gap-1.5"
                   />
                 }
               >
-                <ExternalLink className="w-4 h-4" />
+                <Pencil className="w-3.5 h-3.5" />
+                Edit
               </TooltipTrigger>
               <TooltipContent>Edit in Builder</TooltipContent>
             </Tooltip>
@@ -205,47 +220,65 @@ export function ResumeCard({
                 render={
                   <Button
                     variant="secondary"
-                    size="icon-sm"
+                    size="sm"
                     onClick={onExportPDF}
-                    className="shadow-md"
+                    className="bg-white/90 dark:bg-white/20 text-text-primary backdrop-blur-sm shadow-lg gap-1.5"
                   />
                 }
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-3.5 h-3.5" />
+                Export
               </TooltipTrigger>
               <TooltipContent>Export PDF</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
+      </div>
 
-        {/* Badges */}
-        <div className="absolute top-2.5 right-2.5 flex gap-1.5">
+      {/* Card Body */}
+      <div className="p-4 pt-3.5 space-y-2.5">
+        <h3 className="font-heading font-semibold text-text-primary truncate text-base">
+          {resume.name}
+        </h3>
+
+        {/* Badges row */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           {resume.is_base && (
-            <Badge variant="default" className="text-[10px] shadow-sm">
+            <Badge variant="default" className="text-[10px]">
               Base
             </Badge>
           )}
           {resume.template && (
-            <Badge variant="secondary" className="text-[10px] shadow-sm capitalize">
+            <Badge
+              variant="secondary"
+              className="text-[10px] capitalize"
+            >
               {resume.template}
             </Badge>
           )}
+          {resume.primary_color && (
+            <span
+              className="w-3 h-3 rounded-full border border-border-subtle shrink-0"
+              style={{ backgroundColor: resume.primary_color }}
+            />
+          )}
         </div>
-      </div>
 
-      {/* Card Body */}
-      <div className="p-4 space-y-2">
-        <h3 className="font-heading font-medium text-text-primary truncate text-[15px]">
-          {resume.name}
-        </h3>
-        <p className="text-xs text-text-muted">
+        {/* Updated time */}
+        <p className="text-xs text-text-muted flex items-center gap-1">
+          <Clock className="w-3 h-3" />
           Updated {formatRelativeTime(resume.updated_at)}
         </p>
 
         {/* Actions row */}
         <div className="flex items-center justify-between pt-1">
-          <Button variant="ghost" size="sm" onClick={onEdit} className="gap-1.5 text-xs">
-            <Pencil className="w-3.5 h-3.5" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onEdit}
+            className="gap-1.5 text-xs"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
             Edit
           </Button>
 

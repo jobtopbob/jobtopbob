@@ -39,18 +39,24 @@ export function ResumeGrid({
 
   if (resumes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-surface flex items-center justify-center mb-4">
-          <FileText className="w-8 h-8 text-text-muted" />
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        {/* Overlapping document icon composition */}
+        <div className="relative w-24 h-24 mb-6">
+          <div className="absolute w-16 h-20 rounded-xl bg-surface border border-border-subtle left-1/2 top-1/2 -translate-x-[55%] -translate-y-[55%] rotate-[-6deg]" />
+          <div className="absolute w-16 h-20 rounded-xl bg-card border border-border-subtle shadow-sm left-1/2 top-1/2 -translate-x-[50%] -translate-y-[50%] rotate-[3deg]" />
+          <div className="absolute w-16 h-20 rounded-xl bg-card border border-border-subtle shadow-md left-1/2 top-1/2 -translate-x-[45%] -translate-y-[45%] flex items-center justify-center">
+            <FileText className="w-7 h-7 text-text-muted" />
+          </div>
         </div>
-        <h3 className="font-heading text-lg font-semibold text-text-primary">
-          No resumes yet
+        <h3 className="font-heading text-xl font-semibold text-text-primary">
+          Start building your resume collection
         </h3>
-        <p className="text-sm text-text-muted mt-1 mb-6 max-w-sm">
-          Create your first resume in the Resume Builder. Once created, it will
-          appear here automatically when you sync.
+        <p className="text-sm text-text-muted mt-2 mb-8 max-w-md leading-relaxed">
+          Create your first resume in the Resume Builder. Your resumes will sync
+          automatically and appear here, ready for tailoring to specific job
+          applications.
         </p>
-        <Button onClick={onCreateClick} className="gap-1.5">
+        <Button onClick={onCreateClick} size="lg" className="gap-2">
           <ExternalLink className="w-4 h-4" />
           Open Resume Builder
         </Button>
@@ -63,19 +69,29 @@ export function ResumeGrid({
       {/* Create New card */}
       <button
         onClick={onCreateClick}
-        className="rounded-xl border-2 border-dashed border-border-subtle bg-transparent flex flex-col items-center justify-center gap-3 min-h-[280px] text-text-muted hover:border-primary/50 hover:text-primary transition-all duration-200 hover:bg-primary/5 cursor-pointer"
+        className="group/create rounded-xl bg-gradient-to-br from-brand/20 via-brand-blue/20 to-brand-green/20 p-[1px] min-h-[320px] cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
       >
-        <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center">
-          <Plus className="w-6 h-6" />
+        <div className="rounded-[11px] bg-card h-full flex flex-col items-center justify-center gap-4 transition-colors duration-200 group-hover/create:bg-card/80">
+          <div className="w-14 h-14 rounded-2xl bg-surface flex items-center justify-center transition-transform duration-200 group-hover/create:scale-110">
+            <Plus className="w-7 h-7 text-text-muted group-hover/create:text-primary transition-colors duration-200" />
+          </div>
+          <div className="text-center">
+            <span className="text-sm font-semibold text-text-primary block">
+              Create New Resume
+            </span>
+            <span className="text-xs text-text-muted mt-0.5 block">
+              Open the Resume Builder
+            </span>
+          </div>
         </div>
-        <span className="text-sm font-medium">Create in Builder</span>
       </button>
 
       {/* Resume cards */}
-      {resumes.map((resume) => (
+      {resumes.map((resume, i) => (
         <ResumeCard
           key={resume.id}
           resume={resume}
+          index={i + 1}
           onEdit={() => onEdit(resume)}
           onDuplicate={() => onDuplicate(resume)}
           onExportPDF={() => onExportPDF(resume)}

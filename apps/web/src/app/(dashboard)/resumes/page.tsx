@@ -12,12 +12,45 @@ import {
 import { ResumeGrid } from "@/components/resumes/resume-grid";
 import { DeleteResumeDialog } from "@/components/resumes/delete-resume-dialog";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, RefreshCw } from "lucide-react";
+import {
+  ExternalLink,
+  RefreshCw,
+  FileText,
+  Star,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const BUILDER_URL =
   process.env.NEXT_PUBLIC_RESUME_BUILDER_URL ?? "http://localhost:3010";
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex-1 rounded-xl bg-card border border-border-subtle p-5">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center shrink-0">
+          <Icon className="w-5 h-5 text-text-muted" />
+        </div>
+        <div className="min-w-0">
+          <span className="text-[13px] font-medium text-text-muted block">
+            {label}
+          </span>
+          <div className="text-2xl font-bold leading-none text-text-primary mt-1 truncate">
+            {value}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ResumesPage() {
   const queryClient = useQueryClient();
@@ -120,7 +153,8 @@ export default function ResumesPage() {
               Resumes
             </h1>
             <p className="text-sm text-text-muted mt-1.5">
-              Manage and tailor your resumes for different job applications.
+              Sync from the builder, tailor for specific roles, and export when
+              ready.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -145,24 +179,18 @@ export default function ResumesPage() {
           </div>
         </div>
 
-        {/* Stats bar */}
+        {/* Stats Row */}
         <div className="flex gap-4">
-          <div className="flex-1 rounded-xl bg-card border border-border-subtle p-5">
-            <span className="text-[13px] font-medium text-text-muted">
-              Total Resumes
-            </span>
-            <div className="text-[28px] font-bold leading-none text-text-primary mt-2">
-              {isLoading ? "--" : (resumes?.length ?? 0)}
-            </div>
-          </div>
-          <div className="flex-1 rounded-xl bg-card border border-border-subtle p-5">
-            <span className="text-[13px] font-medium text-text-muted">
-              Base Resume
-            </span>
-            <div className="text-[28px] font-bold leading-none text-text-primary mt-2 truncate">
-              {isLoading ? "--" : (baseResume?.name ?? "Not set")}
-            </div>
-          </div>
+          <StatCard
+            icon={FileText}
+            label="Total Resumes"
+            value={isLoading ? "--" : String(resumes?.length ?? 0)}
+          />
+          <StatCard
+            icon={Star}
+            label="Base Resume"
+            value={isLoading ? "--" : (baseResume?.name ?? "Not set")}
+          />
         </div>
 
         {/* Resume Grid */}
