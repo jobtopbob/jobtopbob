@@ -172,16 +172,46 @@ func extractResumeFields(resumeID pgtype.UUID, userID string, data json.RawMessa
 	return params
 }
 
+// SyncStatus represents the outcome of a sync operation.
+type SyncStatus string
+
+const (
+	SyncStatusSynced  SyncStatus = "synced"
+	SyncStatusSkipped SyncStatus = "skipped"
+	SyncStatusFailed  SyncStatus = "failed"
+)
+
+// SyncResumesResponse wraps the sync result with status metadata.
+type SyncResumesResponse struct {
+	Resumes     []ResumeResponse `json:"resumes"`
+	SyncStatus  SyncStatus       `json:"sync_status"`
+	SyncMessage string           `json:"sync_message,omitempty"`
+}
+
 // syncResumeSnapshots fetches data from RxResume and updates local snapshots for stale resumes.
-func syncResumeSnapshots(ctx context.Context, q *db.Queries, userID string, rxClient *rxresume.Client, staleResumes []db.Resume) {
+// It uses per-user DB reads when userEmail is provided, falling back to the OpenAPI.
+func syncResumeSnapshots(ctx context.Context, q *db.Queries, userID, userEmail string, rxClient *rxresume.Client, staleResumes []db.Resume) {
 	for _, resume := range staleResumes {
 		if !resume.RxresumeID.Valid || resume.RxresumeID.String == "" {
 			continue
 		}
 
-		detail, err := rxClient.GetResume(ctx, resume.RxresumeID.String)
+		var detail *rxresume.ResumeDetail
+		var err error
+
+		// Prefer per-user DB read if email is available
+		if userEmail != "" {
+			detail, err = rxClient.GetResumeForUser(ctx, userEmail, resume.RxresumeID.String)
+			if err != nil {
+				slog.Warn("per-user rxresume DB read failed in snapshot sync", "error", err)
+			}
+		}
+		// Fall back to API key if we don't have a result yet
+		if detail == nil && rxClient.APIConfigured() {
+			detail, err = rxClient.GetResume(ctx, resume.RxresumeID.String)
+		}
+
 		if err != nil {
-			// If 404, clear the link
 			if strings.Contains(err.Error(), "404") {
 				slog.Warn("rxresume not found, clearing link", "rxresume_id", resume.RxresumeID.String)
 				_ = q.ClearResumeSync(ctx, db.ClearResumeSyncParams{ID: resume.ID, UserID: userID})
@@ -199,7 +229,7 @@ func syncResumeSnapshots(ctx context.Context, q *db.Queries, userID string, rxCl
 }
 
 // ListResumes returns all resumes for a user, syncing stale snapshots from RxResume.
-func ListResumes(ctx context.Context, q *db.Queries, userID string, rxClient *rxresume.Client) ([]ResumeResponse, error) {
+func ListResumes(ctx context.Context, q *db.Queries, userID, userEmail string, rxClient *rxresume.Client) ([]ResumeResponse, error) {
 	// Inline sync for stale resumes if RxResume is configured
 	if rxClient.Configured() {
 		stale, err := q.ListStaleResumes(ctx, userID)
@@ -208,7 +238,7 @@ func ListResumes(ctx context.Context, q *db.Queries, userID string, rxClient *rx
 		} else if len(stale) > 0 {
 			syncCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 			defer cancel()
-			syncResumeSnapshots(syncCtx, q, userID, rxClient, stale)
+			syncResumeSnapshots(syncCtx, q, userID, userEmail, rxClient, stale)
 		}
 	}
 
@@ -236,7 +266,7 @@ func CreateResume(ctx context.Context, q *db.Queries, userID string, rxClient *r
 	var rxResumeID pgtype.Text
 
 	// Sync to RxResume if API key is configured
-	if rxClient.Configured() {
+	if rxClient.APIConfigured() {
 		slug := strings.ToLower(strings.ReplaceAll(params.Name, " ", "-"))
 
 		rxResume, err := rxClient.CreateResume(ctx, rxresume.CreateResumeRequest{
@@ -276,7 +306,7 @@ func CreateResume(ctx context.Context, q *db.Queries, userID string, rxClient *r
 }
 
 // GetResume returns a single resume, syncing from RxResume if stale.
-func GetResume(ctx context.Context, q *db.Queries, userID string, rxClient *rxresume.Client, id pgtype.UUID) (ResumeResponse, error) {
+func GetResume(ctx context.Context, q *db.Queries, userID, userEmail string, rxClient *rxresume.Client, id pgtype.UUID) (ResumeResponse, error) {
 	resume, err := q.GetResume(ctx, db.GetResumeParams{ID: id, UserID: userID})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ResumeResponse{}, ErrNotFound
@@ -291,7 +321,7 @@ func GetResume(ctx context.Context, q *db.Queries, userID string, rxClient *rxre
 		if isStale {
 			syncCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 			defer cancel()
-			syncResumeSnapshots(syncCtx, q, userID, rxClient, []db.Resume{resume})
+			syncResumeSnapshots(syncCtx, q, userID, userEmail, rxClient, []db.Resume{resume})
 			// Re-read after sync
 			if updated, err := q.GetResume(ctx, db.GetResumeParams{ID: id, UserID: userID}); err == nil {
 				resume = updated
@@ -346,8 +376,8 @@ func DeleteResume(ctx context.Context, q *db.Queries, userID string, rxClient *r
 		return err
 	}
 
-	// Best-effort delete from RxResume if linked and configured
-	if rxClient.Configured() && resume.RxresumeID.Valid && resume.RxresumeID.String != "" {
+	// Best-effort delete from RxResume if linked and API configured
+	if rxClient.APIConfigured() && resume.RxresumeID.Valid && resume.RxresumeID.String != "" {
 		if err := rxClient.DeleteResume(ctx, resume.RxresumeID.String); err != nil {
 			slog.Warn("failed to delete from rxresume", "rxresume_id", resume.RxresumeID.String, "error", err)
 		}
@@ -367,7 +397,7 @@ func DeleteResume(ctx context.Context, q *db.Queries, userID string, rxClient *r
 
 // ExportResumePDF proxies PDF export from RxResume.
 func ExportResumePDF(ctx context.Context, q *db.Queries, userID string, rxClient *rxresume.Client, id pgtype.UUID) (string, error) {
-	if !rxClient.Configured() {
+	if !rxClient.APIConfigured() {
 		return "", fmt.Errorf("resume builder API key not configured — set RXRESUME_API_KEY to enable PDF export")
 	}
 
@@ -410,20 +440,52 @@ func SetBaseResume(ctx context.Context, q *db.Queries, userID string, id pgtype.
 
 // SyncResumes forces a full sync of all linked resumes from RxResume.
 // It also discovers new resumes created directly in RxResume and imports them locally.
-func SyncResumes(ctx context.Context, q *db.Queries, userID string, rxClient *rxresume.Client) ([]ResumeResponse, error) {
+func SyncResumes(ctx context.Context, q *db.Queries, userID, userEmail string, rxClient *rxresume.Client) (*SyncResumesResponse, error) {
 	if !rxClient.Configured() {
-		return ListResumes(ctx, q, userID, rxClient)
+		resumes, err := listResumesFromDB(ctx, q, userID)
+		if err != nil {
+			return nil, err
+		}
+		return &SyncResumesResponse{
+			Resumes:     resumes,
+			SyncStatus:  SyncStatusSkipped,
+			SyncMessage: "Resume Builder is not configured. Set RXRESUME_DATABASE_URL or RXRESUME_API_KEY in your environment.",
+		}, nil
 	}
 
 	syncCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	// Fetch all resumes from RxResume
-	rxResumes, err := rxClient.ListResumes(syncCtx)
-	if err != nil {
+	// Fetch all resumes from RxResume — prefer per-user DB read, fall back to API key
+	var rxResumes []rxresume.Resume
+	var err error
+	var fetched bool
+
+	if userEmail != "" {
+		rxResumes, err = rxClient.ListResumesForUser(syncCtx, userEmail)
+		if err != nil {
+			slog.Warn("per-user rxresume DB read failed, trying API key", "error", err)
+		} else {
+			fetched = true
+		}
+	}
+	if !fetched && rxClient.APIConfigured() {
+		rxResumes, err = rxClient.ListResumes(syncCtx)
+		if err == nil {
+			fetched = true
+		}
+	}
+	if !fetched {
 		slog.Warn("failed to list rxresume resumes during sync", "error", err)
-		// Fall back to local data
-		return listResumesFromDB(ctx, q, userID)
+		resumes, dbErr := listResumesFromDB(ctx, q, userID)
+		if dbErr != nil {
+			return nil, dbErr
+		}
+		return &SyncResumesResponse{
+			Resumes:     resumes,
+			SyncStatus:  SyncStatusFailed,
+			SyncMessage: "Could not reach Resume Builder. Your local resumes are shown, but new resumes were not imported.",
+		}, nil
 	}
 
 	// Get all local resumes
@@ -443,7 +505,6 @@ func SyncResumes(ctx context.Context, q *db.Queries, userID string, rxClient *rx
 	// Discover new resumes from RxResume and create local records
 	for _, rxr := range rxResumes {
 		if _, exists := knownRxIDs[rxr.ID]; !exists {
-			// New resume in RxResume — create a local record
 			newResume, err := q.CreateResume(ctx, db.CreateResumeParams{
 				UserID:     userID,
 				Name:       rxr.Name,
@@ -472,7 +533,7 @@ func SyncResumes(ctx context.Context, q *db.Queries, userID string, rxClient *rx
 	}
 
 	if len(linked) > 0 {
-		syncResumeSnapshots(syncCtx, q, userID, rxClient, linked)
+		syncResumeSnapshots(syncCtx, q, userID, userEmail, rxClient, linked)
 	}
 
 	// Re-read after snapshot updates
@@ -485,7 +546,10 @@ func SyncResumes(ctx context.Context, q *db.Queries, userID string, rxClient *rx
 	for i, r := range resumes {
 		result[i] = resumeToResponse(r)
 	}
-	return result, nil
+	return &SyncResumesResponse{
+		Resumes:    result,
+		SyncStatus: SyncStatusSynced,
+	}, nil
 }
 
 // listResumesFromDB is a helper that returns resumes from DB only (no sync).

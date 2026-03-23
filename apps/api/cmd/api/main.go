@@ -77,8 +77,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Connect to RxResume database (optional, enables per-user sync)
+	rxDB, err := rxresume.ConnectDB(ctx, cfg.RxResumeDBURL)
+	if err != nil {
+		slog.Warn("failed to connect to rxresume database, falling back to API key", "error", err)
+	}
+	if rxDB != nil {
+		defer rxDB.Close()
+	}
+
 	// Create RxResume client
-	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.RxResumeAPIKey)
+	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.RxResumeAPIKey, rxDB)
 
 	// Create router
 	engine := router.New(pool, cfg.JWKSURL, cfg.CORSOrigins, rxClient)

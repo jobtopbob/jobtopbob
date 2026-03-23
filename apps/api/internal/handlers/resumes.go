@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,13 +12,30 @@ import (
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/services/rxresume"
 )
 
+// getUserEmail looks up the authenticated user's email from the user table.
+func getUserEmail(c *gin.Context) string {
+	tx := getTx(c)
+	userID := getUserID(c)
+	var email string
+	err := tx.QueryRow(c.Request.Context(), `SELECT email FROM "user" WHERE id = $1`, userID).Scan(&email)
+	if err != nil {
+		slog.Warn("failed to look up user email for rxresume sync", "user_id", userID, "error", err)
+		return ""
+	}
+	return email
+}
+
 // ListResumes handles GET /api/v1/resumes
 func ListResumes(rxClient *rxresume.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		q := db.New(getTx(c))
 		userID := getUserID(c)
+		var userEmail string
+		if rxClient.Configured() {
+			userEmail = getUserEmail(c)
+		}
 
-		resumes, err := services.ListResumes(c.Request.Context(), q, userID, rxClient)
+		resumes, err := services.ListResumes(c.Request.Context(), q, userID, userEmail, rxClient)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list resumes"})
 			return
@@ -69,8 +87,12 @@ func GetResume(rxClient *rxresume.Client) gin.HandlerFunc {
 
 		q := db.New(getTx(c))
 		userID := getUserID(c)
+		var userEmail string
+		if rxClient.Configured() {
+			userEmail = getUserEmail(c)
+		}
 
-		resume, err := services.GetResume(c.Request.Context(), q, userID, rxClient, id)
+		resume, err := services.GetResume(c.Request.Context(), q, userID, userEmail, rxClient, id)
 		if errors.Is(err, services.ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "resume not found"})
 			return
@@ -178,14 +200,15 @@ func SyncResumes(rxClient *rxresume.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		q := db.New(getTx(c))
 		userID := getUserID(c)
+		userEmail := getUserEmail(c)
 
-		resumes, err := services.SyncResumes(c.Request.Context(), q, userID, rxClient)
+		resp, err := services.SyncResumes(c.Request.Context(), q, userID, userEmail, rxClient)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to sync resumes"})
 			return
 		}
 
-		c.JSON(http.StatusOK, resumes)
+		c.JSON(http.StatusOK, resp)
 	}
 }
 

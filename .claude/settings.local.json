@@ -25,7 +25,9 @@
       "Bash(grep -E \"\\\\.go$\")",
       "Bash(npm ls:*)",
       "Bash(cat:*)",
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh api:*)"
     ]
   }
 }

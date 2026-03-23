@@ -930,13 +930,13 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Synced resume list */
+                /** @description Sync result with status metadata */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["Resume"][];
+                        "application/json": components["schemas"]["SyncResumesResponse"];
                     };
                 };
             };
@@ -1391,6 +1391,12 @@ export interface components {
             /** @enum {string} */
             template?: "azurill" | "bronzor" | "chikorita" | "ditgar" | "ditto" | "gengar" | "glalie" | "kakuna" | "lapras" | "leafish" | "onyx" | "pikachu" | "rhyhorn";
             with_sample_data?: boolean;
+        };
+        SyncResumesResponse: {
+            resumes: components["schemas"]["Resume"][];
+            /** @enum {string} */
+            sync_status: "synced" | "skipped" | "failed";
+            sync_message?: string;
         };
         UpdateResumeRequest: {
             name?: string;

@@ -81,7 +81,28 @@ export default function ResumesPage() {
 
   const handleSync = () => {
     syncResumes.mutate(undefined, {
-      onSuccess: () => toast.success("Resumes synced"),
+      onSuccess: (data) => {
+        switch (data.sync_status) {
+          case "synced":
+            toast.success(
+              data.resumes.length > 0
+                ? `Synced ${data.resumes.length} resume${data.resumes.length === 1 ? "" : "s"}`
+                : "Sync complete — no resumes found in Resume Builder"
+            );
+            break;
+          case "skipped":
+            toast.warning(
+              data.sync_message ??
+                "Sync skipped — Resume Builder is not configured"
+            );
+            break;
+          case "failed":
+            toast.error(
+              data.sync_message ?? "Sync failed — showing local resumes only"
+            );
+            break;
+        }
+      },
       onError: () => toast.error("Failed to sync resumes"),
     });
   };

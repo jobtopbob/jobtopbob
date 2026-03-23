@@ -9,6 +9,7 @@ import type { components } from "@jobtopbob/api-client";
 export type Resume = components["schemas"]["Resume"];
 export type CreateResumeRequest = components["schemas"]["CreateResumeRequest"];
 export type UpdateResumeRequest = components["schemas"]["UpdateResumeRequest"];
+export type SyncResumesResponse = components["schemas"]["SyncResumesResponse"];
 
 const resumeKeys = {
   all: ["resumes"] as const,
@@ -121,10 +122,10 @@ export function useSyncResumes() {
     mutationFn: async () => {
       const { data, error } = await api.POST("/api/v1/resumes/sync");
       if (error) throw new Error(getErrorMessage(error));
-      return data as Resume[];
+      return data as SyncResumesResponse;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(resumeKeys.all, data);
+      queryClient.setQueryData(resumeKeys.all, data.resumes);
     },
   });
 }

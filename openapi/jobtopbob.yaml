@@ -525,6 +525,20 @@ components:
         with_sample_data:
           type: boolean
 
+    SyncResumesResponse:
+      type: object
+      required: [resumes, sync_status]
+      properties:
+        resumes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Resume"
+        sync_status:
+          type: string
+          enum: [synced, skipped, failed]
+        sync_message:
+          type: string
+
     UpdateResumeRequest:
       type: object
       properties:
@@ -1082,13 +1096,11 @@ paths:
       summary: Force sync all resumes from RxResume
       responses:
         "200":
-          description: Synced resume list
+          description: Sync result with status metadata
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Resume"
+                $ref: "#/components/schemas/SyncResumesResponse"
 
   /api/v1/resumes/{id}:
     get:
