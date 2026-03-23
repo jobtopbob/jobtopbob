@@ -20,10 +20,12 @@ import (
 
 // Client communicates with a Reactive Resume v5 instance.
 type Client struct {
-	baseURL    string
-	apiKey     string
-	rxDB       *pgxpool.Pool // read-only connection to rxresume database
-	httpClient *http.Client
+	baseURL           string
+	apiKey            string
+	printerHTTPURL    string        // Browserless Chromium HTTP endpoint for direct PDF generation
+	printerAppURL     string        // URL the printer uses to reach the resume builder (Docker-internal)
+	rxDB              *pgxpool.Pool // read-only connection to rxresume database
+	httpClient        *http.Client
 }
 
 // Resume is the list-level representation returned by RxResume (no data field).
@@ -60,15 +62,23 @@ type PDFResponse struct {
 // NewClient creates a new RxResume client.
 // rxDB is an optional read-only connection to the rxresume database for per-user sync.
 // apiKey is optional and used for write operations via the OpenAPI.
-func NewClient(baseURL, apiKey string, rxDB *pgxpool.Pool) *Client {
+// printerHTTPURL is the Browserless Chromium HTTP endpoint for direct PDF generation.
+func NewClient(baseURL, apiKey, printerHTTPURL, printerAppURL string, rxDB *pgxpool.Pool) *Client {
 	return &Client{
-		baseURL: strings.TrimRight(baseURL, "/"),
-		apiKey:  apiKey,
-		rxDB:    rxDB,
+		baseURL:        strings.TrimRight(baseURL, "/"),
+		apiKey:         apiKey,
+		printerHTTPURL: strings.TrimRight(printerHTTPURL, "/"),
+		printerAppURL:  strings.TrimRight(printerAppURL, "/"),
+		rxDB:           rxDB,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
 	}
+}
+
+// BuilderConfigured returns true if the resume builder URL is set.
+func (c *Client) BuilderConfigured() bool {
+	return c.baseURL != ""
 }
 
 // Configured returns true if the client can read resume data.
@@ -80,6 +90,11 @@ func (c *Client) Configured() bool {
 // APIConfigured returns true if the OpenAPI (x-api-key) is configured for write operations.
 func (c *Client) APIConfigured() bool {
 	return c.baseURL != "" && c.apiKey != ""
+}
+
+// PDFConfigured returns true if PDF export is possible via either the API key or direct Chromium.
+func (c *Client) PDFConfigured() bool {
+	return c.APIConfigured() || (c.printerHTTPURL != "" && c.printerAppURL != "")
 }
 
 // lookupRxUserID finds the RxResume user ID by email in the rxresume database.
@@ -174,26 +189,6 @@ func (c *Client) GetResumeForUser(ctx context.Context, email, resumeID string) (
 	return &r, nil
 }
 
-// ListResumes returns all resumes via the OpenAPI (x-api-key auth).
-// Deprecated: prefer ListResumesForUser for per-user sync.
-func (c *Client) ListResumes(ctx context.Context) ([]Resume, error) {
-	var resumes []Resume
-	if err := c.do(ctx, http.MethodGet, "/api/openapi/resumes", nil, &resumes); err != nil {
-		return nil, fmt.Errorf("rxresume list: %w", err)
-	}
-	return resumes, nil
-}
-
-// GetResume fetches a single resume with full data via the OpenAPI.
-// Deprecated: prefer GetResumeForUser for per-user sync.
-func (c *Client) GetResume(ctx context.Context, id string) (*ResumeDetail, error) {
-	var resume ResumeDetail
-	if err := c.do(ctx, http.MethodGet, "/api/openapi/resumes/"+id, nil, &resume); err != nil {
-		return nil, fmt.Errorf("rxresume get %s: %w", id, err)
-	}
-	return &resume, nil
-}
-
 // CreateResume creates a new resume via the OpenAPI.
 func (c *Client) CreateResume(ctx context.Context, req CreateResumeRequest) (*Resume, error) {
 	var resume Resume
@@ -218,6 +213,59 @@ func (c *Client) ExportPDF(ctx context.Context, id string) (string, error) {
 		return "", fmt.Errorf("rxresume export pdf %s: %w", id, err)
 	}
 	return resp.URL, nil
+}
+
+// ExportPDFDirect generates a PDF by calling Browserless Chromium's HTTP API directly.
+// It constructs the RxResume artboard URL and sends it to Chromium for rendering.
+func (c *Client) ExportPDFDirect(ctx context.Context, rxResumeID string) ([]byte, error) {
+	if c.printerHTTPURL == "" || c.printerAppURL == "" {
+		return nil, fmt.Errorf("printer HTTP URL or printer app URL not configured")
+	}
+
+	// Use the printer-visible URL (Docker-internal) so the Chromium container can reach RxResume
+	artboardURL := c.printerAppURL + "/artboard/resume/" + rxResumeID
+
+	reqBody := map[string]any{
+		"url": artboardURL,
+		"options": map[string]any{
+			"printBackground": true,
+			"format":          "A4",
+		},
+		"gotoOptions": map[string]any{
+			"waitUntil": "networkidle0",
+			"timeout":   30000,
+		},
+	}
+
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("marshal printer request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.printerHTTPURL+"/pdf", bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("create printer request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 60 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("printer http request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("printer unexpected status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	pdfBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read printer response: %w", err)
+	}
+
+	return pdfBytes, nil
 }
 
 // ConnectDB opens a read-only connection pool to the rxresume database.

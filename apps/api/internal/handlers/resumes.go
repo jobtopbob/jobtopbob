@@ -25,6 +25,14 @@ func getUserEmail(c *gin.Context) string {
 	return email
 }
 
+// GetResumeConfig handles GET /api/v1/resumes/config
+func GetResumeConfig(rxClient *rxresume.Client, builderPublicURL string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		config := services.GetResumeConfig(rxClient, builderPublicURL)
+		c.JSON(http.StatusOK, config)
+	}
+}
+
 // ListResumes handles GET /api/v1/resumes
 func ListResumes(rxClient *rxresume.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -181,17 +189,28 @@ func ExportResumePDF(rxClient *rxresume.Client) gin.HandlerFunc {
 		q := db.New(getTx(c))
 		userID := getUserID(c)
 
-		url, err := services.ExportResumePDF(c.Request.Context(), q, userID, rxClient, id)
+		pdfBytes, err := services.ExportResumePDF(c.Request.Context(), q, userID, rxClient, id)
 		if errors.Is(err, services.ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "resume not found"})
 			return
 		}
+		if errors.Is(err, services.ErrNotConfigured) {
+			slog.Warn("pdf export attempted but not configured", "user_id", userID)
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "PDF export is not available — configure the resume printer"})
+			return
+		}
+		if errors.Is(err, services.ErrNotLinked) {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "This resume is not linked to the builder — open it in the builder first"})
+			return
+		}
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to export pdf"})
+			slog.Error("failed to export resume pdf", "user_id", userID, "resume_id", id, "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to export PDF"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"url": url})
+		c.Header("Content-Disposition", `attachment; filename="resume.pdf"`)
+		c.Data(http.StatusOK, "application/pdf", pdfBytes)
 	}
 }
 

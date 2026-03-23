@@ -10,7 +10,7 @@ import (
 )
 
 // New creates a configured Gin engine with all routes and middleware.
-func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxresume.Client) *gin.Engine {
+func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxresume.Client, builderPublicURL string) *gin.Engine {
 	r := gin.New()
 
 	// Global middleware
@@ -56,6 +56,7 @@ func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxr
 		// Resumes — sync must be registered before :id wildcard routes
 		resumes := v1.Group("/resumes")
 		{
+			resumes.GET("/config", handlers.GetResumeConfig(rxClient, builderPublicURL))
 			resumes.GET("", handlers.ListResumes(rxClient))
 			resumes.POST("", handlers.CreateResume(rxClient))
 			resumes.POST("/sync", handlers.SyncResumes(rxClient))

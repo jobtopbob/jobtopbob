@@ -842,6 +842,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/resumes/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get resume feature configuration status */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Configuration status */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResumeConfig"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/resumes": {
         parameters: {
             query?: never;
@@ -1077,19 +1113,26 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description PDF download URL */
+                /** @description PDF file */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            url: string;
-                        };
+                        "application/pdf": string;
                     };
                 };
                 /** @description Resume not found */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description PDF export not available */
+                503: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1401,6 +1444,13 @@ export interface components {
         UpdateResumeRequest: {
             name?: string;
             is_base?: boolean;
+        };
+        ResumeConfig: {
+            builder_configured: boolean;
+            builder_url: string;
+            sync_configured: boolean;
+            pdf_configured: boolean;
+            api_configured: boolean;
         };
         Stats: {
             /** Format: int64 */

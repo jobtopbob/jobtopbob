@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useResumes,
+  useResumeConfig,
   useExportResumePDF,
   useSetBaseResume,
   useSyncResumes,
@@ -13,16 +14,22 @@ import { ResumeGrid } from "@/components/resumes/resume-grid";
 import { DeleteResumeDialog } from "@/components/resumes/delete-resume-dialog";
 import { Button } from "@/components/ui/button";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   ExternalLink,
   RefreshCw,
   FileText,
   Star,
+  AlertTriangle,
+  CheckCircle2,
+  Circle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-const BUILDER_URL =
-  process.env.NEXT_PUBLIC_RESUME_BUILDER_URL ?? "http://localhost:3010";
 
 function StatCard({
   icon: Icon,
@@ -52,8 +59,38 @@ function StatCard({
   );
 }
 
+function FeatureStatus({
+  configured,
+  label,
+  hint,
+}: {
+  configured: boolean;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <li className="flex items-start gap-2 text-sm">
+      {configured ? (
+        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+      ) : (
+        <Circle className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
+      )}
+      <span className={configured ? "text-text-primary" : "text-text-muted"}>
+        {label}
+        {!configured && (
+          <span className="text-text-muted/70">
+            {" "}
+            &mdash; {hint}
+          </span>
+        )}
+      </span>
+    </li>
+  );
+}
+
 export default function ResumesPage() {
   const queryClient = useQueryClient();
+  const { data: config } = useResumeConfig();
   const { data: resumes, isLoading } = useResumes();
   const [deleteTarget, setDeleteTarget] = useState<Resume | null>(null);
 
@@ -62,6 +99,7 @@ export default function ResumesPage() {
   const syncResumes = useSyncResumes();
 
   const baseResume = resumes?.find((r) => r.is_base);
+  const builderURL = config?.builder_url ?? "";
 
   // Auto-refresh when user returns to this tab (e.g., after editing in RxResume)
   useEffect(() => {
@@ -76,23 +114,15 @@ export default function ResumesPage() {
   }, [queryClient]);
 
   const openBuilder = () => {
-    window.open(BUILDER_URL, "_blank");
+    if (builderURL) window.open(builderURL, "_blank");
   };
 
   const handleEdit = (resume: Resume) => {
+    if (!builderURL) return;
     const url = resume.rxresume_id
-      ? `${BUILDER_URL}/builder/${resume.rxresume_id}`
-      : BUILDER_URL;
+      ? `${builderURL}/builder/${resume.rxresume_id}`
+      : builderURL;
     window.open(url, "_blank");
-  };
-
-  const handleDuplicate = (resume: Resume) => {
-    // Duplicate opens the builder — user can duplicate from within RxResume
-    if (resume.rxresume_id) {
-      window.open(`${BUILDER_URL}/builder/${resume.rxresume_id}`, "_blank");
-    } else {
-      window.open(BUILDER_URL, "_blank");
-    }
   };
 
   const handleExportPDF = (resume: Resume) => {
@@ -101,7 +131,7 @@ export default function ResumesPage() {
         window.open(data.url, "_blank");
         toast.success("PDF exported");
       },
-      onError: () => toast.error("Failed to export PDF"),
+      onError: (error) => toast.error(error.message),
     });
   };
 
@@ -158,26 +188,96 @@ export default function ResumesPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleSync}
-              disabled={syncResumes.isPending}
-              title="Sync from Resume Builder"
-            >
-              <RefreshCw
-                className={cn(
-                  "w-4 h-4",
-                  syncResumes.isPending && "animate-spin"
-                )}
-              />
-            </Button>
-            <Button onClick={openBuilder} className="gap-1.5">
-              <ExternalLink className="w-4 h-4" />
-              Open Builder
-            </Button>
+            <TooltipProvider delay={0}>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleSync}
+                      disabled={
+                        syncResumes.isPending || !config?.sync_configured
+                      }
+                    />
+                  }
+                >
+                  <RefreshCw
+                    className={cn(
+                      "w-4 h-4",
+                      syncResumes.isPending && "animate-spin"
+                    )}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {config?.sync_configured
+                    ? "Sync from Resume Builder"
+                    : "Set RXRESUME_DATABASE_URL to enable syncing"}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      onClick={openBuilder}
+                      disabled={!config?.builder_configured}
+                      className="gap-1.5"
+                    />
+                  }
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open Builder
+                </TooltipTrigger>
+                <TooltipContent>
+                  {config?.builder_configured
+                    ? "Open Resume Builder"
+                    : "Resume Builder is not configured"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
+
+        {/* Feature Status — shows when a core feature is unconfigured */}
+        {config &&
+          (!config.builder_configured ||
+            !config.sync_configured ||
+            !config.pdf_configured) && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                </div>
+                <div className="space-y-2.5">
+                  <h3 className="font-semibold text-text-primary text-sm">
+                    Some resume features need configuration
+                  </h3>
+                  <ul className="space-y-1.5">
+                    <FeatureStatus
+                      configured={config.builder_configured}
+                      label="Resume Builder"
+                      hint="Set RESUME_BUILDER_URL and run docker compose up -d"
+                    />
+                    <FeatureStatus
+                      configured={config.sync_configured}
+                      label="Resume Sync"
+                      hint="Set RXRESUME_DATABASE_URL and ensure the rxresume_reader role exists"
+                    />
+                    <FeatureStatus
+                      configured={config.pdf_configured}
+                      label="PDF Export"
+                      hint="Set RESUME_PRINTER_HTTP_URL and RESUME_BUILDER_PRINTER_URL"
+                    />
+                    <FeatureStatus
+                      configured={config.api_configured}
+                      label="API Key (optional)"
+                      hint="Set RXRESUME_API_KEY to enable create/delete via API"
+                    />
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* Stats Row */}
         <div className="flex gap-4">
@@ -197,9 +297,9 @@ export default function ResumesPage() {
         <ResumeGrid
           resumes={resumes ?? []}
           isLoading={isLoading}
+          config={config}
           onCreateClick={openBuilder}
           onEdit={handleEdit}
-          onDuplicate={handleDuplicate}
           onExportPDF={handleExportPDF}
           onSetBase={handleSetBase}
           onDelete={(resume) => setDeleteTarget(resume)}

@@ -4,9 +4,11 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 import type { components } from "@jobtopbob/api-client";
 
 export type Resume = components["schemas"]["Resume"];
+export type ResumeConfig = components["schemas"]["ResumeConfig"];
 export type CreateResumeRequest = components["schemas"]["CreateResumeRequest"];
 export type UpdateResumeRequest = components["schemas"]["UpdateResumeRequest"];
 export type SyncResumesResponse = components["schemas"]["SyncResumesResponse"];
@@ -21,6 +23,18 @@ function getErrorMessage(error: unknown): string {
     return (error as { error: string }).error;
   }
   return "An error occurred";
+}
+
+export function useResumeConfig() {
+  return useQuery({
+    queryKey: ["resumes", "config"] as const,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/v1/resumes/config");
+      if (error) throw new Error(getErrorMessage(error));
+      return data as ResumeConfig;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 }
 
 export function useResumes() {
@@ -106,11 +120,23 @@ export function useDeleteResume() {
 export function useExportResumePDF() {
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data, error } = await api.GET("/api/v1/resumes/{id}/pdf", {
-        params: { path: { id } },
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+      const { data: tokenData } = await authClient.token();
+      const response = await fetch(`${baseUrl}/api/v1/resumes/${id}/pdf`, {
+        headers: tokenData?.token
+          ? { Authorization: `Bearer ${tokenData.token}` }
+          : {},
       });
-      if (error) throw new Error(getErrorMessage(error));
-      return data as { url: string };
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error ?? `Failed to export PDF (${response.status})`,
+        );
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      return { url };
     },
   });
 }

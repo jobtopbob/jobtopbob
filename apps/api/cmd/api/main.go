@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/jobtopbob/jobtopbob/apps/api/db"
@@ -23,6 +24,12 @@ import (
 
 func main() {
 	ctx := context.Background()
+
+	// Load .env.local if present (host-specific overrides, does not override existing env vars).
+	// .env.local is gitignored and safe for host-based dev (localhost URLs).
+	// The root .env is Docker-oriented (service hostnames like redis, web) and should NOT
+	// be loaded when running on the host.
+	_ = godotenv.Load(".env.local", "../../.env.local")
 
 	// Load config
 	cfg := config.Load()
@@ -87,10 +94,10 @@ func main() {
 	}
 
 	// Create RxResume client
-	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.RxResumeAPIKey, rxDB)
+	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.RxResumeAPIKey, cfg.ResumePrinterHTTPURL, cfg.ResumeBuilderPrinterURL, rxDB)
 
 	// Create router
-	engine := router.New(pool, cfg.JWKSURL, cfg.CORSOrigins, rxClient)
+	engine := router.New(pool, cfg.JWKSURL, cfg.CORSOrigins, rxClient, cfg.ResumeBuilderPublicURL)
 
 	// Start HTTP server with graceful shutdown
 	srv := &http.Server{

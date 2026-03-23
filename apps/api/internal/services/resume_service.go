@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"net/http"
 	"strings"
 	"time"
 
@@ -75,6 +77,26 @@ func uuidToString(u pgtype.UUID) string {
 	b := u.Bytes
 	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x",
 		b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
+}
+
+// ResumeConfigResponse tells the frontend which resume features are available.
+type ResumeConfigResponse struct {
+	BuilderConfigured bool   `json:"builder_configured"`
+	BuilderURL        string `json:"builder_url"`
+	SyncConfigured    bool   `json:"sync_configured"`
+	PDFConfigured     bool   `json:"pdf_configured"`
+	APIConfigured     bool   `json:"api_configured"`
+}
+
+// GetResumeConfig returns the current resume feature configuration status.
+func GetResumeConfig(rxClient *rxresume.Client, builderPublicURL string) ResumeConfigResponse {
+	return ResumeConfigResponse{
+		BuilderConfigured: rxClient.BuilderConfigured(),
+		BuilderURL:        builderPublicURL,
+		SyncConfigured:    rxClient.Configured(),
+		PDFConfigured:     rxClient.PDFConfigured(),
+		APIConfigured:     rxClient.APIConfigured(),
+	}
 }
 
 // rxResumeData represents the relevant parts of the RxResume JSON data for extraction.
@@ -196,21 +218,11 @@ func syncResumeSnapshots(ctx context.Context, q *db.Queries, userID, userEmail s
 			continue
 		}
 
-		var detail *rxresume.ResumeDetail
-		var err error
-
-		// Prefer per-user DB read if email is available
-		if userEmail != "" {
-			detail, err = rxClient.GetResumeForUser(ctx, userEmail, resume.RxresumeID.String)
-			if err != nil {
-				slog.Warn("per-user rxresume DB read failed in snapshot sync", "error", err)
-			}
-		}
-		// Fall back to API key if we don't have a result yet
-		if detail == nil && rxClient.APIConfigured() {
-			detail, err = rxClient.GetResume(ctx, resume.RxresumeID.String)
+		if userEmail == "" {
+			continue
 		}
 
+		detail, err := rxClient.GetResumeForUser(ctx, userEmail, resume.RxresumeID.String)
 		if err != nil {
 			if strings.Contains(err.Error(), "404") {
 				slog.Warn("rxresume not found, clearing link", "rxresume_id", resume.RxresumeID.String)
@@ -395,29 +407,64 @@ func DeleteResume(ctx context.Context, q *db.Queries, userID string, rxClient *r
 	return nil
 }
 
-// ExportResumePDF proxies PDF export from RxResume.
-func ExportResumePDF(ctx context.Context, q *db.Queries, userID string, rxClient *rxresume.Client, id pgtype.UUID) (string, error) {
-	if !rxClient.APIConfigured() {
-		return "", fmt.Errorf("resume builder API key not configured — set RXRESUME_API_KEY to enable PDF export")
+// ExportResumePDF generates a PDF for the given resume.
+// Priority: (1) RxResume API if key configured, (2) direct Browserless Chromium.
+func ExportResumePDF(ctx context.Context, q *db.Queries, userID string, rxClient *rxresume.Client, id pgtype.UUID) ([]byte, error) {
+	if !rxClient.PDFConfigured() {
+		return nil, fmt.Errorf("%w: configure RESUME_PRINTER_HTTP_URL or RXRESUME_API_KEY to enable PDF export", ErrNotConfigured)
 	}
 
 	resume, err := q.GetResume(ctx, db.GetResumeParams{ID: id, UserID: userID})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return "", ErrNotFound
+		return nil, ErrNotFound
 	}
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if !resume.RxresumeID.Valid || resume.RxresumeID.String == "" {
-		return "", fmt.Errorf("resume is not linked to the builder — open it in the builder first")
+		return nil, fmt.Errorf("%w: open it in the builder first", ErrNotLinked)
 	}
 
-	url, err := rxClient.ExportPDF(ctx, resume.RxresumeID.String)
-	if err != nil {
-		return "", fmt.Errorf("export pdf: %w", err)
+	// Priority 1: Use RxResume API if key is configured
+	if rxClient.APIConfigured() {
+		url, err := rxClient.ExportPDF(ctx, resume.RxresumeID.String)
+		if err == nil {
+			pdfBytes, fetchErr := fetchPDFFromURL(ctx, url)
+			if fetchErr == nil {
+				return pdfBytes, nil
+			}
+			slog.Warn("failed to fetch PDF from rxresume URL, trying direct printer", "error", fetchErr)
+		} else {
+			slog.Warn("rxresume API PDF export failed, trying direct printer", "error", err)
+		}
 	}
-	return url, nil
+
+	// Priority 2: Direct Browserless Chromium
+	pdfBytes, err := rxClient.ExportPDFDirect(ctx, resume.RxresumeID.String)
+	if err != nil {
+		return nil, fmt.Errorf("direct pdf export: %w", err)
+	}
+
+	return pdfBytes, nil
+}
+
+// fetchPDFFromURL downloads a PDF from the given URL.
+func fetchPDFFromURL(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+	return io.ReadAll(resp.Body)
 }
 
 // SetBaseResume clears any existing base resume and sets the given one as base.
@@ -449,33 +496,28 @@ func SyncResumes(ctx context.Context, q *db.Queries, userID, userEmail string, r
 		return &SyncResumesResponse{
 			Resumes:     resumes,
 			SyncStatus:  SyncStatusSkipped,
-			SyncMessage: "Resume Builder is not configured. Set RXRESUME_DATABASE_URL or RXRESUME_API_KEY in your environment.",
+			SyncMessage: "Resume sync is not configured. Ensure RXRESUME_DATABASE_URL is set and the rxresume_reader role exists in your database.",
 		}, nil
 	}
 
 	syncCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	// Fetch all resumes from RxResume — prefer per-user DB read, fall back to API key
-	var rxResumes []rxresume.Resume
-	var err error
-	var fetched bool
-
-	if userEmail != "" {
-		rxResumes, err = rxClient.ListResumesForUser(syncCtx, userEmail)
+	// Fetch all resumes from RxResume via per-user DB read
+	if userEmail == "" {
+		resumes, err := listResumesFromDB(ctx, q, userID)
 		if err != nil {
-			slog.Warn("per-user rxresume DB read failed, trying API key", "error", err)
-		} else {
-			fetched = true
+			return nil, err
 		}
+		return &SyncResumesResponse{
+			Resumes:     resumes,
+			SyncStatus:  SyncStatusFailed,
+			SyncMessage: "Could not determine user email for sync. Your local resumes are shown.",
+		}, nil
 	}
-	if !fetched && rxClient.APIConfigured() {
-		rxResumes, err = rxClient.ListResumes(syncCtx)
-		if err == nil {
-			fetched = true
-		}
-	}
-	if !fetched {
+
+	rxResumes, err := rxClient.ListResumesForUser(syncCtx, userEmail)
+	if err != nil {
 		slog.Warn("failed to list rxresume resumes during sync", "error", err)
 		resumes, dbErr := listResumesFromDB(ctx, q, userID)
 		if dbErr != nil {

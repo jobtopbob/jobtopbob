@@ -547,6 +547,21 @@ components:
         is_base:
           type: boolean
 
+    ResumeConfig:
+      type: object
+      required: [builder_configured, builder_url, sync_configured, pdf_configured, api_configured]
+      properties:
+        builder_configured:
+          type: boolean
+        builder_url:
+          type: string
+        sync_configured:
+          type: boolean
+        pdf_configured:
+          type: boolean
+        api_configured:
+          type: boolean
+
     Stats:
       type: object
       properties:
@@ -1057,6 +1072,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/Stats"
 
+  /api/v1/resumes/config:
+    get:
+      summary: Get resume feature configuration status
+      responses:
+        "200":
+          description: Configuration status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeConfig"
+
   /api/v1/resumes:
     get:
       summary: List all resumes for the current user
@@ -1184,17 +1210,20 @@ paths:
             format: uuid
       responses:
         "200":
-          description: PDF download URL
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Resume not found
           content:
             application/json:
               schema:
-                type: object
-                required: [url]
-                properties:
-                  url:
-                    type: string
-        "404":
-          description: Resume not found
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: PDF export not available
           content:
             application/json:
               schema:

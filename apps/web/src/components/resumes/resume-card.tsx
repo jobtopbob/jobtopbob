@@ -19,7 +19,6 @@ import {
   ExternalLink,
   Download,
   MoreHorizontal,
-  Copy,
   Star,
   Trash2,
   Pencil,
@@ -31,7 +30,7 @@ import {
   Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Resume } from "@/hooks/use-resumes";
+import type { Resume, ResumeConfig } from "@/hooks/use-resumes";
 
 const TEMPLATE_GRADIENTS: Record<string, string> = {
   azurill: "from-blue-400/25 to-blue-600/10",
@@ -74,8 +73,8 @@ const SECTION_ICONS = [
 interface ResumeCardProps {
   resume: Resume;
   index?: number;
+  config?: ResumeConfig;
   onEdit: () => void;
-  onDuplicate: () => void;
   onExportPDF: () => void;
   onSetBase: () => void;
   onDelete: () => void;
@@ -84,8 +83,8 @@ interface ResumeCardProps {
 export function ResumeCard({
   resume,
   index = 0,
+  config,
   onEdit,
-  onDuplicate,
   onExportPDF,
   onSetBase,
   onDelete,
@@ -94,6 +93,7 @@ export function ResumeCard({
   const templateKey = resume.template ?? "onyx";
   const gradient =
     TEMPLATE_GRADIENTS[templateKey] ?? "from-stone-400/25 to-stone-600/10";
+  const pdfEnabled = config?.pdf_configured !== false;
 
   return (
     <div
@@ -221,15 +221,23 @@ export function ResumeCard({
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={onExportPDF}
-                    className="bg-white/90 dark:bg-white/20 text-text-primary backdrop-blur-sm shadow-lg gap-1.5"
+                    onClick={pdfEnabled ? onExportPDF : undefined}
+                    disabled={!pdfEnabled}
+                    className={cn(
+                      "bg-white/90 dark:bg-white/20 text-text-primary backdrop-blur-sm shadow-lg gap-1.5",
+                      !pdfEnabled && "opacity-50 cursor-not-allowed"
+                    )}
                   />
                 }
               >
                 <Download className="w-3.5 h-3.5" />
                 Export
               </TooltipTrigger>
-              <TooltipContent>Export PDF</TooltipContent>
+              <TooltipContent>
+                {pdfEnabled
+                  ? "Export PDF"
+                  : "Configure RESUME_PRINTER_HTTP_URL to enable PDF export"}
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
@@ -289,13 +297,12 @@ export function ResumeCard({
               <MoreHorizontal className="w-4 h-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onDuplicate}>
-                <Copy className="w-4 h-4 mr-2" />
-                Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onExportPDF}>
+              <DropdownMenuItem
+                onClick={pdfEnabled ? onExportPDF : undefined}
+                disabled={!pdfEnabled}
+              >
                 <Download className="w-4 h-4 mr-2" />
-                Export PDF
+                {pdfEnabled ? "Export PDF" : "Export PDF (not configured)"}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onSetBase}>
                 <Star className="w-4 h-4 mr-2" />

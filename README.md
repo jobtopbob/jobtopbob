@@ -32,18 +32,22 @@ Open-source alternatives exist for resume building (Reactive Resume, 1M+ users) 
 # 1. Clone and configure
 git clone https://github.com/jobtopbob/jobtopbob.git
 cd jobtopbob
-cp .env.example .env        # defaults work for local dev
+cp .env.example .env        # Docker infrastructure config (service hostnames, passwords)
 
-# 2. Install TypeScript dependencies
+# 2. (Optional) Create .env.local for host-specific secrets
+cp .env.local.example .env.local
+# Edit .env.local to add API keys (e.g. RXRESUME_API_KEY) — see below
+
+# 3. Install TypeScript dependencies
 pnpm install
 
-# 3. Start infrastructure (Postgres, Redis, Resume Builder, Asynq Inspector)
+# 4. Start infrastructure (Postgres, Redis, Resume Builder, Asynq Inspector)
 docker compose up -d
 
-# 4. Start the Next.js frontend (terminal 1)
+# 5. Start the Next.js frontend (terminal 1)
 pnpm dev
 
-# 5. Start Go services (terminals 2 & 3)
+# 6. Start Go services (terminals 2 & 3)
 go run ./apps/api/cmd/api
 go run ./apps/worker/cmd/worker
 ```
@@ -56,6 +60,19 @@ go run ./apps/worker/cmd/worker
 | Asynq Inspector | http://localhost:8081 |
 
 > **Note:** `pnpm dev` starts the Next.js web app only. The Go API and worker are separate processes — they're not part of the pnpm workspace, so they need their own terminal.
+
+#### Environment files
+
+There are two env files, each for a different context:
+
+| File | Purpose | Loaded by |
+|------|---------|-----------|
+| `.env` | Docker infrastructure — service hostnames (`redis`, `web`), passwords, ports | Docker Compose |
+| `.env.local` | Host-based dev secrets — API keys and overrides that use `localhost` | Go API (via godotenv) |
+
+The root `.env` uses Docker service names (e.g. `REDIS_URL=redis://:changeme@redis:6379/0`) which don't resolve on the host. The Go API's `config.go` already defaults to `localhost` for all connection strings, so you typically only need `.env.local` for secrets like `RXRESUME_API_KEY`.
+
+Both files are gitignored. Next.js uses its own `apps/web/.env.local` (loaded automatically by Next.js).
 
 ### Self-hosting (production)
 

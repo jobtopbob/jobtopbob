@@ -1,17 +1,17 @@
 "use client";
 
-import { FileText, Plus, ExternalLink } from "lucide-react";
+import { FileText, Plus, ExternalLink, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResumeCard } from "./resume-card";
 import { ResumeCardSkeleton } from "./resume-card-skeleton";
-import type { Resume } from "@/hooks/use-resumes";
+import type { Resume, ResumeConfig } from "@/hooks/use-resumes";
 
 interface ResumeGridProps {
   resumes: Resume[];
   isLoading: boolean;
+  config?: ResumeConfig;
   onCreateClick: () => void;
   onEdit: (resume: Resume) => void;
-  onDuplicate: (resume: Resume) => void;
   onExportPDF: (resume: Resume) => void;
   onSetBase: (resume: Resume) => void;
   onDelete: (resume: Resume) => void;
@@ -20,9 +20,9 @@ interface ResumeGridProps {
 export function ResumeGrid({
   resumes,
   isLoading,
+  config,
   onCreateClick,
   onEdit,
-  onDuplicate,
   onExportPDF,
   onSetBase,
   onDelete,
@@ -48,18 +48,41 @@ export function ResumeGrid({
             <FileText className="w-7 h-7 text-text-muted" />
           </div>
         </div>
-        <h3 className="font-heading text-xl font-semibold text-text-primary">
-          Start building your resume collection
-        </h3>
-        <p className="text-sm text-text-muted mt-2 mb-8 max-w-md leading-relaxed">
-          Create your first resume in the Resume Builder. Your resumes will sync
-          automatically and appear here, ready for tailoring to specific job
-          applications.
-        </p>
-        <Button onClick={onCreateClick} size="lg" className="gap-2">
-          <ExternalLink className="w-4 h-4" />
-          Open Resume Builder
-        </Button>
+
+        {config?.builder_configured ? (
+          <>
+            <h3 className="font-heading text-xl font-semibold text-text-primary">
+              Start building your resume collection
+            </h3>
+            <p className="text-sm text-text-muted mt-2 mb-8 max-w-md leading-relaxed">
+              Create your first resume in the Resume Builder. Your resumes will
+              sync automatically and appear here, ready for tailoring to
+              specific job applications.
+            </p>
+            <Button onClick={onCreateClick} size="lg" className="gap-2">
+              <ExternalLink className="w-4 h-4" />
+              Open Resume Builder
+            </Button>
+          </>
+        ) : (
+          <>
+            <h3 className="font-heading text-xl font-semibold text-text-primary">
+              Resume Builder not set up yet
+            </h3>
+            <p className="text-sm text-text-muted mt-2 mb-4 max-w-md leading-relaxed">
+              Configure the Resume Builder service in your environment to start
+              creating and managing resumes. Check your{" "}
+              <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                .env
+              </code>{" "}
+              and{" "}
+              <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                docker-compose.yml
+              </code>{" "}
+              files.
+            </p>
+          </>
+        )}
       </div>
     );
   }
@@ -67,24 +90,40 @@ export function ResumeGrid({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       {/* Create New card */}
-      <button
-        onClick={onCreateClick}
-        className="group/create rounded-xl bg-gradient-to-br from-brand/20 via-brand-blue/20 to-brand-green/20 p-[1px] min-h-[320px] cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
-      >
-        <div className="rounded-[11px] bg-card h-full flex flex-col items-center justify-center gap-4 transition-colors duration-200 group-hover/create:bg-card/80">
-          <div className="w-14 h-14 rounded-2xl bg-surface flex items-center justify-center transition-transform duration-200 group-hover/create:scale-110">
-            <Plus className="w-7 h-7 text-text-muted group-hover/create:text-primary transition-colors duration-200" />
+      {config?.builder_configured ? (
+        <button
+          onClick={onCreateClick}
+          className="group/create rounded-xl bg-gradient-to-br from-brand/20 via-brand-blue/20 to-brand-green/20 p-[1px] min-h-[320px] cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+        >
+          <div className="rounded-[11px] bg-card h-full flex flex-col items-center justify-center gap-4 transition-colors duration-200 group-hover/create:bg-card/80">
+            <div className="w-14 h-14 rounded-2xl bg-surface flex items-center justify-center transition-transform duration-200 group-hover/create:scale-110">
+              <Plus className="w-7 h-7 text-text-muted group-hover/create:text-primary transition-colors duration-200" />
+            </div>
+            <div className="text-center">
+              <span className="text-sm font-semibold text-text-primary block">
+                Create New Resume
+              </span>
+              <span className="text-xs text-text-muted mt-0.5 block">
+                Open the Resume Builder
+              </span>
+            </div>
+          </div>
+        </button>
+      ) : (
+        <div className="rounded-xl border border-dashed border-border-subtle min-h-[320px] flex flex-col items-center justify-center gap-4 p-6">
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <AlertTriangle className="w-7 h-7 text-amber-500" />
           </div>
           <div className="text-center">
             <span className="text-sm font-semibold text-text-primary block">
-              Create New Resume
+              Builder not configured
             </span>
             <span className="text-xs text-text-muted mt-0.5 block">
-              Open the Resume Builder
+              Set up the Resume Builder to create resumes
             </span>
           </div>
         </div>
-      </button>
+      )}
 
       {/* Resume cards */}
       {resumes.map((resume, i) => (
@@ -92,8 +131,8 @@ export function ResumeGrid({
           key={resume.id}
           resume={resume}
           index={i + 1}
+          config={config}
           onEdit={() => onEdit(resume)}
-          onDuplicate={() => onDuplicate(resume)}
           onExportPDF={() => onExportPDF(resume)}
           onSetBase={() => onSetBase(resume)}
           onDelete={() => onDelete(resume)}

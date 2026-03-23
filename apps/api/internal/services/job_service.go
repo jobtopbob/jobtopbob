@@ -13,6 +13,12 @@ import (
 // ErrNotFound is returned when a requested resource does not exist.
 var ErrNotFound = errors.New("not found")
 
+// ErrNotConfigured is returned when a required service is not configured.
+var ErrNotConfigured = errors.New("not configured")
+
+// ErrNotLinked is returned when a resource is not linked to an external service.
+var ErrNotLinked = errors.New("not linked")
+
 // GetJob returns a single job with company and stage names joined.
 func GetJob(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID) (db.GetJobRow, error) {
 	row, err := q.GetJob(ctx, db.GetJobParams{ID: id, UserID: userID})
