@@ -144,9 +144,9 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		return nil
 	}
 
-	// Check if demo data already exists.
-	// Must set RLS context because stages has row-level security enabled.
-	var stageCount int
+	// Check if demo data already exists by looking for demo jobs (not stages,
+	// since default stages are auto-created on first ListStages call).
+	var jobCount int
 	checkTx, err := pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin check transaction: %w", err)
@@ -156,12 +156,12 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		_ = checkTx.Rollback(ctx)
 		return fmt.Errorf("set current_user_id for check: %w", err)
 	}
-	err = checkTx.QueryRow(ctx, `SELECT COUNT(*) FROM stages WHERE user_id = $1`, demoUserID).Scan(&stageCount)
+	err = checkTx.QueryRow(ctx, `SELECT COUNT(*) FROM jobs WHERE user_id = $1`, demoUserID).Scan(&jobCount)
 	_ = checkTx.Rollback(ctx) // read-only, no need to commit
 	if err != nil {
 		return fmt.Errorf("check existing demo data: %w", err)
 	}
-	if stageCount > 0 {
+	if jobCount > 0 {
 		slog.Info("demo data already exists, skipping seed")
 		return nil
 	}
@@ -181,9 +181,27 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 
 	now := time.Now()
 
-	// 1. Insert stages and collect IDs
+	// 1. Collect existing stage IDs (stages may already exist from default seeding),
+	//    then insert any missing ones.
 	stageIDs := make(map[string]string) // name -> id
+	rows, err := tx.Query(ctx, `SELECT id, name FROM stages WHERE user_id = $1`, demoUserID)
+	if err != nil {
+		return fmt.Errorf("query existing stages: %w", err)
+	}
+	for rows.Next() {
+		var id, name string
+		if err := rows.Scan(&id, &name); err != nil {
+			rows.Close()
+			return fmt.Errorf("scan existing stage: %w", err)
+		}
+		stageIDs[name] = id
+	}
+	rows.Close()
+
 	for _, s := range demoStages {
+		if _, exists := stageIDs[s.Name]; exists {
+			continue
+		}
 		var id string
 		err = tx.QueryRow(ctx, `
 			INSERT INTO stages (user_id, name, position, is_terminal, color, mapped_status, created_at, updated_at)
