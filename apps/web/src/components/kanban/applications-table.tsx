@@ -15,6 +15,7 @@ import type { Stage } from "@/hooks/use-stages";
 import { formatSalary } from "./job-card";
 import { PaginationControls } from "./pagination-controls";
 import { StageIcon } from "./stage-icons";
+import { JOB_TYPES, JOB_LEVELS } from "@/lib/constants";
 
 interface ApplicationsTableProps {
   jobs: Job[];
@@ -86,6 +87,34 @@ function formatSource(source: string | null | undefined): string {
   return SOURCE_LABELS[source] ?? source.charAt(0).toUpperCase() + source.slice(1);
 }
 
+function formatJobType(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return JOB_TYPES.find((t) => t.value === value)?.label ?? value;
+}
+
+function formatJobLevel(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return JOB_LEVELS.find((l) => l.value === value)?.label ?? value;
+}
+
+function formatDeadline(dateStr: string | null | undefined): {
+  text: string;
+  isUrgent: boolean;
+  isPast: boolean;
+} {
+  if (!dateStr) return { text: "—", isUrgent: false, isPast: false };
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const text = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return {
+    text,
+    isUrgent: diffDays >= 0 && diffDays <= 7,
+    isPast: diffDays < 0,
+  };
+}
+
 export function ApplicationsTable({
   jobs,
   stages,
@@ -114,7 +143,7 @@ export function ApplicationsTable({
 
   return (
     <div className="h-full overflow-auto">
-      <Table className="min-w-[1000px]">
+      <Table className="min-w-[1200px]">
         <TableHeader>
           <TableRow className="border-b border-border-subtle hover:bg-transparent">
             <TableHead className="w-10 bg-surface pl-4">
@@ -126,14 +155,20 @@ export function ApplicationsTable({
             <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[80px]">
               Stage
             </TableHead>
+            <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[80px]">
+              Type
+            </TableHead>
+            <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[80px]">
+              Level
+            </TableHead>
             <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[120px]">
               Salary
             </TableHead>
             <TableHead className="bg-surface text-text-muted text-xs font-semibold">
               Location
             </TableHead>
-            <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[90px]">
-              Source
+            <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[80px]">
+              Deadline
             </TableHead>
             <TableHead className="bg-surface text-text-muted text-xs font-semibold w-[90px]">
               Applied
@@ -147,11 +182,14 @@ export function ApplicationsTable({
           {jobs.map((job) => {
             const stage = job.stage_id ? stageMap.get(job.stage_id) : undefined;
             const pillStyle = getStagePillStyle(stage);
-            const salary = formatSalary(job.salary_min, job.salary_max);
+            const salary = formatSalary(job.salary_min, job.salary_max, job.salary_interval, job.salary_currency);
             const appliedDate = formatDate(job.applied_at);
             const addedDate = formatDate(job.created_at);
+            const deadline = formatDeadline(job.deadline);
             const companyName = job.company_name ?? "Unknown";
             const initialColor = getCompanyInitialColor(companyName);
+            const jobType = formatJobType(job.job_type);
+            const jobLevel = formatJobLevel(job.job_level);
 
             return (
               <TableRow
@@ -209,6 +247,12 @@ export function ApplicationsTable({
                     {stage?.name ?? "—"}
                   </span>
                 </TableCell>
+                <TableCell className="text-xs text-text-muted">
+                  {jobType ?? "—"}
+                </TableCell>
+                <TableCell className="text-xs text-text-muted">
+                  {jobLevel ?? "—"}
+                </TableCell>
                 <TableCell className="text-xs text-text-primary">
                   {salary ?? "—"}
                 </TableCell>
@@ -224,8 +268,18 @@ export function ApplicationsTable({
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-xs text-text-muted">
-                  {formatSource(job.source)}
+                <TableCell>
+                  <span
+                    className={
+                      deadline.isPast
+                        ? "text-[11px] font-medium text-brand-red line-through"
+                        : deadline.isUrgent
+                          ? "text-[11px] font-medium text-brand-red"
+                          : "text-[11px] text-text-muted"
+                    }
+                  >
+                    {deadline.text}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <span
