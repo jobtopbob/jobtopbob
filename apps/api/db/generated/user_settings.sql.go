@@ -50,3 +50,117 @@ func (q *Queries) SetRxResumeAPIKey(ctx context.Context, arg SetRxResumeAPIKeyPa
 	_, err := q.db.Exec(ctx, setRxResumeAPIKey, arg.UserID, arg.RxresumeApiKey)
 	return err
 }
+
+const updateUserImage = `-- name: UpdateUserImage :exec
+UPDATE "user"
+SET image = $2, "updatedAt" = now()
+WHERE id = $1
+`
+
+type UpdateUserImageParams struct {
+	ID    string      `json:"id"`
+	Image pgtype.Text `json:"image"`
+}
+
+func (q *Queries) UpdateUserImage(ctx context.Context, arg UpdateUserImageParams) error {
+	_, err := q.db.Exec(ctx, updateUserImage, arg.ID, arg.Image)
+	return err
+}
+
+const getUserImage = `-- name: GetUserImage :one
+SELECT image FROM "user"
+WHERE id = $1
+`
+
+func (q *Queries) GetUserImage(ctx context.Context, id string) (pgtype.Text, error) {
+	row := q.db.QueryRow(ctx, getUserImage, id)
+	var image pgtype.Text
+	err := row.Scan(&image)
+	return image, err
+}
+
+const getUserSettings = `-- name: GetUserSettings :one
+SELECT user_id, ai_provider, ai_model, writing_style, weekly_goal, task_models, created_at, updated_at
+FROM user_settings
+WHERE user_id = $1
+`
+
+type GetUserSettingsRow struct {
+	UserID       string             `json:"user_id"`
+	AiProvider   pgtype.Text        `json:"ai_provider"`
+	AiModel      pgtype.Text        `json:"ai_model"`
+	WritingStyle pgtype.Text        `json:"writing_style"`
+	WeeklyGoal   pgtype.Int4        `json:"weekly_goal"`
+	TaskModels   []byte             `json:"task_models"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetUserSettings(ctx context.Context, userID string) (GetUserSettingsRow, error) {
+	row := q.db.QueryRow(ctx, getUserSettings, userID)
+	var i GetUserSettingsRow
+	err := row.Scan(
+		&i.UserID,
+		&i.AiProvider,
+		&i.AiModel,
+		&i.WritingStyle,
+		&i.WeeklyGoal,
+		&i.TaskModels,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertUserSettings = `-- name: UpsertUserSettings :one
+INSERT INTO user_settings (user_id, ai_provider, ai_model, writing_style, weekly_goal)
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (user_id)
+DO UPDATE SET
+  ai_provider = COALESCE($2, user_settings.ai_provider),
+  ai_model = COALESCE($3, user_settings.ai_model),
+  writing_style = COALESCE($4, user_settings.writing_style),
+  weekly_goal = COALESCE($5, user_settings.weekly_goal)
+RETURNING user_id, ai_provider, ai_model, writing_style, weekly_goal, task_models, created_at, updated_at
+`
+
+type UpsertUserSettingsParams struct {
+	UserID       string      `json:"user_id"`
+	AiProvider   pgtype.Text `json:"ai_provider"`
+	AiModel      pgtype.Text `json:"ai_model"`
+	WritingStyle pgtype.Text `json:"writing_style"`
+	WeeklyGoal   pgtype.Int4 `json:"weekly_goal"`
+}
+
+type UpsertUserSettingsRow struct {
+	UserID       string             `json:"user_id"`
+	AiProvider   pgtype.Text        `json:"ai_provider"`
+	AiModel      pgtype.Text        `json:"ai_model"`
+	WritingStyle pgtype.Text        `json:"writing_style"`
+	WeeklyGoal   pgtype.Int4        `json:"weekly_goal"`
+	TaskModels   []byte             `json:"task_models"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) UpsertUserSettings(ctx context.Context, arg UpsertUserSettingsParams) (UpsertUserSettingsRow, error) {
+	row := q.db.QueryRow(ctx, upsertUserSettings,
+		arg.UserID,
+		arg.AiProvider,
+		arg.AiModel,
+		arg.WritingStyle,
+		arg.WeeklyGoal,
+	)
+	var i UpsertUserSettingsRow
+	err := row.Scan(
+		&i.UserID,
+		&i.AiProvider,
+		&i.AiModel,
+		&i.WritingStyle,
+		&i.WeeklyGoal,
+		&i.TaskModels,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

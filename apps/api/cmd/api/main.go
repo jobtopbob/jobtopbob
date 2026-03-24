@@ -88,7 +88,7 @@ func main() {
 	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.ResumeBuilderPublicURL, cfg.ResumePrinterHTTPURL, cfg.ResumeBuilderPrinterURL)
 
 	// Create router
-	engine := router.New(pool, cfg.JWKSURL, cfg.CORSOrigins, rxClient, cfg.ResumeBuilderPublicURL)
+	engine := router.New(pool, cfg.JWKSURL, cfg.CORSOrigins, rxClient, cfg.ResumeBuilderPublicURL, store)
 
 	// Start HTTP server with graceful shutdown
 	srv := &http.Server{

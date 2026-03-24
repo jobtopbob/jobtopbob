@@ -15,9 +15,20 @@ interface TopBarProps {
   userName: string;
 }
 
-export function TopBar({ userName }: TopBarProps) {
+export function TopBar({ userName: initialUserName }: TopBarProps) {
   const router = useRouter();
   const { collapsed, setCollapsed } = useSidebar();
+  const { data: session } = authClient.useSession();
+
+  // Prefer live session data over the server-rendered prop
+  const userName = session?.user?.name || initialUserName;
+  const userImage = session?.user?.image;
+  const initials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -56,13 +67,16 @@ export function TopBar({ userName }: TopBarProps) {
           className="flex items-center gap-3 pl-4 outline-none cursor-pointer"
           render={
             <button>
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-medium">
-                {userName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-medium overflow-hidden">
+                {userImage ? (
+                  <img
+                    src={userImage}
+                    alt={userName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  initials
+                )}
               </div>
               <span className="hidden sm:inline text-sm font-medium text-text-primary">
                 {userName}

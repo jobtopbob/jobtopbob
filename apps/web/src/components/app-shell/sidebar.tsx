@@ -13,7 +13,6 @@ import {
   Mail,
   Users,
   Settings,
-  LifeBuoy,
   PanelLeftClose,
   Sun,
   Moon,
@@ -346,26 +345,6 @@ export function Sidebar() {
           collapsed ? "lg:px-[10px] px-4" : "px-4"
         )}>
           <div className="h-px bg-sidebar-border" />
-
-          {/* Help */}
-          <div className={cn(
-            "flex items-center rounded-xl text-sidebar-foreground",
-            collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 lg:gap-0 gap-2.5 px-3 py-3" : "gap-2.5 px-3 py-3"
-          )}>
-            <LifeBuoy className="w-5 h-5 shrink-0" />
-            <span className={cn(
-              "flex-1 text-sm transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
-              collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
-            )}>
-              Help
-            </span>
-            <span className={cn(
-              "flex items-center justify-center px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold transition-[opacity,max-width] duration-200 ease-out overflow-hidden",
-              collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[30px] opacity-100" : "max-w-[30px] opacity-100"
-            )}>
-              3
-            </span>
-          </div>
 
           {/* Theme Toggle */}
           <ThemeToggle collapsed={collapsed} />

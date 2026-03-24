@@ -7,10 +7,11 @@ import (
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/handlers"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/middleware"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/services/rxresume"
+	"github.com/jobtopbob/jobtopbob/internal/storage"
 )
 
 // New creates a configured Gin engine with all routes and middleware.
-func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxresume.Client, builderPublicURL string) *gin.Engine {
+func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxresume.Client, builderPublicURL string, store *storage.Client) *gin.Engine {
 	r := gin.New()
 
 	// Global middleware
@@ -56,6 +57,10 @@ func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxr
 		// Settings
 		settings := v1.Group("/settings")
 		{
+			settings.GET("", handlers.GetUserSettings())
+			settings.PUT("", handlers.UpdateUserSettings())
+			settings.POST("/avatar", handlers.UploadAvatar(store))
+			settings.DELETE("/avatar", handlers.DeleteAvatar(store))
 			settings.PUT("/rxresume-key", handlers.SetRxResumeKey(rxClient))
 			settings.DELETE("/rxresume-key", handlers.DeleteRxResumeKey())
 			settings.GET("/rxresume-key/status", handlers.GetRxResumeKeyStatus())

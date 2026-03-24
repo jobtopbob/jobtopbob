@@ -568,6 +568,40 @@ components:
         connected:
           type: boolean
 
+    UserSettings:
+      type: object
+      properties:
+        ai_provider:
+          type: string
+          nullable: true
+          enum: [openai, anthropic, gemini, ollama]
+        ai_model:
+          type: string
+          nullable: true
+        writing_style:
+          type: string
+          nullable: true
+          enum: [professional, conversational, formal]
+        weekly_goal:
+          type: integer
+          nullable: true
+
+    UpdateUserSettingsRequest:
+      type: object
+      properties:
+        ai_provider:
+          type: string
+          nullable: true
+        ai_model:
+          type: string
+          nullable: true
+        writing_style:
+          type: string
+          nullable: true
+        weekly_goal:
+          type: integer
+          nullable: true
+
     SetRxResumeKeyRequest:
       type: object
       required: [api_key]
@@ -1282,6 +1316,83 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/settings:
+    get:
+      summary: Get user settings
+      responses:
+        "200":
+          description: User settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSettings"
+    put:
+      summary: Update user settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserSettingsRequest"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSettings"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/settings/avatar:
+    post:
+      summary: Upload user avatar
+      description: Upload a profile picture (max 5 MB, JPEG/PNG/WebP/GIF). Stores in RustFS and updates user profile.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Avatar uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        "400":
+          description: Invalid file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Remove user avatar
+      description: Removes the avatar from storage and clears the profile picture.
+      responses:
+        "200":
+          description: Avatar removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
 
   /api/v1/settings/rxresume-key:
     put:
