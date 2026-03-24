@@ -164,7 +164,7 @@ export default function ResumesPage() {
               Resumes
             </h1>
             <p className="text-sm text-text-muted mt-1.5">
-              Built with{" "}
+              Powered by {" "}
               <a
                 href="https://rxresu.me"
                 target="_blank"

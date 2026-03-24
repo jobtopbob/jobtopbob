@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Plus, ExternalLink, AlertTriangle } from "lucide-react";
+import { FileText, Plus, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResumeCard } from "./resume-card";
 import { ResumeCardSkeleton } from "./resume-card-skeleton";
@@ -29,7 +29,7 @@ export function ResumeGrid({
 }: ResumeGridProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.from({ length: 6 }).map((_, i) => (
           <ResumeCardSkeleton key={i} />
         ))}
@@ -60,7 +60,6 @@ export function ResumeGrid({
               specific job applications.
             </p>
             <Button onClick={onCreateClick} size="lg" className="gap-2">
-              <ExternalLink className="w-4 h-4" />
               Open Resume Builder
             </Button>
           </>
@@ -88,37 +87,37 @@ export function ResumeGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {/* Create New card */}
       {config?.builder_configured ? (
         <button
           onClick={onCreateClick}
-          className="group/create rounded-xl bg-gradient-to-br from-brand/20 via-brand-blue/20 to-brand-green/20 p-[1px] min-h-[320px] cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+          className="group/create rounded-2xl bg-card shadow-sm min-h-[340px] cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
         >
-          <div className="rounded-[11px] bg-card h-full flex flex-col items-center justify-center gap-4 transition-colors duration-200 group-hover/create:bg-card/80">
-            <div className="w-14 h-14 rounded-2xl bg-surface flex items-center justify-center transition-transform duration-200 group-hover/create:scale-110">
-              <Plus className="w-7 h-7 text-text-muted group-hover/create:text-primary transition-colors duration-200" />
+          <div className="rounded-2xl h-full flex flex-col items-center justify-center gap-5 transition-colors duration-300">
+            <div className="w-16 h-16 rounded-2xl bg-surface flex items-center justify-center transition-transform duration-300 group-hover/create:scale-110">
+              <Plus className="w-8 h-8 text-text-muted group-hover/create:text-primary transition-colors duration-300" />
             </div>
             <div className="text-center">
-              <span className="text-sm font-semibold text-text-primary block">
+              <span className="text-[15px] font-semibold text-text-primary block">
                 Create New Resume
               </span>
-              <span className="text-xs text-text-muted mt-0.5 block">
+              <span className="text-xs text-text-muted mt-1 block">
                 Open the Resume Builder
               </span>
             </div>
           </div>
         </button>
       ) : (
-        <div className="rounded-xl border border-dashed border-border-subtle min-h-[320px] flex flex-col items-center justify-center gap-4 p-6">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <AlertTriangle className="w-7 h-7 text-amber-500" />
+        <div className="rounded-2xl bg-card shadow-sm border border-dashed border-border-subtle min-h-[340px] flex flex-col items-center justify-center gap-5 p-6">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <AlertTriangle className="w-8 h-8 text-amber-500" />
           </div>
           <div className="text-center">
-            <span className="text-sm font-semibold text-text-primary block">
+            <span className="text-[15px] font-semibold text-text-primary block">
               Builder not configured
             </span>
-            <span className="text-xs text-text-muted mt-0.5 block">
+            <span className="text-xs text-text-muted mt-1 block">
               Set up the Resume Builder to create resumes
             </span>
           </div>

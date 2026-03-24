@@ -16,7 +16,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  ExternalLink,
   Download,
   MoreHorizontal,
   Star,
@@ -33,19 +32,19 @@ import { cn } from "@/lib/utils";
 import type { Resume, ResumeConfig } from "@/hooks/use-resumes";
 
 const TEMPLATE_GRADIENTS: Record<string, string> = {
-  azurill: "from-blue-400/25 to-blue-600/10",
-  bronzor: "from-amber-400/25 to-amber-600/10",
-  chikorita: "from-green-400/25 to-green-600/10",
-  ditgar: "from-purple-400/25 to-purple-600/10",
-  ditto: "from-pink-400/25 to-pink-600/10",
-  gengar: "from-violet-400/25 to-violet-600/10",
-  glalie: "from-cyan-400/25 to-cyan-600/10",
-  kakuna: "from-yellow-400/25 to-yellow-600/10",
-  lapras: "from-sky-400/25 to-sky-600/10",
-  leafish: "from-emerald-400/25 to-emerald-600/10",
-  onyx: "from-stone-400/25 to-stone-600/10",
-  pikachu: "from-orange-400/25 to-orange-600/10",
-  rhyhorn: "from-red-400/25 to-red-600/10",
+  azurill: "from-blue-400/20 to-blue-600/8",
+  bronzor: "from-amber-400/20 to-amber-600/8",
+  chikorita: "from-green-400/20 to-green-600/8",
+  ditgar: "from-purple-400/20 to-purple-600/8",
+  ditto: "from-pink-400/20 to-pink-600/8",
+  gengar: "from-violet-400/20 to-violet-600/8",
+  glalie: "from-cyan-400/20 to-cyan-600/8",
+  kakuna: "from-yellow-400/20 to-yellow-600/8",
+  lapras: "from-sky-400/20 to-sky-600/8",
+  leafish: "from-emerald-400/20 to-emerald-600/8",
+  onyx: "from-stone-400/20 to-stone-600/8",
+  pikachu: "from-orange-400/20 to-orange-600/8",
+  rhyhorn: "from-red-400/20 to-red-600/8",
 };
 
 export function formatRelativeTime(dateStr: string): string {
@@ -92,39 +91,39 @@ export function ResumeCard({
   const hasSyncedData = !!resume.synced_at;
   const templateKey = resume.template ?? "onyx";
   const gradient =
-    TEMPLATE_GRADIENTS[templateKey] ?? "from-stone-400/25 to-stone-600/10";
+    TEMPLATE_GRADIENTS[templateKey] ?? "from-stone-400/20 to-stone-600/8";
   const pdfEnabled = config?.pdf_configured !== false;
 
   return (
     <div
-      className="group rounded-xl border border-border-subtle bg-card overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 animate-in fade-in-0 slide-in-from-bottom-2 duration-300 fill-mode-both"
+      className="group rounded-2xl bg-card shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 animate-in fade-in-0 slide-in-from-bottom-3 fill-mode-both"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      {/* Thumbnail / Preview Area */}
-      <div className="relative h-52 overflow-hidden">
+      {/* Preview Area */}
+      <div className="relative h-56 overflow-hidden">
         <div
           className={cn(
-            "absolute inset-0 bg-gradient-to-br shadow-[inset_0_-20px_40px_-20px_rgba(0,0,0,0.08)]",
+            "absolute inset-0 bg-linear-to-br",
             gradient
           )}
-          style={
-            resume.primary_color
-              ? {
-                  borderBottom: `3px solid ${resume.primary_color}`,
-                }
-              : undefined
-          }
         />
 
+        {/* Accent strip */}
+        {resume.primary_color && (
+          <div
+            className="absolute top-0 left-6 right-6 h-0.5 rounded-full opacity-60"
+            style={{ backgroundColor: resume.primary_color }}
+          />
+        )}
+
         {hasSyncedData ? (
-          /* Synced content preview */
-          <div className="absolute inset-4 flex flex-col gap-1.5">
-            <div className="flex items-center gap-2.5">
+          <div className="absolute inset-5 flex flex-col gap-2">
+            <div className="flex items-center gap-3">
               {resume.picture_url && (
                 <img
                   src={resume.picture_url}
                   alt=""
-                  className="w-10 h-10 rounded-full object-cover border-2 border-white/30 shadow-sm"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white/40 shadow-md"
                 />
               )}
               <div className="min-w-0">
@@ -134,7 +133,7 @@ export function ResumeCard({
                   </p>
                 )}
                 {resume.headline && (
-                  <p className="text-[11px] text-text-secondary truncate">
+                  <p className="text-xs text-text-secondary truncate">
                     {resume.headline}
                   </p>
                 )}
@@ -142,13 +141,10 @@ export function ResumeCard({
             </div>
 
             {resume.latest_role && (
-              <p className="text-[11px] text-text-muted/80 truncate mt-0.5">
+              <p className="text-xs text-text-muted/80 truncate">
                 {resume.latest_role}
               </p>
             )}
-
-            {/* Divider */}
-            <div className="h-px bg-text-primary/10 my-1" />
 
             {/* Section counts */}
             <div className="flex flex-wrap gap-1.5 mt-auto">
@@ -158,7 +154,7 @@ export function ResumeCard({
                 return (
                   <span
                     key={key}
-                    className="inline-flex items-center gap-1 rounded-md bg-white/70 dark:bg-white/10 backdrop-blur-md px-1.5 py-0.5 text-[11px] text-text-muted"
+                    className="inline-flex items-center gap-1 rounded-lg bg-white/60 dark:bg-white/10 backdrop-blur-sm px-2 py-0.5 text-[11px] font-medium text-text-muted"
                   >
                     <Icon className="w-3 h-3" />
                     {count} {label}
@@ -173,7 +169,7 @@ export function ResumeCard({
                 {resume.top_skills.map((skill) => (
                   <span
                     key={skill}
-                    className="rounded-full bg-white/60 dark:bg-white/10 backdrop-blur-md px-2 py-0.5 text-[10px] text-text-muted"
+                    className="rounded-full bg-white/50 dark:bg-white/10 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-text-muted"
                   >
                     {skill}
                   </span>
@@ -182,56 +178,52 @@ export function ResumeCard({
             )}
           </div>
         ) : (
-          /* Fallback: document lines decoration */
-          <div className="absolute inset-4 flex flex-col gap-2 opacity-30">
-            <div className="h-2.5 w-1/3 rounded-sm bg-text-primary/25" />
-            <div className="h-px w-full bg-text-primary/10 mt-1 mb-1" />
-            <div className="h-3 w-2/3 rounded-sm bg-text-primary/20" />
-            <div className="h-2 w-full rounded-sm bg-text-primary/10" />
-            <div className="h-2 w-full rounded-sm bg-text-primary/10" />
-            <div className="h-2 w-4/5 rounded-sm bg-text-primary/10" />
-            <div className="mt-2 h-2.5 w-1/2 rounded-sm bg-text-primary/15" />
-            <div className="h-2 w-full rounded-sm bg-text-primary/10" />
-            <div className="h-2 w-3/4 rounded-sm bg-text-primary/10" />
+          /* Fallback: document mock */
+          <div className="absolute inset-5 flex items-center justify-center">
+            <div className="w-full max-w-[85%] bg-white/50 dark:bg-white/5 rounded-lg shadow-sm p-4 flex flex-col gap-2">
+              <div className="h-2.5 w-2/5 rounded-sm bg-text-primary/15" />
+              <div className="h-px w-full bg-text-primary/8 mt-1 mb-0.5" />
+              <div className="h-2 w-3/4 rounded-sm bg-text-primary/10" />
+              <div className="h-2 w-full rounded-sm bg-text-primary/8" />
+              <div className="h-2 w-full rounded-sm bg-text-primary/8" />
+              <div className="h-2 w-4/5 rounded-sm bg-text-primary/8" />
+              <div className="mt-2 h-2.5 w-1/2 rounded-sm bg-text-primary/12" />
+              <div className="h-2 w-full rounded-sm bg-text-primary/8" />
+              <div className="h-2 w-3/5 rounded-sm bg-text-primary/8" />
+            </div>
           </div>
         )}
 
-        {/* Hover overlay with quick actions — frosted glass */}
-        <div className="absolute inset-0 backdrop-blur-0 group-hover:backdrop-blur-sm bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
+        {/* Hover overlay with circular action buttons */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 backdrop-blur-0 group-hover:backdrop-blur-[2px] transition-all duration-300 flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100">
           <TooltipProvider delay={0}>
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <Button
-                    variant="secondary"
-                    size="sm"
+                  <button
                     onClick={onEdit}
-                    className="bg-white/90 dark:bg-white/20 text-text-primary backdrop-blur-sm shadow-lg gap-1.5"
+                    className="w-10 h-10 rounded-full bg-white/90 dark:bg-white/20 backdrop-blur-md shadow-lg flex items-center justify-center transition-transform duration-200 hover:scale-110"
                   />
                 }
               >
-                <Pencil className="w-3.5 h-3.5" />
-                Edit
+                <Pencil className="w-4 h-4 text-text-primary" />
               </TooltipTrigger>
               <TooltipContent>Edit in Builder</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <Button
-                    variant="secondary"
-                    size="sm"
+                  <button
                     onClick={pdfEnabled ? onExportPDF : undefined}
                     disabled={!pdfEnabled}
                     className={cn(
-                      "bg-white/90 dark:bg-white/20 text-text-primary backdrop-blur-sm shadow-lg gap-1.5",
-                      !pdfEnabled && "opacity-50 cursor-not-allowed"
+                      "w-10 h-10 rounded-full bg-white/90 dark:bg-white/20 backdrop-blur-md shadow-lg flex items-center justify-center transition-transform duration-200 hover:scale-110",
+                      !pdfEnabled && "opacity-40 cursor-not-allowed hover:scale-100"
                     )}
                   />
                 }
               >
-                <Download className="w-3.5 h-3.5" />
-                Export
+                <Download className="w-4 h-4 text-text-primary" />
               </TooltipTrigger>
               <TooltipContent>
                 {pdfEnabled
@@ -244,10 +236,43 @@ export function ResumeCard({
       </div>
 
       {/* Card Body */}
-      <div className="p-4 pt-3.5 space-y-2.5">
-        <h3 className="font-heading font-semibold text-text-primary truncate text-base">
-          {resume.name}
-        </h3>
+      <div className="p-4 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-[15px] text-text-primary truncate leading-snug">
+            {resume.name}
+          </h3>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <button className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface transition-colors" />
+              }
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={pdfEnabled ? onExportPDF : undefined}
+                disabled={!pdfEnabled}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {pdfEnabled ? "Export PDF" : "Export PDF (not configured)"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onSetBase}>
+                <Star className="w-4 h-4 mr-2" />
+                Set as Base
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={onDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Badges row */}
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -277,48 +302,6 @@ export function ResumeCard({
           <Clock className="w-3 h-3" />
           Updated {formatRelativeTime(resume.updated_at)}
         </p>
-
-        {/* Actions row */}
-        <div className="flex items-center justify-between pt-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onEdit}
-            className="gap-1.5 text-xs"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Edit
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={<Button variant="ghost" size="icon-sm" />}
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={pdfEnabled ? onExportPDF : undefined}
-                disabled={!pdfEnabled}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {pdfEnabled ? "Export PDF" : "Export PDF (not configured)"}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onSetBase}>
-                <Star className="w-4 h-4 mr-2" />
-                Set as Base
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={onDelete}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </div>
     </div>
   );

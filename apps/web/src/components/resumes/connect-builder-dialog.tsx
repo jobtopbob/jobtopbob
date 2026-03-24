@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useConnectRxResumeKey } from "@/hooks/use-resumes";
-import { ExternalLink, Key, CheckCircle2 } from "lucide-react";
+import { useConnectRxResumeKey, useSyncResumes } from "@/hooks/use-resumes";
+import { ExternalLink, Key } from "lucide-react";
 import { toast } from "sonner";
 
 interface ConnectBuilderDialogProps {
@@ -28,14 +28,27 @@ export function ConnectBuilderDialog({
 }: ConnectBuilderDialogProps) {
   const [apiKey, setApiKey] = useState("");
   const connectKey = useConnectRxResumeKey();
+  const syncResumes = useSyncResumes();
 
   const handleConnect = () => {
     if (!apiKey.trim()) return;
     connectKey.mutate(apiKey.trim(), {
       onSuccess: () => {
-        toast.success("Resume Builder connected");
+        toast.success("Resume Builder connected — syncing resumes…");
         setApiKey("");
         onOpenChange(false);
+        syncResumes.mutate(undefined, {
+          onSuccess: (data) => {
+            if (data.sync_status === "synced") {
+              toast.success(
+                data.resumes.length > 0
+                  ? `Synced ${data.resumes.length} resume${data.resumes.length === 1 ? "" : "s"}`
+                  : "Sync complete — no resumes found in Resume Builder",
+              );
+            }
+          },
+          onError: () => toast.error("Initial sync failed — you can sync manually later"),
+        });
       },
       onError: (error) => {
         toast.error(error.message);
@@ -71,7 +84,7 @@ export function ConnectBuilderDialog({
                   variant="outline"
                   size="sm"
                   className="mt-2 gap-1.5"
-                  onClick={() => window.open(builderURL, "_blank")}
+                  onClick={() => window.open(`${builderURL}/dashboard/settings/api-keys`, "_blank")}
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   Open Builder
