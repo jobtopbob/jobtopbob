@@ -23,8 +23,6 @@ import {
 import {
   ExternalLink,
   RefreshCw,
-  FileText,
-  Star,
   AlertTriangle,
   CheckCircle2,
   Circle,
@@ -32,34 +30,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex-1 rounded-xl bg-card border border-border-subtle p-5">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center shrink-0">
-          <Icon className="w-5 h-5 text-text-muted" />
-        </div>
-        <div className="min-w-0">
-          <span className="text-[13px] font-medium text-text-muted block">
-            {label}
-          </span>
-          <div className="text-2xl font-bold leading-none text-text-primary mt-1 truncate">
-            {value}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function FeatureStatus({
   configured,
@@ -106,7 +76,6 @@ export default function ResumesPage() {
   const setBase = useSetBaseResume();
   const syncResumes = useSyncResumes();
 
-  const baseResume = resumes?.find((r) => r.is_base);
   const builderURL = config?.builder_url ?? "";
 
   // Auto-refresh when user returns to this tab (e.g., after editing in RxResume)
@@ -293,20 +262,6 @@ export default function ResumesPage() {
               </div>
             </div>
           )}
-
-        {/* Stats Row */}
-        <div className="flex gap-4">
-          <StatCard
-            icon={FileText}
-            label="Total Resumes"
-            value={isLoading ? "--" : String(resumes?.length ?? 0)}
-          />
-          <StatCard
-            icon={Star}
-            label="Base Resume"
-            value={isLoading ? "--" : (baseResume?.name ?? "Not set")}
-          />
-        </div>
 
         {/* Resume Grid */}
         <ResumeGrid
