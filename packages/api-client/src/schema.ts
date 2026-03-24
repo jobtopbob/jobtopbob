@@ -1197,6 +1197,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/rxresume-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Connect a RxResume API key
+         * @description Validates the key against RxResume and stores it for the current user
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SetRxResumeKeyRequest"];
+                };
+            };
+            responses: {
+                /** @description Key connected successfully */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RxResumeKeyStatus"];
+                    };
+                };
+                /** @description Invalid API key */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /** Disconnect the stored RxResume API key */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Key removed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RxResumeKeyStatus"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/rxresume-key/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check if the user has a RxResume API key connected */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Connection status */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RxResumeKeyStatus"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1448,9 +1556,15 @@ export interface components {
         ResumeConfig: {
             builder_configured: boolean;
             builder_url: string;
-            sync_configured: boolean;
+            /** @description Whether the current user has connected their RxResume API key */
+            api_key_configured: boolean;
             pdf_configured: boolean;
-            api_configured: boolean;
+        };
+        RxResumeKeyStatus: {
+            connected: boolean;
+        };
+        SetRxResumeKeyRequest: {
+            api_key: string;
         };
         Stats: {
             /** Format: int64 */

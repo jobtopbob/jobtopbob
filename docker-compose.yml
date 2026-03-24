@@ -40,7 +40,6 @@ services:
       - ./docker/postgres/01-init-app-role.sh:/docker-entrypoint-initdb.d/01-init-app-role.sh:ro
       - ./docker/postgres/02-init-rxresume.sh:/docker-entrypoint-initdb.d/02-init-rxresume.sh:ro
       - ./docker/postgres/03-init-better-auth.sh:/docker-entrypoint-initdb.d/03-init-better-auth.sh:ro
-      - ./docker/postgres/04-init-rxresume-reader.sh:/docker-entrypoint-initdb.d/04-init-rxresume-reader.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jobtopbob}"]
       interval: 10s
@@ -111,6 +110,8 @@ services:
       OAUTH_TOKEN_URL: ${OAUTH_INTERNAL_URL:-http://host.docker.internal:3000}/api/auth/oauth2/token
       OAUTH_USER_INFO_URL: ${OAUTH_INTERNAL_URL:-http://host.docker.internal:3000}/api/auth/oauth2/userinfo
       OAUTH_SCOPES: openid profile email
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${RESUME_BUILDER_PORT:-3010}:3000"
     volumes:
@@ -192,8 +193,6 @@ services:
       JWKS_URL: ${JWKS_URL:-http://web:3000/api/auth/jwks}
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
       RESUME_BUILDER_URL: ${RESUME_BUILDER_URL:-http://resume-builder:3000}
-      RXRESUME_DATABASE_URL: postgresql://rxresume_reader:${RXRESUME_READER_PASSWORD:-changeme}@postgres:5432/rxresume
-      RXRESUME_API_KEY: ${RXRESUME_API_KEY:-}
       RESUME_PRINTER_HTTP_URL: http://resume-printer:3000
       RESUME_BUILDER_PRINTER_URL: http://resume-builder:3000
       S3_BUCKET: ${S3_BUCKET:-jobtopbob}

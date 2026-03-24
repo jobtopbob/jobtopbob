@@ -53,6 +53,14 @@ func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxr
 		// Stats
 		v1.GET("/stats", handlers.GetStats())
 
+		// Settings
+		settings := v1.Group("/settings")
+		{
+			settings.PUT("/rxresume-key", handlers.SetRxResumeKey(rxClient))
+			settings.DELETE("/rxresume-key", handlers.DeleteRxResumeKey())
+			settings.GET("/rxresume-key/status", handlers.GetRxResumeKeyStatus())
+		}
+
 		// Resumes — sync must be registered before :id wildcard routes
 		resumes := v1.Group("/resumes")
 		{

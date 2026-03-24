@@ -327,18 +327,24 @@ Rather than building a resume builder from scratch (estimated 4–6 weeks), JobT
 - Health check at `/api/health`
 - Optional S3-compatible storage (falls back to local filesystem)
 
-**Integration approach:**
+**Integration approach (API-only, per-user keys):**
+
+All communication between JobTopBob and RxResume happens through RxResume's OpenAPI endpoints.
+Each user connects their own per-user API key (generated in RxResume Settings > API Keys) via a
+guided setup dialog in the JobTopBob UI. No direct database reads between the two services.
 
 ```
-Phase 1: Microservice composition
-├── Add RxResume as a Docker Compose service (app + printer)
-├── Share PostgreSQL instance (separate database) or use RxResume's own DB
-├── JobTopBob Go API proxies resume operations via RxResume REST API
-├── Link resume versions to job applications (jobs.resume_version_id → resume_versions.id)
-└── PDF export calls RxResume's GET /resumes/{id}/pdf endpoint
+Phase 1: Microservice composition (complete)
+├── RxResume as Docker Compose service (app + Chromium printer)
+├── Shared PostgreSQL instance (separate databases, no cross-DB reads)
+├── SSO via OIDC: RxResume custom OAuth → JobTopBob's Better Auth as provider
+├── Per-user API key stored in user_settings for RxResume OpenAPI access
+├── Resume sync: list + detail via GET /api/openapi/resumes[/{id}]
+├── Resume CRUD: create/delete via POST/DELETE /api/openapi/resumes
+├── PDF export: API-based (per-user key) with direct Chromium fallback
+└── Snapshot extraction: basics, sections, skills, template from full resume data
 
 Phase 2: Deeper integration
-├── SSO via OIDC: configure RxResume custom OAuth to use JobTopBob's Better Auth as provider
 ├── AI resume tailoring via RxResume MCP endpoint or JSON Patch API
 ├── Resume version tracking: snapshot RxResume JSON on application submit
 └── ATS scoring: fetch resume JSON from RxResume, compare against JD
@@ -363,7 +369,7 @@ Phase 2: Deeper integration
 - Adds 2 containers to the stack (RxResume app + Chromium printer) — but removes the need for JobTopBob's own Puppeteer
 - RxResume's template customisation is CSS-based, not a visual editor — sufficient for most users
 - Users see RxResume's UI for resume editing (can be embedded via iframe or linked) — not a fully seamless experience without deeper integration
-- Auth is separate (RxResume has its own auth system) — Phase 2 SSO via OIDC bridges this gap
+- One-time API key setup per user (guided dialog in UI) — acceptable trade-off for security isolation
 
 ### Language summary
 

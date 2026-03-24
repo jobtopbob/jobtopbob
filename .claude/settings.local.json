@@ -30,7 +30,9 @@
       "Bash(gh api:*)",
       "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
       "WebFetch(domain:docs.rxresu.me)",
-      "WebFetch(domain:better-auth.com)"
+      "WebFetch(domain:better-auth.com)",
+      "Bash(grep:*)",
+      "Bash(go vet:*)"
     ]
   }
 }

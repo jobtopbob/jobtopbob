@@ -12,6 +12,7 @@ import {
 } from "@/hooks/use-resumes";
 import { ResumeGrid } from "@/components/resumes/resume-grid";
 import { DeleteResumeDialog } from "@/components/resumes/delete-resume-dialog";
+import { ConnectBuilderDialog } from "@/components/resumes/connect-builder-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -22,51 +23,24 @@ import {
 import {
   ExternalLink,
   RefreshCw,
-  FileText,
-  Star,
   AlertTriangle,
   CheckCircle2,
   Circle,
+  Key,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex-1 rounded-xl bg-card border border-border-subtle p-5">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center shrink-0">
-          <Icon className="w-5 h-5 text-text-muted" />
-        </div>
-        <div className="min-w-0">
-          <span className="text-[13px] font-medium text-text-muted block">
-            {label}
-          </span>
-          <div className="text-2xl font-bold leading-none text-text-primary mt-1 truncate">
-            {value}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function FeatureStatus({
   configured,
   label,
   hint,
+  action,
 }: {
   configured: boolean;
   label: string;
   hint: string;
+  action?: React.ReactNode;
 }) {
   return (
     <li className="flex items-start gap-2 text-sm">
@@ -78,10 +52,13 @@ function FeatureStatus({
       <span className={configured ? "text-text-primary" : "text-text-muted"}>
         {label}
         {!configured && (
-          <span className="text-text-muted/70">
-            {" "}
-            &mdash; {hint}
-          </span>
+          <>
+            <span className="text-text-muted/70">
+              {" "}
+              &mdash; {hint}
+            </span>
+            {action && <span className="ml-2">{action}</span>}
+          </>
         )}
       </span>
     </li>
@@ -93,12 +70,12 @@ export default function ResumesPage() {
   const { data: config } = useResumeConfig();
   const { data: resumes, isLoading } = useResumes();
   const [deleteTarget, setDeleteTarget] = useState<Resume | null>(null);
+  const [connectDialogOpen, setConnectDialogOpen] = useState(false);
 
   const exportPDF = useExportResumePDF();
   const setBase = useSetBaseResume();
   const syncResumes = useSyncResumes();
 
-  const baseResume = resumes?.find((r) => r.is_base);
   const builderURL = config?.builder_url ?? "";
 
   // Auto-refresh when user returns to this tab (e.g., after editing in RxResume)
@@ -114,7 +91,7 @@ export default function ResumesPage() {
   }, [queryClient]);
 
   const openBuilder = () => {
-    if (builderURL) window.open(builderURL, "_blank");
+    if (builderURL) window.open(`${builderURL}/dashboard/resumes`, "_blank");
   };
 
   const handleEdit = (resume: Resume) => {
@@ -126,13 +103,17 @@ export default function ResumesPage() {
   };
 
   const handleExportPDF = (resume: Resume) => {
-    exportPDF.mutate(resume.id, {
-      onSuccess: (data) => {
-        window.open(data.url, "_blank");
-        toast.success("PDF exported");
+    toast.promise(
+      exportPDF.mutateAsync({
+        id: resume.id,
+        fileName: `${resume.name || "resume"}.pdf`,
+      }),
+      {
+        loading: "Exporting PDF...",
+        success: "PDF exported",
+        error: (err) => err?.message ?? "Failed to export PDF",
       },
-      onError: (error) => toast.error(error.message),
-    });
+    );
   };
 
   const handleSetBase = (resume: Resume) => {
@@ -156,7 +137,7 @@ export default function ResumesPage() {
           case "skipped":
             toast.warning(
               data.sync_message ??
-                "Sync skipped — Resume Builder is not configured"
+                "Sync skipped — connect your API key first"
             );
             break;
           case "failed":
@@ -183,8 +164,17 @@ export default function ResumesPage() {
               Resumes
             </h1>
             <p className="text-sm text-text-muted mt-1.5">
-              Sync from the builder, tailor for specific roles, and export when
-              ready.
+              Built with{" "}
+              <a
+                href="https://rxresu.me"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-text-primary transition-colors"
+              >
+                Reactive Resume
+              </a>
+              . Sync from the builder, tailor for specific roles, and export
+              when ready.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -197,7 +187,7 @@ export default function ResumesPage() {
                       size="icon"
                       onClick={handleSync}
                       disabled={
-                        syncResumes.isPending || !config?.sync_configured
+                        syncResumes.isPending || !config?.api_key_configured
                       }
                     />
                   }
@@ -210,9 +200,9 @@ export default function ResumesPage() {
                   />
                 </TooltipTrigger>
                 <TooltipContent>
-                  {config?.sync_configured
+                  {config?.api_key_configured
                     ? "Sync from Resume Builder"
-                    : "Set RXRESUME_DATABASE_URL to enable syncing"}
+                    : "Connect your API key to enable syncing"}
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
@@ -241,7 +231,7 @@ export default function ResumesPage() {
         {/* Feature Status — shows when a core feature is unconfigured */}
         {config &&
           (!config.builder_configured ||
-            !config.sync_configured ||
+            !config.api_key_configured ||
             !config.pdf_configured) && (
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
               <div className="flex items-start gap-3">
@@ -250,7 +240,7 @@ export default function ResumesPage() {
                 </div>
                 <div className="space-y-2.5">
                   <h3 className="font-semibold text-text-primary text-sm">
-                    Some resume features need configuration
+                    Some resume features need setup
                   </h3>
                   <ul className="space-y-1.5">
                     <FeatureStatus
@@ -259,39 +249,32 @@ export default function ResumesPage() {
                       hint="Set RESUME_BUILDER_URL and run docker compose up -d"
                     />
                     <FeatureStatus
-                      configured={config.sync_configured}
-                      label="Resume Sync"
-                      hint="Set RXRESUME_DATABASE_URL and ensure the rxresume_reader role exists"
+                      configured={config.api_key_configured}
+                      label="API Key"
+                      hint="Connect your Resume Builder API key to enable sync and create"
+                      action={
+                        config.builder_configured && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 text-xs"
+                            onClick={() => setConnectDialogOpen(true)}
+                          >
+                            Connect now
+                          </Button>
+                        )
+                      }
                     />
                     <FeatureStatus
                       configured={config.pdf_configured}
                       label="PDF Export"
-                      hint="Set RESUME_PRINTER_HTTP_URL and RESUME_BUILDER_PRINTER_URL"
-                    />
-                    <FeatureStatus
-                      configured={config.api_configured}
-                      label="API Key (optional)"
-                      hint="Set RXRESUME_API_KEY to enable create/delete via API"
+                      hint="Connect your API key or set RESUME_PRINTER_HTTP_URL"
                     />
                   </ul>
                 </div>
               </div>
             </div>
           )}
-
-        {/* Stats Row */}
-        <div className="flex gap-4">
-          <StatCard
-            icon={FileText}
-            label="Total Resumes"
-            value={isLoading ? "--" : String(resumes?.length ?? 0)}
-          />
-          <StatCard
-            icon={Star}
-            label="Base Resume"
-            value={isLoading ? "--" : (baseResume?.name ?? "Not set")}
-          />
-        </div>
 
         {/* Resume Grid */}
         <ResumeGrid
@@ -310,6 +293,11 @@ export default function ResumesPage() {
           open={!!deleteTarget}
           onOpenChange={(open) => !open && setDeleteTarget(null)}
           resume={deleteTarget}
+        />
+        <ConnectBuilderDialog
+          open={connectDialogOpen}
+          onOpenChange={setConnectDialogOpen}
+          builderURL={builderURL}
         />
       </div>
     </div>
