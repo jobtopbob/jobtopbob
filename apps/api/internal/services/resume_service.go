@@ -292,12 +292,18 @@ func CreateResume(ctx context.Context, q *db.Queries, userID, userAPIKey string,
 		}
 	}
 
+	// Auto-set as base if user has no base resume yet
+	isBase := false
+	if _, err := q.GetBaseResume(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
+		isBase = true
+	}
+
 	// Always create the local DB record
 	resume, err := q.CreateResume(ctx, db.CreateResumeParams{
 		UserID:     userID,
 		Name:       params.Name,
 		RxresumeID: rxResumeID,
-		IsBase:     pgtype.Bool{Bool: false, Valid: true},
+		IsBase:     pgtype.Bool{Bool: isBase, Valid: true},
 		Template:   pgtype.Text{String: params.Template, Valid: params.Template != ""},
 	})
 	if err != nil {
@@ -464,6 +470,18 @@ func fetchPDFFromURL(ctx context.Context, url string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
+// GetBaseResume returns the user's base resume, or ErrNotFound if none is set.
+func GetBaseResume(ctx context.Context, q *db.Queries, userID string) (ResumeResponse, error) {
+	resume, err := q.GetBaseResume(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ResumeResponse{}, ErrNotFound
+	}
+	if err != nil {
+		return ResumeResponse{}, err
+	}
+	return resumeToResponse(resume), nil
+}
+
 // SetBaseResume clears any existing base resume and sets the given one as base.
 func SetBaseResume(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID) (ResumeResponse, error) {
 	_, err := q.GetResume(ctx, db.GetResumeParams{ID: id, UserID: userID})
@@ -478,8 +496,15 @@ func SetBaseResume(ctx context.Context, q *db.Queries, userID string, id pgtype.
 		return ResumeResponse{}, fmt.Errorf("clear base: %w", err)
 	}
 
-	isBaseTrue := true
-	return UpdateResume(ctx, q, userID, id, UpdateResumeParams{IsBase: &isBaseTrue})
+	updated, err := q.UpdateResume(ctx, db.UpdateResumeParams{
+		ID:     id,
+		UserID: userID,
+		IsBase: pgtype.Bool{Bool: true, Valid: true},
+	})
+	if err != nil {
+		return ResumeResponse{}, err
+	}
+	return resumeToResponse(updated), nil
 }
 
 // SyncResumes forces a full sync of all linked resumes from RxResume.
@@ -529,18 +554,26 @@ func SyncResumes(ctx context.Context, q *db.Queries, userID, userAPIKey string, 
 		}
 	}
 
+	// Check if user has a base resume; first discovered resume becomes base if not
+	_, baseErr := q.GetBaseResume(ctx, userID)
+	hasBase := !errors.Is(baseErr, pgx.ErrNoRows)
+
 	// Discover new resumes from RxResume and create local records
 	for _, rxr := range rxResumes {
 		if _, exists := knownRxIDs[rxr.ID]; !exists {
+			setAsBase := !hasBase
 			newResume, err := q.CreateResume(ctx, db.CreateResumeParams{
 				UserID:     userID,
 				Name:       rxr.Name,
 				RxresumeID: pgtype.Text{String: rxr.ID, Valid: true},
-				IsBase:     pgtype.Bool{Bool: false, Valid: true},
+				IsBase:     pgtype.Bool{Bool: setAsBase, Valid: true},
 			})
 			if err != nil {
 				slog.Warn("failed to create local record for discovered rxresume", "rxresume_id", rxr.ID, "error", err)
 				continue
+			}
+			if setAsBase {
+				hasBase = true
 			}
 			_ = LogActivity(ctx, q, userID, "resume", newResume.ID, "imported", nil, map[string]string{"name": rxr.Name})
 		}

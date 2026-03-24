@@ -232,6 +232,26 @@ func SyncResumes(rxClient *rxresume.Client) gin.HandlerFunc {
 	}
 }
 
+// GetBaseResume handles GET /api/v1/resumes/base
+func GetBaseResume() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		q := db.New(getTx(c))
+		userID := getUserID(c)
+
+		resume, err := services.GetBaseResume(c.Request.Context(), q, userID)
+		if errors.Is(err, services.ErrNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "no base resume set"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get base resume"})
+			return
+		}
+
+		c.JSON(http.StatusOK, resume)
+	}
+}
+
 // SetBaseResume handles PUT /api/v1/resumes/:id/base
 func SetBaseResume() gin.HandlerFunc {
 	return func(c *gin.Context) {

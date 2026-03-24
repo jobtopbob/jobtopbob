@@ -68,6 +68,7 @@ func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxr
 			resumes.GET("", handlers.ListResumes(rxClient))
 			resumes.POST("", handlers.CreateResume(rxClient))
 			resumes.POST("/sync", handlers.SyncResumes(rxClient))
+			resumes.GET("/base", handlers.GetBaseResume())
 			resumes.GET("/:id", handlers.GetResume(rxClient))
 			resumes.PUT("/:id", handlers.UpdateResume(rxClient))
 			resumes.DELETE("/:id", handlers.DeleteResume(rxClient))

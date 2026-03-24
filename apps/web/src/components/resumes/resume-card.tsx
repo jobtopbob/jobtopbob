@@ -258,9 +258,12 @@ export function ResumeCard({
                 <Download className="w-4 h-4 mr-2" />
                 {pdfEnabled ? "Export PDF" : "Export PDF (not configured)"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onSetBase}>
+              <DropdownMenuItem
+                onClick={resume.is_base ? undefined : onSetBase}
+                disabled={resume.is_base}
+              >
                 <Star className="w-4 h-4 mr-2" />
-                Set as Base
+                {resume.is_base ? "Base Resume" : "Set as Base"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

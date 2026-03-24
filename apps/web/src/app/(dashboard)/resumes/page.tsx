@@ -276,9 +276,9 @@ export default function ResumesPage() {
             </div>
           )}
 
-        {/* Resume Grid */}
+        {/* Resume Grid — base resume always first */}
         <ResumeGrid
-          resumes={resumes ?? []}
+          resumes={[...(resumes ?? [])].sort((a, b) => (b.is_base ? 1 : 0) - (a.is_base ? 1 : 0))}
           isLoading={isLoading}
           config={config}
           onCreateClick={openBuilder}

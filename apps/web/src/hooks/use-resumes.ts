@@ -169,6 +169,17 @@ export function useSyncResumes() {
   });
 }
 
+export function useBaseResume() {
+  return useQuery({
+    queryKey: [...resumeKeys.all, "base"] as const,
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/v1/resumes/base");
+      if (error) throw new Error(getErrorMessage(error));
+      return data as Resume;
+    },
+  });
+}
+
 export function useSetBaseResume() {
   const queryClient = useQueryClient();
 
