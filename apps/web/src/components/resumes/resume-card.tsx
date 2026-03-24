@@ -1,7 +1,7 @@
 "use client";
 
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,9 +120,12 @@ export function ResumeCard({
           <div className="absolute inset-5 flex flex-col gap-2">
             <div className="flex items-center gap-3">
               {resume.picture_url && (
-                <img
+                <Image
                   src={resume.picture_url}
                   alt=""
+                  width={48}
+                  height={48}
+                  unoptimized
                   className="w-12 h-12 rounded-full object-cover border-2 border-white/40 shadow-md"
                 />
               )}

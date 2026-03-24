@@ -118,11 +118,7 @@ interface MobileJobRowProps {
 function MobileJobRow({ job, stages, onClick }: MobileJobRowProps) {
   const updateJob = useUpdateJob();
   const date = formatRelativeDate(job.created_at);
-  const salary = formatSalary(
-    job.salary_min,
-    job.salary_max,
-    job.salary_currency
-  );
+  const salary = formatSalary(job.salary_min, job.salary_max);
 
   const handleStageChange = (newStageId: string | null) => {
     if (!newStageId || newStageId === job.stage_id) return;

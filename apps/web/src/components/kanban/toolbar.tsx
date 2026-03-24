@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FilterPanel } from "./filter-panel";

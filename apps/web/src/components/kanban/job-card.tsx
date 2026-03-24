@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useDraggable } from "@dnd-kit/react";
 import type { Job } from "@/hooks/use-jobs";
 import type { Tag } from "@/hooks/use-tags";
@@ -30,8 +31,7 @@ export function formatRelativeDate(dateStr: string | null | undefined): {
 
 export function formatSalary(
   min: number | null | undefined,
-  max: number | null | undefined,
-  currency: string | null | undefined
+  max: number | null | undefined
 ): string | null {
   if (!min && !max) return null;
   const fmt = (n: number) => {
@@ -51,7 +51,7 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
   });
 
   const date = formatRelativeDate(job.created_at);
-  const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
+  const salary = formatSalary(job.salary_min, job.salary_max);
   const tags = (job.tags ?? []) as Tag[];
   const displayTags = tags.slice(0, 3);
 
@@ -65,9 +65,12 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
       {/* Company */}
       <div className="flex items-center gap-1.5">
         {job.company_logo_url && (
-          <img
+          <Image
             src={job.company_logo_url}
             alt=""
+            width={16}
+            height={16}
+            unoptimized
             className="w-4 h-4 rounded-sm object-contain"
           />
         )}

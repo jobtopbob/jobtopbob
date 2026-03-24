@@ -242,15 +242,6 @@ function FilterContent({
     });
   }, [draft, onApply]);
 
-  const draftHasChanges =
-    draft.statuses.length > 0 ||
-    draft.stageIds.length > 0 ||
-    draft.locationTypes.length > 0 ||
-    draft.sources.length > 0 ||
-    draft.tagIds.length > 0 ||
-    draft.createdAfter !== "" ||
-    draft.createdBefore !== "";
-
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5 max-h-[70vh]">

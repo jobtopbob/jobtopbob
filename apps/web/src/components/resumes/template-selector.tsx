@@ -8,11 +8,6 @@ interface TemplateLayout {
   render: () => React.ReactNode;
 }
 
-// Mini document preview components representing each template's actual layout
-function Line({ w = "full", h = "1.5", className }: { w?: string; h?: string; className?: string }) {
-  return <div className={cn(`h-[${h}px] rounded-[1px]`, `w-${w}`, className)} />;
-}
-
 // Reusable layout blocks
 function ContentLines({ color = "bg-foreground/10" }: { color?: string }) {
   return (

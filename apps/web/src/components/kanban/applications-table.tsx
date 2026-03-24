@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -146,11 +147,7 @@ export function ApplicationsTable({
           {jobs.map((job) => {
             const stage = job.stage_id ? stageMap.get(job.stage_id) : undefined;
             const pillStyle = getStagePillStyle(stage);
-            const salary = formatSalary(
-              job.salary_min,
-              job.salary_max,
-              job.salary_currency
-            );
+            const salary = formatSalary(job.salary_min, job.salary_max);
             const appliedDate = formatDate(job.applied_at);
             const addedDate = formatDate(job.created_at);
             const companyName = job.company_name ?? "Unknown";
@@ -171,9 +168,12 @@ export function ApplicationsTable({
                 <TableCell>
                   <div className="flex items-center gap-2.5">
                     {job.company_logo_url ? (
-                      <img
+                      <Image
                         src={job.company_logo_url}
                         alt={companyName}
+                        width={36}
+                        height={36}
+                        unoptimized
                         className="w-9 h-9 rounded-lg shrink-0 object-contain"
                       />
                     ) : (

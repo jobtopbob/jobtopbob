@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Sheet,
@@ -145,11 +146,13 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
     isLoading: activityLoading,
   } = useActivityLog(activeTab === "activity" ? job?.id : undefined);
 
-  useEffect(() => {
+  const [prevJobId, setPrevJobId] = useState(job?.id);
+  if (job?.id !== prevJobId) {
+    setPrevJobId(job?.id);
     setActiveTab("details");
     setEditingDescription(false);
     setDescriptionDraft("");
-  }, [job?.id]);
+  }
 
   if (!job) return null;
 
@@ -219,9 +222,12 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
         <SheetHeader className="px-6 pt-6 pb-0 space-y-3">
           <div className="flex items-center gap-2.5">
             {job.company_logo_url ? (
-              <img
+              <Image
                 src={job.company_logo_url}
                 alt=""
+                width={36}
+                height={36}
+                unoptimized
                 className="w-9 h-9 rounded-xl object-contain bg-card border border-border-subtle p-0.5"
               />
             ) : (

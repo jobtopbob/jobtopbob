@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useJobs } from "@/hooks/use-jobs";
 import { useTheme } from "next-themes";
@@ -92,9 +93,12 @@ export function RecentApplications() {
                 className="flex items-center gap-3 py-2.5 border-b border-border-subtle last:border-b-0"
               >
                 {job.company_logo_url ? (
-                  <img
+                  <Image
                     src={job.company_logo_url}
                     alt={companyName}
+                    width={28}
+                    height={28}
+                    unoptimized
                     className="w-7 h-7 rounded-md shrink-0 object-contain"
                   />
                 ) : (
