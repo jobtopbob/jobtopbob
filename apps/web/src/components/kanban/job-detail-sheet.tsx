@@ -38,6 +38,7 @@ import type { Stage } from "@/hooks/use-stages";
 import { useTags, type Tag } from "@/hooks/use-tags";
 import { InlineEditField } from "./inline-edit-field";
 import { StageIcon } from "./stage-icons";
+import { SectionIcon, type SectionIconName } from "./section-icons";
 import { SOURCES, LOCATION_TYPES, CURRENCIES, JOB_TYPES, JOB_LEVELS, SALARY_INTERVALS } from "@/lib/constants";
 import { toast } from "sonner";
 import {
@@ -137,9 +138,14 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
     });
   }, [activeTab]);
 
+  // Re-measure when active tab changes or when a new job opens the sheet
+  // (activeTab may already be "details" from a previous close, so the callback
+  // reference won't change — job?.id ensures we re-measure when the tab bar
+  // re-enters the DOM for a different job).
+  const jobId = job?.id;
   useEffect(() => {
     measureTabIndicator();
-  }, [measureTabIndicator]);
+  }, [measureTabIndicator, jobId]);
 
   const {
     data: activityEntries,
@@ -168,7 +174,7 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
       body[field] = value ? parseInt(value) : null;
     } else if (field === "interest") {
       body[field] = value ? parseInt(value) : null;
-    } else if (field === "applied_at" || field === "follow_up_at") {
+    } else if (field === "applied_at" || field === "follow_up_at" || field === "deadline") {
       body[field] = value ? new Date(value).toISOString() : null;
     } else {
       body[field] = value || null;
@@ -377,6 +383,7 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
             <ActivityTab
               entries={activityEntries ?? []}
               isLoading={activityLoading}
+              stages={stages}
             />
           )}
         </div>
@@ -433,11 +440,19 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
 
 /* ─── Details Tab ─── */
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionHeader({ icon, children }: { icon?: SectionIconName; children: React.ReactNode }) {
   return (
-    <h4 className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
-      {children}
-    </h4>
+    <div className="flex items-center gap-2.5 mb-2">
+      {icon && (
+        <SectionIcon
+          name={icon}
+          className="w-6 h-6 text-text-muted/60 shrink-0"
+        />
+      )}
+      <h4 className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">
+        {children}
+      </h4>
+    </div>
   );
 }
 
@@ -461,15 +476,16 @@ function DetailsTab({
       {/* Property card */}
       <div className="rounded-xl bg-surface border border-border-subtle shadow-[0_1px_3px_rgba(0,0,0,0.04)] divide-y divide-border-subtle">
         {/* Job Info */}
-        <div className="p-4 space-y-0.5">
-          <SectionLabel>Job Info</SectionLabel>
+        <div className="px-4 py-5 space-y-0.5">
+          <SectionHeader icon="job-info">Job Info</SectionHeader>
           <InlineEditField
             icon={Building2}
             label="Company"
             value={job.company_name}
             type="text"
             placeholder="Add company"
-            onSave={(v) => onUpdate("company_name", v)}
+            disabled
+            onSave={() => {}}
           />
           <InlineEditField
             icon={MapPin}
@@ -541,8 +557,8 @@ function DetailsTab({
         </div>
 
         {/* Compensation */}
-        <div className="p-4 space-y-0.5">
-          <SectionLabel>Compensation</SectionLabel>
+        <div className="px-4 py-5 space-y-0.5">
+          <SectionHeader icon="compensation">Compensation</SectionHeader>
           <InlineEditField
             icon={DollarSign}
             label="Salary Min"
@@ -590,8 +606,8 @@ function DetailsTab({
         </div>
 
         {/* Dates */}
-        <div className="p-4 space-y-0.5">
-          <SectionLabel>Dates</SectionLabel>
+        <div className="px-4 py-5 space-y-0.5">
+          <SectionHeader icon="dates">Dates</SectionHeader>
           <InlineEditField
             icon={Calendar}
             label="Deadline"
@@ -628,8 +644,8 @@ function DetailsTab({
         </div>
 
         {/* Assessment */}
-        <div className="p-4 space-y-0.5">
-          <SectionLabel>Assessment</SectionLabel>
+        <div className="px-4 py-5 space-y-0.5">
+          <SectionHeader icon="assessment">Assessment</SectionHeader>
           <div className="flex items-center sm:flex-row flex-col sm:items-center items-start gap-2 min-h-[36px] py-1">
             <div className="flex items-center gap-2 sm:w-32 w-full shrink-0">
               <Star className="w-4 h-4 text-text-muted shrink-0" />
@@ -687,9 +703,7 @@ function DetailsTab({
 
       {/* Tags */}
       <div className="space-y-2.5">
-        <h3 className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">
-          Tags
-        </h3>
+        <SectionHeader>Tags</SectionHeader>
         <div className="flex flex-wrap gap-2 items-center">
           {tags.map((tag) => (
             <span
@@ -810,9 +824,7 @@ function DescriptionTab({
       ) : (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">
-              Job Description
-            </h3>
+            <SectionHeader>Job Description</SectionHeader>
             <Button
               variant="outline"
               size="sm"
@@ -830,13 +842,20 @@ function DescriptionTab({
             </div>
           ) : (
             <div className="rounded-xl border border-dashed border-border-dashed p-8 text-center">
-              <p className="text-sm text-text-muted">
-                No description added yet.
+              <SectionIcon
+                name="resume"
+                className="w-12 h-12 text-text-muted/30 mx-auto mb-3"
+              />
+              <p className="text-sm font-medium text-text-muted">
+                No description added yet
+              </p>
+              <p className="text-xs text-text-muted/70 mt-1">
+                Paste the job posting to help track requirements
               </p>
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-3 h-7 text-xs"
+                className="mt-4 h-7 text-xs"
                 onClick={onStartEdit}
               >
                 Add description
@@ -854,9 +873,11 @@ function DescriptionTab({
 function ActivityTab({
   entries,
   isLoading,
+  stages,
 }: {
   entries: ActivityLogEntry[];
   isLoading: boolean;
+  stages: Stage[];
 }) {
   if (isLoading) {
     return (
@@ -874,11 +895,12 @@ function ActivityTab({
   if (entries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-text-muted">
-        <div className="w-12 h-12 rounded-full bg-surface-hover flex items-center justify-center mb-3">
-          <Clock className="w-5 h-5 opacity-50" />
-        </div>
+        <SectionIcon
+          name="search"
+          className="w-14 h-14 text-text-muted/25 mb-4"
+        />
         <p className="text-sm font-medium">No activity yet</p>
-        <p className="text-xs mt-1">Changes will appear here</p>
+        <p className="text-xs text-text-muted/70 mt-1">Changes will appear here</p>
       </div>
     );
   }
@@ -888,7 +910,7 @@ function ActivityTab({
       <div className="absolute left-[7px] top-1 bottom-1 w-[2px] bg-border-subtle rounded-full" />
 
       {entries.map((entry) => {
-        const changes = extractChanges(entry);
+        const changes = extractChanges(entry, stages);
         return (
           <div key={entry.id} className="relative pb-6 last:pb-0">
             <div
@@ -938,22 +960,166 @@ function ActivityTab({
   );
 }
 
+/** Try to parse a value that might be a base64-encoded JSON string (Go serializes []byte as base64). */
+function parseActivityValue(raw: unknown): Record<string, unknown> | null {
+  if (raw == null) return null;
+  if (typeof raw === "object") return raw as Record<string, unknown>;
+  if (typeof raw === "string") {
+    try {
+      const decoded = JSON.parse(atob(raw));
+      if (typeof decoded === "object" && decoded !== null) return decoded;
+    } catch {
+      try {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed === "object" && parsed !== null) return parsed;
+      } catch {
+        // Not JSON
+      }
+    }
+  }
+  return null;
+}
+
+/** Extract a raw display string from a value (handles pgtype structs as fallback). */
+function rawDisplayValue(val: unknown): string | undefined {
+  if (val == null) return undefined;
+  if (typeof val === "string") return val || undefined;
+  if (typeof val === "number") return String(val);
+  if (typeof val === "boolean") return String(val);
+  if (typeof val === "object") {
+    const obj = val as Record<string, unknown>;
+    if ("String" in obj) return obj.Valid ? String(obj.String) : undefined;
+    if ("Int32" in obj) return obj.Valid ? String(obj.Int32) : undefined;
+    if ("Time" in obj) return obj.Valid ? formatDate(String(obj.Time)) : undefined;
+  }
+  return undefined;
+}
+
+/** Field display metadata: human labels and value formatters for activity log. */
+const FIELD_META: Record<string, {
+  label: string;
+  format?: (val: string, stages: Stage[]) => string;
+}> = {
+  title: { label: "Title" },
+  status: {
+    label: "Status",
+    format: (v) => v.charAt(0).toUpperCase() + v.slice(1),
+  },
+  stage_id: {
+    label: "Stage",
+    format: (v, stages) => stages.find((s) => s.id === v)?.name ?? v,
+  },
+  company_id: { label: "Company" },
+  location: { label: "Location" },
+  location_type: {
+    label: "Location Type",
+    format: (v) => LOCATION_TYPES.find((o) => o.value === v)?.label ?? v,
+  },
+  source: {
+    label: "Source",
+    format: (v) => SOURCES.find((o) => o.value === v)?.label ?? v,
+  },
+  job_type: {
+    label: "Job Type",
+    format: (v) => JOB_TYPES.find((o) => o.value === v)?.label ?? v,
+  },
+  job_level: {
+    label: "Level",
+    format: (v) => JOB_LEVELS.find((o) => o.value === v)?.label ?? v,
+  },
+  salary_min: {
+    label: "Salary Min",
+    format: (v) => {
+      const n = Number(v);
+      return isNaN(n) ? v : `$${n.toLocaleString()}`;
+    },
+  },
+  salary_max: {
+    label: "Salary Max",
+    format: (v) => {
+      const n = Number(v);
+      return isNaN(n) ? v : `$${n.toLocaleString()}`;
+    },
+  },
+  salary_currency: {
+    label: "Currency",
+    format: (v) => CURRENCIES.find((o) => o.value === v)?.label ?? v,
+  },
+  salary_interval: {
+    label: "Pay Interval",
+    format: (v) => SALARY_INTERVALS.find((o) => o.value === v)?.label ?? v,
+  },
+  interest: {
+    label: "Interest",
+    format: (v) => "★".repeat(Math.min(Number(v) || 0, 5)),
+  },
+  suitability: {
+    label: "Suitability",
+    format: (v) => `${v}/10`,
+  },
+  jd_raw: { label: "Description" },
+  applied_at: {
+    label: "Applied Date",
+    format: (v) => formatDate(v) || v,
+  },
+  follow_up_at: {
+    label: "Follow Up",
+    format: (v) => formatDate(v) || v,
+  },
+  deadline: {
+    label: "Deadline",
+    format: (v) => formatDate(v) || v,
+  },
+  experience_range: { label: "Experience" },
+  application_url: { label: "Apply Link" },
+};
+
+function formatFieldValue(field: string, raw: string | undefined, stages: Stage[]): string | undefined {
+  if (!raw) return undefined;
+  const meta = FIELD_META[field];
+  if (meta?.format) return meta.format(raw, stages);
+  return raw;
+}
+
+function fieldLabel(field: string): string {
+  return FIELD_META[field]?.label ?? field.replace(/_/g, " ").replace(/\bid\b/gi, "").trim();
+}
+
 function extractChanges(
-  entry: ActivityLogEntry
+  entry: ActivityLogEntry,
+  stages: Stage[],
 ): { field: string; from?: string; to: string }[] {
   const changes: { field: string; from?: string; to: string }[] = [];
-  const oldVal = entry.old_value as Record<string, string> | null | undefined;
-  const newVal = entry.new_value as Record<string, string> | null | undefined;
+  const newVal = parseActivityValue(entry.new_value);
 
   if (!newVal) return changes;
 
   for (const key of Object.keys(newVal)) {
-    const label = key.replace(/_/g, " ").replace(/\bid\b/g, "").trim();
-    changes.push({
-      field: label || key,
-      from: oldVal?.[key] ?? undefined,
-      to: String(newVal[key]),
-    });
+    const label = fieldLabel(key);
+    const fieldVal = newVal[key];
+
+    // detectJobChanges stores each field as {old: value, new: value}
+    if (
+      fieldVal != null &&
+      typeof fieldVal === "object" &&
+      "new" in (fieldVal as Record<string, unknown>)
+    ) {
+      const pair = fieldVal as Record<string, unknown>;
+      const fromRaw = rawDisplayValue(pair.old);
+      const toRaw = rawDisplayValue(pair["new"]);
+      const from = formatFieldValue(key, fromRaw, stages);
+      const to = formatFieldValue(key, toRaw, stages);
+      if (to) {
+        changes.push({ field: label, from, to });
+      }
+    } else {
+      // Simple value (e.g. from "created" action: {title: "..."})
+      const raw = rawDisplayValue(fieldVal);
+      const to = formatFieldValue(key, raw, stages);
+      if (to) {
+        changes.push({ field: label, to });
+      }
+    }
   }
 
   return changes;

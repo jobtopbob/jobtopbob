@@ -147,6 +147,58 @@ func (q *Queries) ListTags(ctx context.Context, userID string) ([]Tag, error) {
 	return items, nil
 }
 
+const listTagsForEntities = `-- name: ListTagsForEntities :many
+SELECT tg.entity_id, t.id, t.user_id, t.name, t.color, t.created_at, t.updated_at
+FROM tags t
+JOIN taggings tg ON tg.tag_id = t.id
+WHERE tg.user_id = $1 AND tg.entity_type = $2 AND tg.entity_id = ANY($3::uuid[])
+ORDER BY t.name ASC
+`
+
+type ListTagsForEntitiesParams struct {
+	UserID     string        `json:"user_id"`
+	EntityType string        `json:"entity_type"`
+	Column3    []pgtype.UUID `json:"column_3"`
+}
+
+type ListTagsForEntitiesRow struct {
+	EntityID  pgtype.UUID        `json:"entity_id"`
+	ID        pgtype.UUID        `json:"id"`
+	UserID    string             `json:"user_id"`
+	Name      pgtype.Text        `json:"name"`
+	Color     pgtype.Text        `json:"color"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ListTagsForEntities(ctx context.Context, arg ListTagsForEntitiesParams) ([]ListTagsForEntitiesRow, error) {
+	rows, err := q.db.Query(ctx, listTagsForEntities, arg.UserID, arg.EntityType, arg.Column3)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListTagsForEntitiesRow{}
+	for rows.Next() {
+		var i ListTagsForEntitiesRow
+		if err := rows.Scan(
+			&i.EntityID,
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.Color,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTagsForEntity = `-- name: ListTagsForEntity :many
 SELECT t.id, t.user_id, t.name, t.color, t.created_at, t.updated_at FROM tags t
 JOIN taggings tg ON tg.tag_id = t.id

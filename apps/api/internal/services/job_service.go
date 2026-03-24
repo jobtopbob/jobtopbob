@@ -46,12 +46,18 @@ type ListJobsParams struct {
 	PerPage       int32
 }
 
+// JobWithTags wraps a ListJobsRow with its associated tags.
+type JobWithTags struct {
+	db.ListJobsRow
+	Tags []db.Tag `json:"tags"`
+}
+
 // ListJobsResult holds the paginated result.
 type ListJobsResult struct {
-	Jobs    []db.ListJobsRow `json:"data"`
-	Total   int64            `json:"total"`
-	Page    int32            `json:"page"`
-	PerPage int32            `json:"per_page"`
+	Jobs    []JobWithTags `json:"data"`
+	Total   int64         `json:"total"`
+	Page    int32         `json:"page"`
+	PerPage int32         `json:"per_page"`
 }
 
 // ListJobs returns a paginated, filtered list of jobs.
@@ -113,8 +119,47 @@ func ListJobs(ctx context.Context, q *db.Queries, userID string, p ListJobsParam
 		return ListJobsResult{}, err
 	}
 
+	// Batch-fetch tags for all jobs
+	jobIDs := make([]pgtype.UUID, len(jobs))
+	for i, j := range jobs {
+		jobIDs[i] = j.ID
+	}
+
+	tagMap := make(map[string][]db.Tag)
+	if len(jobIDs) > 0 {
+		tagRows, err := q.ListTagsForEntities(ctx, db.ListTagsForEntitiesParams{
+			UserID:     userID,
+			EntityType: "job",
+			Column3:    jobIDs,
+		})
+		if err != nil {
+			return ListJobsResult{}, err
+		}
+		for _, row := range tagRows {
+			eid := uuidToString(row.EntityID)
+			tagMap[eid] = append(tagMap[eid], db.Tag{
+				ID:        row.ID,
+				UserID:    row.UserID,
+				Name:      row.Name,
+				Color:     row.Color,
+				CreatedAt: row.CreatedAt,
+				UpdatedAt: row.UpdatedAt,
+			})
+		}
+	}
+
+	result := make([]JobWithTags, len(jobs))
+	for i, j := range jobs {
+		jid := uuidToString(j.ID)
+		tags := tagMap[jid]
+		if tags == nil {
+			tags = []db.Tag{}
+		}
+		result[i] = JobWithTags{ListJobsRow: j, Tags: tags}
+	}
+
 	return ListJobsResult{
-		Jobs:    jobs,
+		Jobs:    result,
 		Total:   total,
 		Page:    p.Page,
 		PerPage: p.PerPage,
@@ -295,8 +340,50 @@ func detectJobChanges(old db.GetJobRow, updated db.Job) map[string]any {
 	if old.LocationType != updated.LocationType {
 		changes["location_type"] = map[string]pgtype.Text{"old": old.LocationType, "new": updated.LocationType}
 	}
+	if old.Source != updated.Source {
+		changes["source"] = map[string]pgtype.Text{"old": old.Source, "new": updated.Source}
+	}
+	if old.JobType != updated.JobType {
+		changes["job_type"] = map[string]pgtype.Text{"old": old.JobType, "new": updated.JobType}
+	}
+	if old.JobLevel != updated.JobLevel {
+		changes["job_level"] = map[string]pgtype.Text{"old": old.JobLevel, "new": updated.JobLevel}
+	}
+	if old.SalaryMin != updated.SalaryMin {
+		changes["salary_min"] = map[string]pgtype.Int4{"old": old.SalaryMin, "new": updated.SalaryMin}
+	}
+	if old.SalaryMax != updated.SalaryMax {
+		changes["salary_max"] = map[string]pgtype.Int4{"old": old.SalaryMax, "new": updated.SalaryMax}
+	}
+	if old.SalaryCurrency != updated.SalaryCurrency {
+		changes["salary_currency"] = map[string]pgtype.Text{"old": old.SalaryCurrency, "new": updated.SalaryCurrency}
+	}
+	if old.SalaryInterval != updated.SalaryInterval {
+		changes["salary_interval"] = map[string]pgtype.Text{"old": old.SalaryInterval, "new": updated.SalaryInterval}
+	}
 	if old.Interest != updated.Interest {
 		changes["interest"] = map[string]pgtype.Int4{"old": old.Interest, "new": updated.Interest}
+	}
+	if old.Suitability != updated.Suitability {
+		changes["suitability"] = map[string]pgtype.Int4{"old": old.Suitability, "new": updated.Suitability}
+	}
+	if old.ExperienceRange != updated.ExperienceRange {
+		changes["experience_range"] = map[string]pgtype.Text{"old": old.ExperienceRange, "new": updated.ExperienceRange}
+	}
+	if old.AppliedAt != updated.AppliedAt {
+		changes["applied_at"] = map[string]pgtype.Timestamptz{"old": old.AppliedAt, "new": updated.AppliedAt}
+	}
+	if old.FollowUpAt != updated.FollowUpAt {
+		changes["follow_up_at"] = map[string]pgtype.Timestamptz{"old": old.FollowUpAt, "new": updated.FollowUpAt}
+	}
+	if old.Deadline != updated.Deadline {
+		changes["deadline"] = map[string]pgtype.Timestamptz{"old": old.Deadline, "new": updated.Deadline}
+	}
+	if old.CloseReason != updated.CloseReason {
+		changes["close_reason"] = map[string]pgtype.Text{"old": old.CloseReason, "new": updated.CloseReason}
+	}
+	if old.JdRaw != updated.JdRaw {
+		changes["jd_raw"] = map[string]pgtype.Text{"old": old.JdRaw, "new": updated.JdRaw}
 	}
 
 	return changes

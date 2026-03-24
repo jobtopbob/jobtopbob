@@ -34,39 +34,6 @@ func (q *Queries) GetRxResumeAPIKey(ctx context.Context, userID string) (pgtype.
 	return rxresume_api_key, err
 }
 
-const setRxResumeAPIKey = `-- name: SetRxResumeAPIKey :exec
-INSERT INTO user_settings (user_id, rxresume_api_key)
-VALUES ($1, $2)
-ON CONFLICT (user_id)
-DO UPDATE SET rxresume_api_key = $2
-`
-
-type SetRxResumeAPIKeyParams struct {
-	UserID         string      `json:"user_id"`
-	RxresumeApiKey pgtype.Text `json:"rxresume_api_key"`
-}
-
-func (q *Queries) SetRxResumeAPIKey(ctx context.Context, arg SetRxResumeAPIKeyParams) error {
-	_, err := q.db.Exec(ctx, setRxResumeAPIKey, arg.UserID, arg.RxresumeApiKey)
-	return err
-}
-
-const updateUserImage = `-- name: UpdateUserImage :exec
-UPDATE "user"
-SET image = $2, "updatedAt" = now()
-WHERE id = $1
-`
-
-type UpdateUserImageParams struct {
-	ID    string      `json:"id"`
-	Image pgtype.Text `json:"image"`
-}
-
-func (q *Queries) UpdateUserImage(ctx context.Context, arg UpdateUserImageParams) error {
-	_, err := q.db.Exec(ctx, updateUserImage, arg.ID, arg.Image)
-	return err
-}
-
 const getUserImage = `-- name: GetUserImage :one
 SELECT image FROM "user"
 WHERE id = $1
@@ -110,6 +77,39 @@ func (q *Queries) GetUserSettings(ctx context.Context, userID string) (GetUserSe
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const setRxResumeAPIKey = `-- name: SetRxResumeAPIKey :exec
+INSERT INTO user_settings (user_id, rxresume_api_key)
+VALUES ($1, $2)
+ON CONFLICT (user_id)
+DO UPDATE SET rxresume_api_key = $2
+`
+
+type SetRxResumeAPIKeyParams struct {
+	UserID         string      `json:"user_id"`
+	RxresumeApiKey pgtype.Text `json:"rxresume_api_key"`
+}
+
+func (q *Queries) SetRxResumeAPIKey(ctx context.Context, arg SetRxResumeAPIKeyParams) error {
+	_, err := q.db.Exec(ctx, setRxResumeAPIKey, arg.UserID, arg.RxresumeApiKey)
+	return err
+}
+
+const updateUserImage = `-- name: UpdateUserImage :exec
+UPDATE "user"
+SET image = $2, "updatedAt" = now()
+WHERE id = $1
+`
+
+type UpdateUserImageParams struct {
+	ID    string      `json:"id"`
+	Image pgtype.Text `json:"image"`
+}
+
+func (q *Queries) UpdateUserImage(ctx context.Context, arg UpdateUserImageParams) error {
+	_, err := q.db.Exec(ctx, updateUserImage, arg.ID, arg.Image)
+	return err
 }
 
 const upsertUserSettings = `-- name: UpsertUserSettings :one

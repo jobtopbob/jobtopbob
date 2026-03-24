@@ -27,7 +27,7 @@ function KanbanBoardInner() {
     activeFilterCount,
   } = useJobFilters();
   const [addJobOpen, setAddJobOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<"kanban" | "table" | "calendar">(
     "kanban"
   );
@@ -42,6 +42,11 @@ function KanbanBoardInner() {
   }, [filters, activeView]);
 
   const { data: jobsData, isLoading: jobsLoading, error: jobsError } = useJobs(viewFilters);
+
+  const selectedJob = useMemo(
+    () => (selectedJobId ? jobsData?.data?.find((j) => j.id === selectedJobId) ?? null : null),
+    [selectedJobId, jobsData]
+  );
 
   const jobsByStage = useMemo(() => {
     const map = new Map<string, Job[]>();
@@ -62,6 +67,8 @@ function KanbanBoardInner() {
   const queryClient = useQueryClient();
   const isLoading = stagesLoading || jobsLoading;
   const hasError = stagesError || jobsError;
+
+  const handleJobClick = useCallback((job: Job) => setSelectedJobId(job.id), []);
 
   const handleRetry = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["stages"] });
@@ -158,7 +165,7 @@ function KanbanBoardInner() {
               <ApplicationsTable
                 jobs={jobsData?.data ?? []}
                 stages={stages!}
-                onJobClick={setSelectedJob}
+                onJobClick={handleJobClick}
                 page={filters.page}
                 perPage={filters.perPage}
                 total={jobsData?.total ?? 0}
@@ -168,7 +175,7 @@ function KanbanBoardInner() {
               <ApplicationsCalendar
                 jobs={jobsData?.data ?? []}
                 stages={stages!}
-                onJobClick={setSelectedJob}
+                onJobClick={handleJobClick}
               />
             ) : (
               <>
@@ -180,7 +187,7 @@ function KanbanBoardInner() {
                         key={stage.id}
                         stage={stage}
                         jobs={jobsByStage.get(stage.id) ?? []}
-                        onJobClick={setSelectedJob}
+                        onJobClick={handleJobClick}
                       />
                     ))}
                   </div>
@@ -191,7 +198,7 @@ function KanbanBoardInner() {
                   <MobileJobList
                     stages={stages!}
                     jobsByStage={jobsByStage}
-                    onJobClick={setSelectedJob}
+                    onJobClick={handleJobClick}
                   />
                 </div>
               </>
@@ -208,7 +215,7 @@ function KanbanBoardInner() {
       />
       <JobDetailSheet
         job={selectedJob}
-        onClose={() => setSelectedJob(null)}
+        onClose={() => setSelectedJobId(null)}
         stages={stages ?? []}
       />
     </div>

@@ -107,7 +107,7 @@ export function InlineEditField({
               onValueChange={(v) => {
                 setDraft(v ?? "");
                 setEditing(false);
-                if (v && v !== (displayValue ?? "")) onSave(v);
+                if ((v ?? "") !== (displayValue ?? "")) onSave(v ?? "");
               }}
               open={true}
               onOpenChange={(open) => {

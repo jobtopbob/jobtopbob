@@ -24,3 +24,10 @@ SELECT t.* FROM tags t
 JOIN taggings tg ON tg.tag_id = t.id
 WHERE tg.user_id = $1 AND tg.entity_type = $2 AND tg.entity_id = $3
 ORDER BY t.name ASC;
+
+-- name: ListTagsForEntities :many
+SELECT tg.entity_id, t.id, t.user_id, t.name, t.color, t.created_at, t.updated_at
+FROM tags t
+JOIN taggings tg ON tg.tag_id = t.id
+WHERE tg.user_id = $1 AND tg.entity_type = $2 AND tg.entity_id = ANY($3::uuid[])
+ORDER BY t.name ASC;
