@@ -549,18 +549,31 @@ components:
 
     ResumeConfig:
       type: object
-      required: [builder_configured, builder_url, sync_configured, pdf_configured, api_configured]
+      required: [builder_configured, builder_url, api_key_configured, pdf_configured]
       properties:
         builder_configured:
           type: boolean
         builder_url:
           type: string
-        sync_configured:
+        api_key_configured:
           type: boolean
+          description: Whether the current user has connected their RxResume API key
         pdf_configured:
           type: boolean
-        api_configured:
+
+    RxResumeKeyStatus:
+      type: object
+      required: [connected]
+      properties:
+        connected:
           type: boolean
+
+    SetRxResumeKeyRequest:
+      type: object
+      required: [api_key]
+      properties:
+        api_key:
+          type: string
 
     Stats:
       type: object
@@ -1252,3 +1265,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/settings/rxresume-key:
+    put:
+      summary: Connect a RxResume API key
+      description: Validates the key against RxResume and stores it for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetRxResumeKeyRequest"
+      responses:
+        "200":
+          description: Key connected successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RxResumeKeyStatus"
+        "400":
+          description: Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Disconnect the stored RxResume API key
+      responses:
+        "200":
+          description: Key removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RxResumeKeyStatus"
+
+  /api/v1/settings/rxresume-key/status:
+    get:
+      summary: Check if the user has a RxResume API key connected
+      responses:
+        "200":
+          description: Connection status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RxResumeKeyStatus"

@@ -279,14 +279,15 @@ type User struct {
 }
 
 type UserSetting struct {
-	UserID       string             `json:"user_id"`
-	AiProvider   pgtype.Text        `json:"ai_provider"`
-	AiModel      pgtype.Text        `json:"ai_model"`
-	WritingStyle pgtype.Text        `json:"writing_style"`
-	WeeklyGoal   pgtype.Int4        `json:"weekly_goal"`
-	TaskModels   []byte             `json:"task_models"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	UserID         string             `json:"user_id"`
+	AiProvider     pgtype.Text        `json:"ai_provider"`
+	AiModel        pgtype.Text        `json:"ai_model"`
+	WritingStyle   pgtype.Text        `json:"writing_style"`
+	WeeklyGoal     pgtype.Int4        `json:"weekly_goal"`
+	TaskModels     []byte             `json:"task_models"`
+	RxresumeApiKey pgtype.Text        `json:"rxresume_api_key"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Verification struct {

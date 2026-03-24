@@ -15,11 +15,8 @@ type Config struct {
 	SeedDemoData         bool
 
 	// Resume Builder (Reactive Resume v5)
-	ResumeBuilderURL     string
-	RxResumeAPIKey       string
-	RxResumeDBURL        string // read-only connection to rxresume database
-	RxResumeAuthSecret   string // shared JWT signing secret (unused for now, reserved)
-	ResumePrinterHTTPURL string // Browserless Chromium HTTP endpoint for direct PDF generation
+	ResumeBuilderURL        string
+	ResumePrinterHTTPURL    string // Browserless Chromium HTTP endpoint for direct PDF generation
 	ResumeBuilderPrinterURL string // URL the printer uses to reach the resume builder (Docker-internal)
 	ResumeBuilderPublicURL  string // Public URL for users to access the resume builder in their browser
 
@@ -43,11 +40,8 @@ func Load() *Config {
 		JWKSURL:              getEnv("JWKS_URL", "http://localhost:3000/api/auth/jwks"),
 		CORSOrigins:          strings.Split(getEnv("CORS_ORIGINS", "http://localhost:3000"), ","),
 		SeedDemoData:         getEnv("SEED_DEMO_DATA", "false") == "true",
-		ResumeBuilderURL:    getEnv("RESUME_BUILDER_URL", "http://localhost:3010"),
-		RxResumeAPIKey:      getEnv("RXRESUME_API_KEY", ""),
-		RxResumeDBURL:       getEnv("RXRESUME_DATABASE_URL", "postgres://rxresume_reader:changeme@localhost:5432/rxresume?sslmode=disable"),
-		RxResumeAuthSecret:   getEnv("RXRESUME_AUTH_SECRET", ""),
-		ResumePrinterHTTPURL:  getEnv("RESUME_PRINTER_HTTP_URL", "http://localhost:3020"),
+		ResumeBuilderURL:      getEnv("RESUME_BUILDER_URL", "http://localhost:3010"),
+		ResumePrinterHTTPURL: getEnv("RESUME_PRINTER_HTTP_URL", "http://localhost:3020"),
 		ResumeBuilderPrinterURL: getEnv("RESUME_BUILDER_PRINTER_URL", "http://resume-builder:3000"),
 		ResumeBuilderPublicURL:  getEnv("RESUME_BUILDER_PUBLIC_URL", "http://localhost:3010"),
 		S3Bucket:             getEnv("S3_BUCKET", "jobtopbob"),

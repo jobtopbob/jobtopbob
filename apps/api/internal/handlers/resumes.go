@@ -6,29 +6,33 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 
 	db "github.com/jobtopbob/jobtopbob/apps/api/db/generated"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/services"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/services/rxresume"
 )
 
-// getUserEmail looks up the authenticated user's email from the user table.
-func getUserEmail(c *gin.Context) string {
-	tx := getTx(c)
+// getUserRxAPIKey reads the user's stored RxResume API key from user_settings.
+// Returns empty string if not configured.
+func getUserRxAPIKey(c *gin.Context) string {
+	q := db.New(getTx(c))
 	userID := getUserID(c)
-	var email string
-	err := tx.QueryRow(c.Request.Context(), `SELECT email FROM "user" WHERE id = $1`, userID).Scan(&email)
+	key, err := q.GetRxResumeAPIKey(c.Request.Context(), userID)
 	if err != nil {
-		slog.Warn("failed to look up user email for rxresume sync", "user_id", userID, "error", err)
+		if !errors.Is(err, pgx.ErrNoRows) {
+			slog.Warn("failed to read rxresume api key", "user_id", userID, "error", err)
+		}
 		return ""
 	}
-	return email
+	return key.String
 }
 
 // GetResumeConfig handles GET /api/v1/resumes/config
 func GetResumeConfig(rxClient *rxresume.Client, builderPublicURL string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		config := services.GetResumeConfig(rxClient, builderPublicURL)
+		apiKey := getUserRxAPIKey(c)
+		config := services.GetResumeConfig(rxClient, builderPublicURL, apiKey != "")
 		c.JSON(http.StatusOK, config)
 	}
 }
@@ -38,12 +42,9 @@ func ListResumes(rxClient *rxresume.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		q := db.New(getTx(c))
 		userID := getUserID(c)
-		var userEmail string
-		if rxClient.Configured() {
-			userEmail = getUserEmail(c)
-		}
+		userAPIKey := getUserRxAPIKey(c)
 
-		resumes, err := services.ListResumes(c.Request.Context(), q, userID, userEmail, rxClient)
+		resumes, err := services.ListResumes(c.Request.Context(), q, userID, userAPIKey, rxClient)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list resumes"})
 			return
@@ -70,8 +71,9 @@ func CreateResume(rxClient *rxresume.Client) gin.HandlerFunc {
 
 		q := db.New(getTx(c))
 		userID := getUserID(c)
+		userAPIKey := getUserRxAPIKey(c)
 
-		resume, err := services.CreateResume(c.Request.Context(), q, userID, rxClient, services.CreateResumeParams{
+		resume, err := services.CreateResume(c.Request.Context(), q, userID, userAPIKey, rxClient, services.CreateResumeParams{
 			Name:           req.Name,
 			Template:       req.Template,
 			WithSampleData: req.WithSampleData,
@@ -95,12 +97,9 @@ func GetResume(rxClient *rxresume.Client) gin.HandlerFunc {
 
 		q := db.New(getTx(c))
 		userID := getUserID(c)
-		var userEmail string
-		if rxClient.Configured() {
-			userEmail = getUserEmail(c)
-		}
+		userAPIKey := getUserRxAPIKey(c)
 
-		resume, err := services.GetResume(c.Request.Context(), q, userID, userEmail, rxClient, id)
+		resume, err := services.GetResume(c.Request.Context(), q, userID, userAPIKey, rxClient, id)
 		if errors.Is(err, services.ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "resume not found"})
 			return
@@ -163,8 +162,9 @@ func DeleteResume(rxClient *rxresume.Client) gin.HandlerFunc {
 
 		q := db.New(getTx(c))
 		userID := getUserID(c)
+		userAPIKey := getUserRxAPIKey(c)
 
-		err := services.DeleteResume(c.Request.Context(), q, userID, rxClient, id)
+		err := services.DeleteResume(c.Request.Context(), q, userID, userAPIKey, rxClient, id)
 		if errors.Is(err, services.ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "resume not found"})
 			return
@@ -188,15 +188,16 @@ func ExportResumePDF(rxClient *rxresume.Client) gin.HandlerFunc {
 
 		q := db.New(getTx(c))
 		userID := getUserID(c)
+		userAPIKey := getUserRxAPIKey(c)
 
-		pdfBytes, err := services.ExportResumePDF(c.Request.Context(), q, userID, rxClient, id)
+		pdfBytes, err := services.ExportResumePDF(c.Request.Context(), q, userID, userAPIKey, rxClient, id)
 		if errors.Is(err, services.ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "resume not found"})
 			return
 		}
 		if errors.Is(err, services.ErrNotConfigured) {
 			slog.Warn("pdf export attempted but not configured", "user_id", userID)
-			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "PDF export is not available — configure the resume printer"})
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "PDF export is not available — connect your Resume Builder API key or configure the resume printer"})
 			return
 		}
 		if errors.Is(err, services.ErrNotLinked) {
@@ -219,9 +220,9 @@ func SyncResumes(rxClient *rxresume.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		q := db.New(getTx(c))
 		userID := getUserID(c)
-		userEmail := getUserEmail(c)
+		userAPIKey := getUserRxAPIKey(c)
 
-		resp, err := services.SyncResumes(c.Request.Context(), q, userID, userEmail, rxClient)
+		resp, err := services.SyncResumes(c.Request.Context(), q, userID, userAPIKey, rxClient)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to sync resumes"})
 			return

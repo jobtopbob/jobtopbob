@@ -12,6 +12,7 @@ export type ResumeConfig = components["schemas"]["ResumeConfig"];
 export type CreateResumeRequest = components["schemas"]["CreateResumeRequest"];
 export type UpdateResumeRequest = components["schemas"]["UpdateResumeRequest"];
 export type SyncResumesResponse = components["schemas"]["SyncResumesResponse"];
+export type RxResumeKeyStatus = components["schemas"]["RxResumeKeyStatus"];
 
 const resumeKeys = {
   all: ["resumes"] as const,
@@ -169,6 +170,63 @@ export function useSetBaseResume() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: resumeKeys.all });
+    },
+  });
+}
+
+// --- RxResume API Key management ---
+
+export function useRxResumeKeyStatus() {
+  return useQuery({
+    queryKey: ["settings", "rxresume-key"] as const,
+    queryFn: async () => {
+      const { data, error } = await api.GET(
+        "/api/v1/settings/rxresume-key/status",
+      );
+      if (error) throw new Error(getErrorMessage(error));
+      return data as RxResumeKeyStatus;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useConnectRxResumeKey() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (apiKey: string) => {
+      const { data, error } = await api.PUT(
+        "/api/v1/settings/rxresume-key",
+        { body: { api_key: apiKey } },
+      );
+      if (error) throw new Error(getErrorMessage(error));
+      return data as RxResumeKeyStatus;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["settings", "rxresume-key"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["resumes", "config"] });
+    },
+  });
+}
+
+export function useDisconnectRxResumeKey() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await api.DELETE(
+        "/api/v1/settings/rxresume-key",
+      );
+      if (error) throw new Error(getErrorMessage(error));
+      return data as RxResumeKeyStatus;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["settings", "rxresume-key"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["resumes", "config"] });
     },
   });
 }
