@@ -111,6 +111,8 @@ services:
       OAUTH_TOKEN_URL: ${OAUTH_INTERNAL_URL:-http://host.docker.internal:3000}/api/auth/oauth2/token
       OAUTH_USER_INFO_URL: ${OAUTH_INTERNAL_URL:-http://host.docker.internal:3000}/api/auth/oauth2/userinfo
       OAUTH_SCOPES: openid profile email
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${RESUME_BUILDER_PORT:-3010}:3000"
     volumes:
