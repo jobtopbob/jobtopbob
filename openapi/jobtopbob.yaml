@@ -116,6 +116,34 @@ components:
           type: string
           format: date-time
           nullable: true
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+        job_type:
+          type: string
+          nullable: true
+        job_level:
+          type: string
+          nullable: true
+        salary_interval:
+          type: string
+          nullable: true
+        application_url:
+          type: string
+          nullable: true
+        experience_range:
+          type: string
+          nullable: true
+        skills:
+          type: array
+          items:
+            type: string
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -268,6 +296,8 @@ components:
           type: integer
         salary_currency:
           type: string
+        salary_interval:
+          type: string
         interest:
           type: integer
         jd_raw:
@@ -278,6 +308,17 @@ components:
         follow_up_at:
           type: string
           format: date-time
+        deadline:
+          type: string
+          format: date-time
+        job_type:
+          type: string
+        job_level:
+          type: string
+        application_url:
+          type: string
+        experience_range:
+          type: string
 
     UpdateJobRequest:
       type: object
@@ -346,6 +387,29 @@ components:
           type: string
           format: date-time
           nullable: true
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+        job_type:
+          type: string
+          nullable: true
+        job_level:
+          type: string
+          nullable: true
+        salary_interval:
+          type: string
+          nullable: true
+        application_url:
+          type: string
+          nullable: true
+        experience_range:
+          type: string
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
 
     ImportJobRequest:
       type: object
@@ -367,9 +431,22 @@ components:
           type: integer
         salary_currency:
           type: string
+        salary_interval:
+          type: string
         jd_raw:
           type: string
         company_name:
+          type: string
+        deadline:
+          type: string
+          format: date-time
+        job_type:
+          type: string
+        job_level:
+          type: string
+        application_url:
+          type: string
+        experience_range:
           type: string
 
     BulkUpdateRequest:
@@ -660,6 +737,16 @@ paths:
           description: Comma-separated list of sources to filter by
           schema:
             type: string
+        - name: job_types
+          in: query
+          description: Comma-separated list of job types to filter by
+          schema:
+            type: string
+        - name: job_levels
+          in: query
+          description: Comma-separated list of job levels to filter by
+          schema:
+            type: string
         - name: tag_ids
           in: query
           description: Comma-separated list of tag UUIDs to filter by
@@ -694,7 +781,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [created_at, updated_at, title, applied_at, salary_min]
+            enum: [created_at, updated_at, title, applied_at, salary_min, deadline]
             default: created_at
         - name: sort_order
           in: query

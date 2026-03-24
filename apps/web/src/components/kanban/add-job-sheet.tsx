@@ -23,7 +23,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useCreateJob } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
-import { SOURCES, LOCATION_TYPES, CURRENCIES } from "@/lib/constants";
+import { SOURCES, LOCATION_TYPES, CURRENCIES, JOB_TYPES, JOB_LEVELS, SALARY_INTERVALS } from "@/lib/constants";
 import { toast } from "sonner";
 
 interface AddJobSheetProps {
@@ -43,10 +43,16 @@ interface FormState {
   salaryCurrency: string;
   salaryMin: string;
   salaryMax: string;
+  salaryInterval: string;
   appliedAt: string;
   followUpAt: string;
+  deadline: string;
   interest: string;
   jdRaw: string;
+  jobType: string;
+  jobLevel: string;
+  applicationUrl: string;
+  experienceRange: string;
 }
 
 const initialForm: FormState = {
@@ -60,10 +66,16 @@ const initialForm: FormState = {
   salaryCurrency: "USD",
   salaryMin: "",
   salaryMax: "",
+  salaryInterval: "annual",
   appliedAt: "",
   followUpAt: "",
+  deadline: "",
   interest: "",
   jdRaw: "",
+  jobType: "",
+  jobLevel: "",
+  applicationUrl: "",
+  experienceRange: "",
 };
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
@@ -116,6 +128,7 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
         salary_currency: form.salaryCurrency || undefined,
         salary_min: form.salaryMin ? parseInt(form.salaryMin) : undefined,
         salary_max: form.salaryMax ? parseInt(form.salaryMax) : undefined,
+        salary_interval: form.salaryInterval || undefined,
         interest: form.interest ? parseInt(form.interest) : undefined,
         jd_raw: form.jdRaw || undefined,
         applied_at: form.appliedAt
@@ -124,6 +137,13 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
         follow_up_at: form.followUpAt
           ? new Date(form.followUpAt).toISOString()
           : undefined,
+        deadline: form.deadline
+          ? new Date(form.deadline).toISOString()
+          : undefined,
+        job_type: form.jobType || undefined,
+        job_level: form.jobLevel || undefined,
+        application_url: form.applicationUrl || undefined,
+        experience_range: form.experienceRange || undefined,
       },
       {
         onSuccess: () => {
@@ -186,6 +206,40 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
                 </SelectContent>
               </Select>
             </Field>
+            <Field label="Job Type">
+              <Select
+                value={form.jobType}
+                onValueChange={(v) => set("jobType", v ?? "")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {JOB_TYPES.map((jt) => (
+                    <SelectItem key={jt.value} value={jt.value}>
+                      {jt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Level">
+              <Select
+                value={form.jobLevel}
+                onValueChange={(v) => set("jobLevel", v ?? "")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {JOB_LEVELS.map((jl) => (
+                    <SelectItem key={jl.value} value={jl.value}>
+                      {jl.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
 
           <Separator />
@@ -242,6 +296,20 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
                   placeholder="e.g. San Francisco, CA"
                 />
               </Field>
+              <Field label="Application URL">
+                <Input
+                  value={form.applicationUrl}
+                  onChange={(e) => set("applicationUrl", e.target.value)}
+                  placeholder="Direct apply link"
+                />
+              </Field>
+              <Field label="Experience">
+                <Input
+                  value={form.experienceRange}
+                  onChange={(e) => set("experienceRange", e.target.value)}
+                  placeholder="e.g. 3-5 years"
+                />
+              </Field>
             </div>
           </div>
 
@@ -251,23 +319,42 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="space-y-3">
               <SectionHeading>Compensation</SectionHeading>
-              <Field label="Currency">
-                <Select
-                  value={form.salaryCurrency}
-                  onValueChange={(v) => set("salaryCurrency", v ?? "USD")}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Currency">
+                  <Select
+                    value={form.salaryCurrency}
+                    onValueChange={(v) => set("salaryCurrency", v ?? "USD")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Interval">
+                  <Select
+                    value={form.salaryInterval}
+                    onValueChange={(v) => set("salaryInterval", v ?? "annual")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SALARY_INTERVALS.map((si) => (
+                        <SelectItem key={si.value} value={si.value}>
+                          {si.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Min">
                   <Input
@@ -290,6 +377,13 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
 
             <div className="space-y-3">
               <SectionHeading>Dates</SectionHeading>
+              <Field label="Deadline">
+                <Input
+                  type="date"
+                  value={form.deadline}
+                  onChange={(e) => set("deadline", e.target.value)}
+                />
+              </Field>
               <Field label="Applied Date">
                 <Input
                   type="date"

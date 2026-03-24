@@ -130,6 +130,14 @@ type Job struct {
 	FollowUpAt        pgtype.Timestamptz `json:"follow_up_at"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	Deadline          pgtype.Timestamptz `json:"deadline"`
+	JobType           pgtype.Text        `json:"job_type"`
+	JobLevel          pgtype.Text        `json:"job_level"`
+	SalaryInterval    pgtype.Text        `json:"salary_interval"`
+	ApplicationUrl    pgtype.Text        `json:"application_url"`
+	ExperienceRange   pgtype.Text        `json:"experience_range"`
+	Skills            []byte             `json:"skills"`
+	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
 }
 
 type JobAsset struct {

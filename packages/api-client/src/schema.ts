@@ -57,6 +57,10 @@ export interface paths {
                     location_types?: string;
                     /** @description Comma-separated list of sources to filter by */
                     sources?: string;
+                    /** @description Comma-separated list of job types to filter by */
+                    job_types?: string;
+                    /** @description Comma-separated list of job levels to filter by */
+                    job_levels?: string;
                     /** @description Comma-separated list of tag UUIDs to filter by */
                     tag_ids?: string;
                     /** @description Search in title, company name, location */
@@ -65,7 +69,7 @@ export interface paths {
                     created_before?: string;
                     page?: number;
                     per_page?: number;
-                    sort_by?: "created_at" | "updated_at" | "title" | "applied_at" | "salary_min";
+                    sort_by?: "created_at" | "updated_at" | "title" | "applied_at" | "salary_min" | "deadline";
                     sort_order?: "asc" | "desc";
                 };
                 header?: never;
@@ -1547,6 +1551,16 @@ export interface components {
             /** Format: date-time */
             follow_up_at?: string | null;
             /** Format: date-time */
+            deadline?: string | null;
+            job_type?: string | null;
+            job_level?: string | null;
+            salary_interval?: string | null;
+            application_url?: string | null;
+            experience_range?: string | null;
+            skills?: string[] | null;
+            /** Format: date-time */
+            closed_at?: string | null;
+            /** Format: date-time */
             created_at: string;
             /** Format: date-time */
             updated_at: string;
@@ -1624,12 +1638,19 @@ export interface components {
             salary_min?: number;
             salary_max?: number;
             salary_currency?: string;
+            salary_interval?: string;
             interest?: number;
             jd_raw?: string;
             /** Format: date-time */
             applied_at?: string;
             /** Format: date-time */
             follow_up_at?: string;
+            /** Format: date-time */
+            deadline?: string;
+            job_type?: string;
+            job_level?: string;
+            application_url?: string;
+            experience_range?: string;
         };
         UpdateJobRequest: {
             title?: string;
@@ -1657,6 +1678,15 @@ export interface components {
             applied_at?: string | null;
             /** Format: date-time */
             follow_up_at?: string | null;
+            /** Format: date-time */
+            deadline?: string | null;
+            job_type?: string | null;
+            job_level?: string | null;
+            salary_interval?: string | null;
+            application_url?: string | null;
+            experience_range?: string | null;
+            /** Format: date-time */
+            closed_at?: string | null;
         };
         ImportJobRequest: {
             title: string;
@@ -1667,8 +1697,15 @@ export interface components {
             salary_min?: number;
             salary_max?: number;
             salary_currency?: string;
+            salary_interval?: string;
             jd_raw?: string;
             company_name?: string;
+            /** Format: date-time */
+            deadline?: string;
+            job_type?: string;
+            job_level?: string;
+            application_url?: string;
+            experience_range?: string;
         };
         BulkUpdateRequest: {
             job_ids: string[];

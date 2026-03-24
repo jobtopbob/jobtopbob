@@ -34,6 +34,8 @@ type ListJobsParams struct {
 	StageIDs      []pgtype.UUID
 	LocationTypes []string
 	Sources       []string
+	JobTypes      []string
+	JobLevels     []string
 	Search        pgtype.Text
 	CreatedAfter  pgtype.Timestamptz
 	CreatedBefore pgtype.Timestamptz
@@ -77,6 +79,8 @@ func ListJobs(ctx context.Context, q *db.Queries, userID string, p ListJobsParam
 		StageIds:      p.StageIDs,
 		LocationTypes: p.LocationTypes,
 		Sources:       p.Sources,
+		JobTypes:      p.JobTypes,
+		JobLevels:     p.JobLevels,
 		Search:        p.Search,
 		CreatedAfter:  p.CreatedAfter,
 		CreatedBefore: p.CreatedBefore,
@@ -96,6 +100,8 @@ func ListJobs(ctx context.Context, q *db.Queries, userID string, p ListJobsParam
 		StageIds:      p.StageIDs,
 		LocationTypes: p.LocationTypes,
 		Sources:       p.Sources,
+		JobTypes:      p.JobTypes,
+		JobLevels:     p.JobLevels,
 		Search:        p.Search,
 		CreatedAfter:  p.CreatedAfter,
 		CreatedBefore: p.CreatedBefore,

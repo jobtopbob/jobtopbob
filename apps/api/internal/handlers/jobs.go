@@ -26,6 +26,8 @@ func ListJobs() gin.HandlerFunc {
 			Statuses:      splitCSV(c.Query("statuses")),
 			LocationTypes: splitCSV(c.Query("location_types")),
 			Sources:       splitCSV(c.Query("sources")),
+			JobTypes:      splitCSV(c.Query("job_types")),
+			JobLevels:     splitCSV(c.Query("job_levels")),
 			Search:        pgtextValid(c.Query("search")),
 			SortBy:        c.DefaultQuery("sort_by", "created_at"),
 			SortOrder:     c.DefaultQuery("sort_order", "desc"),
@@ -61,21 +63,27 @@ func ListJobs() gin.HandlerFunc {
 }
 
 type createJobRequest struct {
-	Title          string  `json:"title" binding:"required"`
-	CompanyID      *string `json:"company_id"`
-	StageID        *string `json:"stage_id"`
-	Status         string  `json:"status"`
-	Source         string  `json:"source"`
-	SourceURL      string  `json:"source_url"`
-	Location       string  `json:"location"`
-	LocationType   string  `json:"location_type"`
-	SalaryMin      *int32  `json:"salary_min"`
-	SalaryMax      *int32  `json:"salary_max"`
-	SalaryCurrency string  `json:"salary_currency"`
-	Interest       *int32  `json:"interest"`
-	JdRaw          string  `json:"jd_raw"`
-	AppliedAt      *string `json:"applied_at"`
-	FollowUpAt     *string `json:"follow_up_at"`
+	Title           string  `json:"title" binding:"required"`
+	CompanyID       *string `json:"company_id"`
+	StageID         *string `json:"stage_id"`
+	Status          string  `json:"status"`
+	Source          string  `json:"source"`
+	SourceURL       string  `json:"source_url"`
+	Location        string  `json:"location"`
+	LocationType    string  `json:"location_type"`
+	SalaryMin       *int32  `json:"salary_min"`
+	SalaryMax       *int32  `json:"salary_max"`
+	SalaryCurrency  string  `json:"salary_currency"`
+	SalaryInterval  string  `json:"salary_interval"`
+	Interest        *int32  `json:"interest"`
+	JdRaw           string  `json:"jd_raw"`
+	AppliedAt       *string `json:"applied_at"`
+	FollowUpAt      *string `json:"follow_up_at"`
+	Deadline        *string `json:"deadline"`
+	JobType         string  `json:"job_type"`
+	JobLevel        string  `json:"job_level"`
+	ApplicationURL  string  `json:"application_url"`
+	ExperienceRange string  `json:"experience_range"`
 }
 
 // CreateJob handles POST /api/v1/jobs
@@ -91,14 +99,19 @@ func CreateJob() gin.HandlerFunc {
 		userID := getUserID(c)
 
 		params := db.CreateJobParams{
-			Title:          req.Title,
-			Status:         pgtextValid(req.Status),
-			Source:         pgtextValid(req.Source),
-			SourceUrl:      pgtextValid(req.SourceURL),
-			Location:       pgtextValid(req.Location),
-			LocationType:   pgtextValid(req.LocationType),
-			SalaryCurrency: pgtextValid(req.SalaryCurrency),
-			JdRaw:          pgtextValid(req.JdRaw),
+			Title:           req.Title,
+			Status:          pgtextValid(req.Status),
+			Source:          pgtextValid(req.Source),
+			SourceUrl:       pgtextValid(req.SourceURL),
+			Location:        pgtextValid(req.Location),
+			LocationType:    pgtextValid(req.LocationType),
+			SalaryCurrency:  pgtextValid(req.SalaryCurrency),
+			SalaryInterval:  pgtextValid(req.SalaryInterval),
+			JdRaw:           pgtextValid(req.JdRaw),
+			JobType:         pgtextValid(req.JobType),
+			JobLevel:        pgtextValid(req.JobLevel),
+			ApplicationUrl:  pgtextValid(req.ApplicationURL),
+			ExperienceRange: pgtextValid(req.ExperienceRange),
 		}
 		if req.CompanyID != nil {
 			params.CompanyID = parseUUID(*req.CompanyID)
@@ -123,6 +136,11 @@ func CreateJob() gin.HandlerFunc {
 		if req.FollowUpAt != nil {
 			if t, err := time.Parse(time.RFC3339, *req.FollowUpAt); err == nil {
 				params.FollowUpAt = pgtype.Timestamptz{Time: t, Valid: true}
+			}
+		}
+		if req.Deadline != nil {
+			if t, err := time.Parse(time.RFC3339, *req.Deadline); err == nil {
+				params.Deadline = pgtype.Timestamptz{Time: t, Valid: true}
 			}
 		}
 
@@ -175,6 +193,7 @@ type updateJobRequest struct {
 	SalaryMax         *int32  `json:"salary_max"`
 	SalaryMarket      *int32  `json:"salary_market"`
 	SalaryCurrency    *string `json:"salary_currency"`
+	SalaryInterval    *string `json:"salary_interval"`
 	Interest          *int32  `json:"interest"`
 	Suitability       *int32  `json:"suitability"`
 	SuitabilityReason *string `json:"suitability_reason"`
@@ -182,6 +201,12 @@ type updateJobRequest struct {
 	JdRaw             *string `json:"jd_raw"`
 	AppliedAt         *string `json:"applied_at"`
 	FollowUpAt        *string `json:"follow_up_at"`
+	Deadline          *string `json:"deadline"`
+	JobType           *string `json:"job_type"`
+	JobLevel          *string `json:"job_level"`
+	ApplicationURL    *string `json:"application_url"`
+	ExperienceRange   *string `json:"experience_range"`
+	ClosedAt          *string `json:"closed_at"`
 }
 
 // UpdateJob handles PUT /api/v1/jobs/:id
@@ -266,6 +291,31 @@ func UpdateJob() gin.HandlerFunc {
 				params.FollowUpAt = pgtype.Timestamptz{Time: t, Valid: true}
 			}
 		}
+		if req.Deadline != nil {
+			if t, err := time.Parse(time.RFC3339, *req.Deadline); err == nil {
+				params.Deadline = pgtype.Timestamptz{Time: t, Valid: true}
+			}
+		}
+		if req.JobType != nil {
+			params.JobType = pgtextValid(*req.JobType)
+		}
+		if req.JobLevel != nil {
+			params.JobLevel = pgtextValid(*req.JobLevel)
+		}
+		if req.SalaryInterval != nil {
+			params.SalaryInterval = pgtextValid(*req.SalaryInterval)
+		}
+		if req.ApplicationURL != nil {
+			params.ApplicationUrl = pgtextValid(*req.ApplicationURL)
+		}
+		if req.ExperienceRange != nil {
+			params.ExperienceRange = pgtextValid(*req.ExperienceRange)
+		}
+		if req.ClosedAt != nil {
+			if t, err := time.Parse(time.RFC3339, *req.ClosedAt); err == nil {
+				params.ClosedAt = pgtype.Timestamptz{Time: t, Valid: true}
+			}
+		}
 
 		job, err := services.UpdateJob(c.Request.Context(), q, userID, id, params)
 		if errors.Is(err, services.ErrNotFound) {
@@ -307,16 +357,22 @@ func DeleteJob() gin.HandlerFunc {
 }
 
 type importJobRequest struct {
-	Title          string `json:"title" binding:"required"`
-	SourceURL      string `json:"source_url" binding:"required"`
-	Source         string `json:"source"`
-	Location       string `json:"location"`
-	LocationType   string `json:"location_type"`
-	SalaryMin      *int32 `json:"salary_min"`
-	SalaryMax      *int32 `json:"salary_max"`
-	SalaryCurrency string `json:"salary_currency"`
-	JdRaw          string `json:"jd_raw"`
-	CompanyName    string `json:"company_name"`
+	Title           string  `json:"title" binding:"required"`
+	SourceURL       string  `json:"source_url" binding:"required"`
+	Source          string  `json:"source"`
+	Location        string  `json:"location"`
+	LocationType    string  `json:"location_type"`
+	SalaryMin       *int32  `json:"salary_min"`
+	SalaryMax       *int32  `json:"salary_max"`
+	SalaryCurrency  string  `json:"salary_currency"`
+	SalaryInterval  string  `json:"salary_interval"`
+	JdRaw           string  `json:"jd_raw"`
+	CompanyName     string  `json:"company_name"`
+	Deadline        *string `json:"deadline"`
+	JobType         string  `json:"job_type"`
+	JobLevel        string  `json:"job_level"`
+	ApplicationURL  string  `json:"application_url"`
+	ExperienceRange string  `json:"experience_range"`
 }
 
 // ImportJob handles POST /api/v1/jobs/import
@@ -332,19 +388,29 @@ func ImportJob() gin.HandlerFunc {
 		userID := getUserID(c)
 
 		params := db.CreateJobParams{
-			Title:          req.Title,
-			Source:         pgtextValid(req.Source),
-			SourceUrl:      pgtextValid(req.SourceURL),
-			Location:       pgtextValid(req.Location),
-			LocationType:   pgtextValid(req.LocationType),
-			SalaryCurrency: pgtextValid(req.SalaryCurrency),
-			JdRaw:          pgtextValid(req.JdRaw),
+			Title:           req.Title,
+			Source:          pgtextValid(req.Source),
+			SourceUrl:       pgtextValid(req.SourceURL),
+			Location:        pgtextValid(req.Location),
+			LocationType:    pgtextValid(req.LocationType),
+			SalaryCurrency:  pgtextValid(req.SalaryCurrency),
+			SalaryInterval:  pgtextValid(req.SalaryInterval),
+			JdRaw:           pgtextValid(req.JdRaw),
+			JobType:         pgtextValid(req.JobType),
+			JobLevel:        pgtextValid(req.JobLevel),
+			ApplicationUrl:  pgtextValid(req.ApplicationURL),
+			ExperienceRange: pgtextValid(req.ExperienceRange),
 		}
 		if req.SalaryMin != nil {
 			params.SalaryMin = pgtype.Int4{Int32: *req.SalaryMin, Valid: true}
 		}
 		if req.SalaryMax != nil {
 			params.SalaryMax = pgtype.Int4{Int32: *req.SalaryMax, Valid: true}
+		}
+		if req.Deadline != nil {
+			if t, err := time.Parse(time.RFC3339, *req.Deadline); err == nil {
+				params.Deadline = pgtype.Timestamptz{Time: t, Valid: true}
+			}
 		}
 
 		job, err := services.ImportJob(c.Request.Context(), q, userID, params, req.CompanyName)

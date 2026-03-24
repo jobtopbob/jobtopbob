@@ -26,6 +26,8 @@ function buildQueryParams(filters: JobFilters) {
   if (filters.stageIds.length > 0) params.stage_ids = filters.stageIds.join(",");
   if (filters.locationTypes.length > 0) params.location_types = filters.locationTypes.join(",");
   if (filters.sources.length > 0) params.sources = filters.sources.join(",");
+  if (filters.jobTypes.length > 0) params.job_types = filters.jobTypes.join(",");
+  if (filters.jobLevels.length > 0) params.job_levels = filters.jobLevels.join(",");
   if (filters.tagIds.length > 0) params.tag_ids = filters.tagIds.join(",");
   if (filters.createdAfter) params.created_after = filters.createdAfter;
   if (filters.createdBefore) params.created_before = filters.createdBefore;
@@ -44,6 +46,8 @@ export function useJobs(filters?: Partial<JobFilters>) {
     stageIds: filters?.stageIds ?? [],
     locationTypes: filters?.locationTypes ?? [],
     sources: filters?.sources ?? [],
+    jobTypes: filters?.jobTypes ?? [],
+    jobLevels: filters?.jobLevels ?? [],
     tagIds: filters?.tagIds ?? [],
     createdAfter: filters?.createdAfter ?? "",
     createdBefore: filters?.createdBefore ?? "",

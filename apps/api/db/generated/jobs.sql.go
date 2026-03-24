@@ -73,16 +73,18 @@ WHERE j.user_id = $1
   AND ($3::uuid[] IS NULL OR j.stage_id = ANY($3::uuid[]))
   AND ($4::text[] IS NULL OR j.location_type = ANY($4::text[]))
   AND ($5::text[] IS NULL OR j.source = ANY($5::text[]))
-  AND ($6::text IS NULL OR (
-      j.title ILIKE '%' || $6 || '%'
-      OR c.name ILIKE '%' || $6 || '%'
-      OR j.location ILIKE '%' || $6 || '%'
+  AND ($6::text[] IS NULL OR j.job_type = ANY($6::text[]))
+  AND ($7::text[] IS NULL OR j.job_level = ANY($7::text[]))
+  AND ($8::text IS NULL OR (
+      j.title ILIKE '%' || $8 || '%'
+      OR c.name ILIKE '%' || $8 || '%'
+      OR j.location ILIKE '%' || $8 || '%'
   ))
-  AND ($7::timestamptz IS NULL OR j.created_at >= $7)
-  AND ($8::timestamptz IS NULL OR j.created_at <= $8)
-  AND ($9::uuid[] IS NULL OR EXISTS (
+  AND ($9::timestamptz IS NULL OR j.created_at >= $9)
+  AND ($10::timestamptz IS NULL OR j.created_at <= $10)
+  AND ($11::uuid[] IS NULL OR EXISTS (
       SELECT 1 FROM taggings t
-      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = ANY($9::uuid[])
+      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = ANY($11::uuid[])
   ))
 `
 
@@ -92,6 +94,8 @@ type CountJobsParams struct {
 	StageIds      []pgtype.UUID      `json:"stage_ids"`
 	LocationTypes []string           `json:"location_types"`
 	Sources       []string           `json:"sources"`
+	JobTypes      []string           `json:"job_types"`
+	JobLevels     []string           `json:"job_levels"`
 	Search        pgtype.Text        `json:"search"`
 	CreatedAfter  pgtype.Timestamptz `json:"created_after"`
 	CreatedBefore pgtype.Timestamptz `json:"created_before"`
@@ -105,6 +109,8 @@ func (q *Queries) CountJobs(ctx context.Context, arg CountJobsParams) (int64, er
 		arg.StageIds,
 		arg.LocationTypes,
 		arg.Sources,
+		arg.JobTypes,
+		arg.JobLevels,
 		arg.Search,
 		arg.CreatedAfter,
 		arg.CreatedBefore,
@@ -151,29 +157,39 @@ const createJob = `-- name: CreateJob :one
 INSERT INTO jobs (
     user_id, company_id, stage_id, title, status, source, source_url,
     location, location_type, salary_min, salary_max, salary_currency,
-    interest, jd_raw, applied_at, follow_up_at
+    interest, jd_raw, applied_at, follow_up_at,
+    deadline, job_type, job_level, salary_interval, application_url,
+    experience_range, skills
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-) RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+    $17, $18, $19, $20, $21, $22, $23
+) RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at
 `
 
 type CreateJobParams struct {
-	UserID         string             `json:"user_id"`
-	CompanyID      pgtype.UUID        `json:"company_id"`
-	StageID        pgtype.UUID        `json:"stage_id"`
-	Title          string             `json:"title"`
-	Status         pgtype.Text        `json:"status"`
-	Source         pgtype.Text        `json:"source"`
-	SourceUrl      pgtype.Text        `json:"source_url"`
-	Location       pgtype.Text        `json:"location"`
-	LocationType   pgtype.Text        `json:"location_type"`
-	SalaryMin      pgtype.Int4        `json:"salary_min"`
-	SalaryMax      pgtype.Int4        `json:"salary_max"`
-	SalaryCurrency pgtype.Text        `json:"salary_currency"`
-	Interest       pgtype.Int4        `json:"interest"`
-	JdRaw          pgtype.Text        `json:"jd_raw"`
-	AppliedAt      pgtype.Timestamptz `json:"applied_at"`
-	FollowUpAt     pgtype.Timestamptz `json:"follow_up_at"`
+	UserID          string             `json:"user_id"`
+	CompanyID       pgtype.UUID        `json:"company_id"`
+	StageID         pgtype.UUID        `json:"stage_id"`
+	Title           string             `json:"title"`
+	Status          pgtype.Text        `json:"status"`
+	Source          pgtype.Text        `json:"source"`
+	SourceUrl       pgtype.Text        `json:"source_url"`
+	Location        pgtype.Text        `json:"location"`
+	LocationType    pgtype.Text        `json:"location_type"`
+	SalaryMin       pgtype.Int4        `json:"salary_min"`
+	SalaryMax       pgtype.Int4        `json:"salary_max"`
+	SalaryCurrency  pgtype.Text        `json:"salary_currency"`
+	Interest        pgtype.Int4        `json:"interest"`
+	JdRaw           pgtype.Text        `json:"jd_raw"`
+	AppliedAt       pgtype.Timestamptz `json:"applied_at"`
+	FollowUpAt      pgtype.Timestamptz `json:"follow_up_at"`
+	Deadline        pgtype.Timestamptz `json:"deadline"`
+	JobType         pgtype.Text        `json:"job_type"`
+	JobLevel        pgtype.Text        `json:"job_level"`
+	SalaryInterval  pgtype.Text        `json:"salary_interval"`
+	ApplicationUrl  pgtype.Text        `json:"application_url"`
+	ExperienceRange pgtype.Text        `json:"experience_range"`
+	Skills          []byte             `json:"skills"`
 }
 
 func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, error) {
@@ -194,6 +210,13 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, erro
 		arg.JdRaw,
 		arg.AppliedAt,
 		arg.FollowUpAt,
+		arg.Deadline,
+		arg.JobType,
+		arg.JobLevel,
+		arg.SalaryInterval,
+		arg.ApplicationUrl,
+		arg.ExperienceRange,
+		arg.Skills,
 	)
 	var i Job
 	err := row.Scan(
@@ -222,6 +245,14 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, erro
 		&i.FollowUpAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Deadline,
+		&i.JobType,
+		&i.JobLevel,
+		&i.SalaryInterval,
+		&i.ApplicationUrl,
+		&i.ExperienceRange,
+		&i.Skills,
+		&i.ClosedAt,
 	)
 	return i, err
 }
@@ -240,7 +271,7 @@ func (q *Queries) DeleteJob(ctx context.Context, arg DeleteJobParams) (pgconn.Co
 }
 
 const getJob = `-- name: GetJob :one
-SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at,
+SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at,
        c.name AS company_name,
        c.logo_url AS company_logo_url,
        s.name AS stage_name
@@ -281,6 +312,14 @@ type GetJobRow struct {
 	FollowUpAt        pgtype.Timestamptz `json:"follow_up_at"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	Deadline          pgtype.Timestamptz `json:"deadline"`
+	JobType           pgtype.Text        `json:"job_type"`
+	JobLevel          pgtype.Text        `json:"job_level"`
+	SalaryInterval    pgtype.Text        `json:"salary_interval"`
+	ApplicationUrl    pgtype.Text        `json:"application_url"`
+	ExperienceRange   pgtype.Text        `json:"experience_range"`
+	Skills            []byte             `json:"skills"`
+	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
 	CompanyName       pgtype.Text        `json:"company_name"`
 	CompanyLogoUrl    pgtype.Text        `json:"company_logo_url"`
 	StageName         pgtype.Text        `json:"stage_name"`
@@ -315,6 +354,14 @@ func (q *Queries) GetJob(ctx context.Context, arg GetJobParams) (GetJobRow, erro
 		&i.FollowUpAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Deadline,
+		&i.JobType,
+		&i.JobLevel,
+		&i.SalaryInterval,
+		&i.ApplicationUrl,
+		&i.ExperienceRange,
+		&i.Skills,
+		&i.ClosedAt,
 		&i.CompanyName,
 		&i.CompanyLogoUrl,
 		&i.StageName,
@@ -323,7 +370,7 @@ func (q *Queries) GetJob(ctx context.Context, arg GetJobParams) (GetJobRow, erro
 }
 
 const listJobs = `-- name: ListJobs :many
-SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at,
+SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at,
        c.name AS company_name,
        c.logo_url AS company_logo_url,
        s.name AS stage_name
@@ -335,27 +382,31 @@ WHERE j.user_id = $1
   AND ($5::uuid[] IS NULL OR j.stage_id = ANY($5::uuid[]))
   AND ($6::text[] IS NULL OR j.location_type = ANY($6::text[]))
   AND ($7::text[] IS NULL OR j.source = ANY($7::text[]))
-  AND ($8::text IS NULL OR (
-      j.title ILIKE '%' || $8 || '%'
-      OR c.name ILIKE '%' || $8 || '%'
-      OR j.location ILIKE '%' || $8 || '%'
+  AND ($8::text[] IS NULL OR j.job_type = ANY($8::text[]))
+  AND ($9::text[] IS NULL OR j.job_level = ANY($9::text[]))
+  AND ($10::text IS NULL OR (
+      j.title ILIKE '%' || $10 || '%'
+      OR c.name ILIKE '%' || $10 || '%'
+      OR j.location ILIKE '%' || $10 || '%'
   ))
-  AND ($9::timestamptz IS NULL OR j.created_at >= $9)
-  AND ($10::timestamptz IS NULL OR j.created_at <= $10)
-  AND ($11::uuid[] IS NULL OR EXISTS (
+  AND ($11::timestamptz IS NULL OR j.created_at >= $11)
+  AND ($12::timestamptz IS NULL OR j.created_at <= $12)
+  AND ($13::uuid[] IS NULL OR EXISTS (
       SELECT 1 FROM taggings t
-      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = ANY($11::uuid[])
+      WHERE t.entity_type = 'job' AND t.entity_id = j.id AND t.tag_id = ANY($13::uuid[])
   ))
 ORDER BY
-  CASE WHEN $12::text = 'title' AND $13::text = 'asc' THEN j.title END ASC,
-  CASE WHEN $12::text = 'title' AND $13::text = 'desc' THEN j.title END DESC,
-  CASE WHEN $12::text = 'updated_at' AND $13::text = 'asc' THEN j.updated_at END ASC,
-  CASE WHEN $12::text = 'updated_at' AND $13::text = 'desc' THEN j.updated_at END DESC,
-  CASE WHEN $12::text = 'applied_at' AND $13::text = 'asc' THEN j.applied_at END ASC NULLS LAST,
-  CASE WHEN $12::text = 'applied_at' AND $13::text = 'desc' THEN j.applied_at END DESC NULLS LAST,
-  CASE WHEN $12::text = 'salary_min' AND $13::text = 'asc' THEN j.salary_min END ASC NULLS LAST,
-  CASE WHEN $12::text = 'salary_min' AND $13::text = 'desc' THEN j.salary_min END DESC NULLS LAST,
-  CASE WHEN $12::text = 'created_at' AND $13::text = 'asc' THEN j.created_at END ASC,
+  CASE WHEN $14::text = 'title' AND $15::text = 'asc' THEN j.title END ASC,
+  CASE WHEN $14::text = 'title' AND $15::text = 'desc' THEN j.title END DESC,
+  CASE WHEN $14::text = 'updated_at' AND $15::text = 'asc' THEN j.updated_at END ASC,
+  CASE WHEN $14::text = 'updated_at' AND $15::text = 'desc' THEN j.updated_at END DESC,
+  CASE WHEN $14::text = 'applied_at' AND $15::text = 'asc' THEN j.applied_at END ASC NULLS LAST,
+  CASE WHEN $14::text = 'applied_at' AND $15::text = 'desc' THEN j.applied_at END DESC NULLS LAST,
+  CASE WHEN $14::text = 'salary_min' AND $15::text = 'asc' THEN j.salary_min END ASC NULLS LAST,
+  CASE WHEN $14::text = 'salary_min' AND $15::text = 'desc' THEN j.salary_min END DESC NULLS LAST,
+  CASE WHEN $14::text = 'deadline' AND $15::text = 'asc' THEN j.deadline END ASC NULLS LAST,
+  CASE WHEN $14::text = 'deadline' AND $15::text = 'desc' THEN j.deadline END DESC NULLS LAST,
+  CASE WHEN $14::text = 'created_at' AND $15::text = 'asc' THEN j.created_at END ASC,
   j.created_at DESC
 LIMIT $2 OFFSET $3
 `
@@ -368,6 +419,8 @@ type ListJobsParams struct {
 	StageIds      []pgtype.UUID      `json:"stage_ids"`
 	LocationTypes []string           `json:"location_types"`
 	Sources       []string           `json:"sources"`
+	JobTypes      []string           `json:"job_types"`
+	JobLevels     []string           `json:"job_levels"`
 	Search        pgtype.Text        `json:"search"`
 	CreatedAfter  pgtype.Timestamptz `json:"created_after"`
 	CreatedBefore pgtype.Timestamptz `json:"created_before"`
@@ -402,6 +455,14 @@ type ListJobsRow struct {
 	FollowUpAt        pgtype.Timestamptz `json:"follow_up_at"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	Deadline          pgtype.Timestamptz `json:"deadline"`
+	JobType           pgtype.Text        `json:"job_type"`
+	JobLevel          pgtype.Text        `json:"job_level"`
+	SalaryInterval    pgtype.Text        `json:"salary_interval"`
+	ApplicationUrl    pgtype.Text        `json:"application_url"`
+	ExperienceRange   pgtype.Text        `json:"experience_range"`
+	Skills            []byte             `json:"skills"`
+	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
 	CompanyName       pgtype.Text        `json:"company_name"`
 	CompanyLogoUrl    pgtype.Text        `json:"company_logo_url"`
 	StageName         pgtype.Text        `json:"stage_name"`
@@ -416,6 +477,8 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]ListJobsR
 		arg.StageIds,
 		arg.LocationTypes,
 		arg.Sources,
+		arg.JobTypes,
+		arg.JobLevels,
 		arg.Search,
 		arg.CreatedAfter,
 		arg.CreatedBefore,
@@ -456,6 +519,14 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]ListJobsR
 			&i.FollowUpAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Deadline,
+			&i.JobType,
+			&i.JobLevel,
+			&i.SalaryInterval,
+			&i.ApplicationUrl,
+			&i.ExperienceRange,
+			&i.Skills,
+			&i.ClosedAt,
 			&i.CompanyName,
 			&i.CompanyLogoUrl,
 			&i.StageName,
@@ -491,9 +562,17 @@ UPDATE jobs SET
     resume_version_id = COALESCE($19, resume_version_id),
     jd_raw = COALESCE($20, jd_raw),
     applied_at = COALESCE($21, applied_at),
-    follow_up_at = COALESCE($22, follow_up_at)
+    follow_up_at = COALESCE($22, follow_up_at),
+    deadline = COALESCE($23, deadline),
+    job_type = COALESCE($24, job_type),
+    job_level = COALESCE($25, job_level),
+    salary_interval = COALESCE($26, salary_interval),
+    application_url = COALESCE($27, application_url),
+    experience_range = COALESCE($28, experience_range),
+    skills = COALESCE($29, skills),
+    closed_at = COALESCE($30, closed_at)
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at
+RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at
 `
 
 type UpdateJobParams struct {
@@ -519,6 +598,14 @@ type UpdateJobParams struct {
 	JdRaw             pgtype.Text        `json:"jd_raw"`
 	AppliedAt         pgtype.Timestamptz `json:"applied_at"`
 	FollowUpAt        pgtype.Timestamptz `json:"follow_up_at"`
+	Deadline          pgtype.Timestamptz `json:"deadline"`
+	JobType           pgtype.Text        `json:"job_type"`
+	JobLevel          pgtype.Text        `json:"job_level"`
+	SalaryInterval    pgtype.Text        `json:"salary_interval"`
+	ApplicationUrl    pgtype.Text        `json:"application_url"`
+	ExperienceRange   pgtype.Text        `json:"experience_range"`
+	Skills            []byte             `json:"skills"`
+	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
 }
 
 func (q *Queries) UpdateJob(ctx context.Context, arg UpdateJobParams) (Job, error) {
@@ -545,6 +632,14 @@ func (q *Queries) UpdateJob(ctx context.Context, arg UpdateJobParams) (Job, erro
 		arg.JdRaw,
 		arg.AppliedAt,
 		arg.FollowUpAt,
+		arg.Deadline,
+		arg.JobType,
+		arg.JobLevel,
+		arg.SalaryInterval,
+		arg.ApplicationUrl,
+		arg.ExperienceRange,
+		arg.Skills,
+		arg.ClosedAt,
 	)
 	var i Job
 	err := row.Scan(
@@ -573,6 +668,14 @@ func (q *Queries) UpdateJob(ctx context.Context, arg UpdateJobParams) (Job, erro
 		&i.FollowUpAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Deadline,
+		&i.JobType,
+		&i.JobLevel,
+		&i.SalaryInterval,
+		&i.ApplicationUrl,
+		&i.ExperienceRange,
+		&i.Skills,
+		&i.ClosedAt,
 	)
 	return i, err
 }

@@ -21,6 +21,8 @@ WHERE j.user_id = $1
   AND (sqlc.narg('stage_ids')::uuid[] IS NULL OR j.stage_id = ANY(sqlc.narg('stage_ids')::uuid[]))
   AND (sqlc.narg('location_types')::text[] IS NULL OR j.location_type = ANY(sqlc.narg('location_types')::text[]))
   AND (sqlc.narg('sources')::text[] IS NULL OR j.source = ANY(sqlc.narg('sources')::text[]))
+  AND (sqlc.narg('job_types')::text[] IS NULL OR j.job_type = ANY(sqlc.narg('job_types')::text[]))
+  AND (sqlc.narg('job_levels')::text[] IS NULL OR j.job_level = ANY(sqlc.narg('job_levels')::text[]))
   AND (sqlc.narg('search')::text IS NULL OR (
       j.title ILIKE '%' || sqlc.narg('search') || '%'
       OR c.name ILIKE '%' || sqlc.narg('search') || '%'
@@ -41,6 +43,8 @@ ORDER BY
   CASE WHEN @sort_by::text = 'applied_at' AND @sort_order::text = 'desc' THEN j.applied_at END DESC NULLS LAST,
   CASE WHEN @sort_by::text = 'salary_min' AND @sort_order::text = 'asc' THEN j.salary_min END ASC NULLS LAST,
   CASE WHEN @sort_by::text = 'salary_min' AND @sort_order::text = 'desc' THEN j.salary_min END DESC NULLS LAST,
+  CASE WHEN @sort_by::text = 'deadline' AND @sort_order::text = 'asc' THEN j.deadline END ASC NULLS LAST,
+  CASE WHEN @sort_by::text = 'deadline' AND @sort_order::text = 'desc' THEN j.deadline END DESC NULLS LAST,
   CASE WHEN @sort_by::text = 'created_at' AND @sort_order::text = 'asc' THEN j.created_at END ASC,
   j.created_at DESC
 LIMIT $2 OFFSET $3;
@@ -53,6 +57,8 @@ WHERE j.user_id = $1
   AND (sqlc.narg('stage_ids')::uuid[] IS NULL OR j.stage_id = ANY(sqlc.narg('stage_ids')::uuid[]))
   AND (sqlc.narg('location_types')::text[] IS NULL OR j.location_type = ANY(sqlc.narg('location_types')::text[]))
   AND (sqlc.narg('sources')::text[] IS NULL OR j.source = ANY(sqlc.narg('sources')::text[]))
+  AND (sqlc.narg('job_types')::text[] IS NULL OR j.job_type = ANY(sqlc.narg('job_types')::text[]))
+  AND (sqlc.narg('job_levels')::text[] IS NULL OR j.job_level = ANY(sqlc.narg('job_levels')::text[]))
   AND (sqlc.narg('search')::text IS NULL OR (
       j.title ILIKE '%' || sqlc.narg('search') || '%'
       OR c.name ILIKE '%' || sqlc.narg('search') || '%'
@@ -69,9 +75,12 @@ WHERE j.user_id = $1
 INSERT INTO jobs (
     user_id, company_id, stage_id, title, status, source, source_url,
     location, location_type, salary_min, salary_max, salary_currency,
-    interest, jd_raw, applied_at, follow_up_at
+    interest, jd_raw, applied_at, follow_up_at,
+    deadline, job_type, job_level, salary_interval, application_url,
+    experience_range, skills
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+    $17, $18, $19, $20, $21, $22, $23
 ) RETURNING *;
 
 -- name: UpdateJob :one
@@ -95,7 +104,15 @@ UPDATE jobs SET
     resume_version_id = COALESCE(sqlc.narg('resume_version_id'), resume_version_id),
     jd_raw = COALESCE(sqlc.narg('jd_raw'), jd_raw),
     applied_at = COALESCE(sqlc.narg('applied_at'), applied_at),
-    follow_up_at = COALESCE(sqlc.narg('follow_up_at'), follow_up_at)
+    follow_up_at = COALESCE(sqlc.narg('follow_up_at'), follow_up_at),
+    deadline = COALESCE(sqlc.narg('deadline'), deadline),
+    job_type = COALESCE(sqlc.narg('job_type'), job_type),
+    job_level = COALESCE(sqlc.narg('job_level'), job_level),
+    salary_interval = COALESCE(sqlc.narg('salary_interval'), salary_interval),
+    application_url = COALESCE(sqlc.narg('application_url'), application_url),
+    experience_range = COALESCE(sqlc.narg('experience_range'), experience_range),
+    skills = COALESCE(sqlc.narg('skills'), skills),
+    closed_at = COALESCE(sqlc.narg('closed_at'), closed_at)
 WHERE id = $1 AND user_id = $2
 RETURNING *;
 

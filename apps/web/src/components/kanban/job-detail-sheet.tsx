@@ -38,7 +38,7 @@ import type { Stage } from "@/hooks/use-stages";
 import { useTags, type Tag } from "@/hooks/use-tags";
 import { InlineEditField } from "./inline-edit-field";
 import { StageIcon } from "./stage-icons";
-import { SOURCES, LOCATION_TYPES, CURRENCIES } from "@/lib/constants";
+import { SOURCES, LOCATION_TYPES, CURRENCIES, JOB_TYPES, JOB_LEVELS, SALARY_INTERVALS } from "@/lib/constants";
 import { toast } from "sonner";
 import {
   MapPin,
@@ -497,6 +497,47 @@ function DetailsTab({
             placeholder="Select source"
             onSave={(v) => onUpdate("source", v)}
           />
+          <InlineEditField
+            icon={Briefcase}
+            label="Job Type"
+            value={job.job_type}
+            type="select"
+            options={JOB_TYPES}
+            placeholder="Select type"
+            onSave={(v) => onUpdate("job_type", v)}
+          />
+          <InlineEditField
+            icon={Briefcase}
+            label="Level"
+            value={job.job_level}
+            type="select"
+            options={JOB_LEVELS}
+            placeholder="Select level"
+            onSave={(v) => onUpdate("job_level", v)}
+          />
+          <InlineEditField
+            label="Experience"
+            value={job.experience_range}
+            type="text"
+            placeholder="e.g. 3-5 years"
+            onSave={(v) => onUpdate("experience_range", v)}
+          />
+          {job.application_url && (
+            <div className="flex sm:flex-row flex-col sm:items-center items-start gap-2 min-h-[36px] py-1">
+              <div className="flex items-center gap-2 sm:w-32 shrink-0">
+                <ExternalLink className="w-4 h-4 text-text-muted shrink-0" />
+                <span className="text-[13px] text-text-muted">Apply Link</span>
+              </div>
+              <a
+                href={job.application_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-brand-blue hover:underline px-2 truncate min-w-0"
+              >
+                Apply
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Compensation */}
@@ -526,6 +567,14 @@ function DetailsTab({
             placeholder="USD"
             onSave={(v) => onUpdate("salary_currency", v)}
           />
+          <InlineEditField
+            label="Interval"
+            value={job.salary_interval}
+            type="select"
+            options={SALARY_INTERVALS}
+            placeholder="Annual"
+            onSave={(v) => onUpdate("salary_interval", v)}
+          />
           {job.salary_market != null && (
             <div className="flex sm:flex-row flex-col sm:items-center items-start gap-2 min-h-[36px] py-1">
               <div className="flex items-center gap-2 sm:w-32 shrink-0">
@@ -543,6 +592,14 @@ function DetailsTab({
         {/* Dates */}
         <div className="p-4 space-y-0.5">
           <SectionLabel>Dates</SectionLabel>
+          <InlineEditField
+            icon={Calendar}
+            label="Deadline"
+            value={toDateInputValue(job.deadline)}
+            type="date"
+            placeholder="Set deadline"
+            onSave={(v) => onUpdate("deadline", v)}
+          />
           <InlineEditField
             icon={Calendar}
             label="Applied"

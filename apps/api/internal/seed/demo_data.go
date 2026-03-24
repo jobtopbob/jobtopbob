@@ -47,12 +47,18 @@ type job struct {
 	LocationType       string
 	SalaryMin          int
 	SalaryMax          int
+	SalaryInterval     string // "annual", "monthly", "hourly" (empty = annual)
 	Interest           int
 	MonthOffset        int // -3 to +3 relative to current month (0 = this month)
 	DayOfMonth         int // 1-28 (safe for all months)
 	AppliedMonthOffset int // month offset for applied_at (ignored if AppliedDayOfMonth == 0)
 	AppliedDayOfMonth  int // 0 means not applied
 	FollowUpDays       int // positive = days from now, 0 = no follow-up
+	DeadlineDays       int // positive = days from now, negative = days ago, 0 = no deadline
+	JobType            string // "full_time", "part_time", "contract", "internship", etc.
+	JobLevel           string // "intern", "entry", "mid", "senior", "lead", "manager", etc.
+	ApplicationURL     string
+	ExperienceRange    string // "3-5 years", "5+ years", etc.
 	Tags               []string
 }
 
@@ -99,32 +105,149 @@ var demoTags = []struct {
 
 var demoJobs = []job{
 	// --- 3 months ago: closed applications ---
-	//                                                                                                                                          MonthOff Day  ApplMo ApplDay FollowUp
-	{"Software Engineer", "Meta", "Rejected", "", "rejected", "linkedin", "", "Menlo Park, CA", "onsite", 180000, 250000, 3, -3, 5, -3, 8, 0, []string{"FAANG"}},
-	{"Senior Engineer", "Coinbase", "Withdrawn", "", "withdrawn", "indeed", "", "Remote", "remote", 170000, 230000, 3, -3, 18, -3, 20, 0, []string{"Remote"}},
+	{
+		Title: "Software Engineer", CompanyName: "Meta", StageName: "Rejected", CloseReason: "rejected",
+		Source: "linkedin", Location: "Menlo Park, CA", LocationType: "onsite",
+		SalaryMin: 180000, SalaryMax: 250000, Interest: 3,
+		MonthOffset: -3, DayOfMonth: 5, AppliedMonthOffset: -3, AppliedDayOfMonth: 8,
+		JobType: "full_time", JobLevel: "mid", ExperienceRange: "2-4 years",
+		Tags: []string{"FAANG"},
+	},
+	{
+		Title: "Senior Engineer", CompanyName: "Coinbase", StageName: "Withdrawn", CloseReason: "withdrawn",
+		Source: "indeed", Location: "Remote", LocationType: "remote",
+		SalaryMin: 170000, SalaryMax: 230000, Interest: 3,
+		MonthOffset: -3, DayOfMonth: 18, AppliedMonthOffset: -3, AppliedDayOfMonth: 20,
+		JobType: "full_time", JobLevel: "senior", ExperienceRange: "5+ years",
+		Tags: []string{"Remote"},
+	},
 
 	// --- 2 months ago: offers and late-stage interviews ---
-	{"Senior Software Engineer", "HashiCorp", "Offer", "", "", "linkedin", "", "San Francisco, CA", "hybrid", 195000, 265000, 5, -2, 3, -2, 6, 0, []string{"Senior", "TypeScript"}},
-	{"Lead Frontend Engineer", "Slack", "Offer", "", "", "company_website", "", "Remote", "remote", 185000, 255000, 4, -2, 12, -2, 15, 0, []string{"Remote", "React"}},
-	{"Staff Software Engineer", "Airbnb", "Interviewing", "", "", "referral", "", "San Francisco, CA", "onsite", 210000, 290000, 5, -2, 20, -2, 22, 0, []string{"Senior", "FAANG"}},
+	{
+		Title: "Senior Software Engineer", CompanyName: "HashiCorp", StageName: "Offer",
+		Source: "linkedin", Location: "San Francisco, CA", LocationType: "hybrid",
+		SalaryMin: 195000, SalaryMax: 265000, Interest: 5,
+		MonthOffset: -2, DayOfMonth: 3, AppliedMonthOffset: -2, AppliedDayOfMonth: 6,
+		JobType: "full_time", JobLevel: "senior", ExperienceRange: "5-8 years",
+		Tags: []string{"Senior", "TypeScript"},
+	},
+	{
+		Title: "Lead Frontend Engineer", CompanyName: "Slack", StageName: "Offer",
+		Source: "company_website", Location: "Remote", LocationType: "remote",
+		SalaryMin: 185000, SalaryMax: 255000, Interest: 4,
+		MonthOffset: -2, DayOfMonth: 12, AppliedMonthOffset: -2, AppliedDayOfMonth: 15,
+		JobType: "full_time", JobLevel: "lead", ExperienceRange: "6-10 years",
+		Tags: []string{"Remote", "React"},
+	},
+	{
+		Title: "Staff Software Engineer", CompanyName: "Airbnb", StageName: "Interviewing",
+		Source: "referral", Location: "San Francisco, CA", LocationType: "onsite",
+		SalaryMin: 210000, SalaryMax: 290000, Interest: 5,
+		MonthOffset: -2, DayOfMonth: 20, AppliedMonthOffset: -2, AppliedDayOfMonth: 22,
+		JobType: "full_time", JobLevel: "senior", ExperienceRange: "8+ years",
+		Tags: []string{"Senior", "FAANG"},
+	},
 
 	// --- 1 month ago: active applications and interviews ---
-	{"Senior Backend Engineer", "Twilio", "Interviewing", "", "", "linkedin", "", "Remote", "remote", 165000, 220000, 4, -1, 4, -1, 7, 0, []string{"Remote", "TypeScript"}},
-	{"Engineering Manager", "Atlassian", "Interviewing", "", "", "referral", "", "New York, NY", "hybrid", 200000, 270000, 5, -1, 10, -1, 14, 5, []string{"Senior"}},
-	{"Senior Software Engineer", "Stripe", "Applied", "", "", "linkedin", "", "San Francisco, CA", "hybrid", 190000, 260000, 5, -1, 18, -1, 18, 0, []string{"TypeScript", "Senior"}},
-	{"Frontend Engineer", "Figma", "Applied", "", "", "linkedin", "", "New York, NY", "onsite", 170000, 230000, 4, -1, 25, -1, 26, 0, []string{"React", "TypeScript"}},
+	{
+		Title: "Senior Backend Engineer", CompanyName: "Twilio", StageName: "Interviewing",
+		Source: "linkedin", Location: "Remote", LocationType: "remote",
+		SalaryMin: 165000, SalaryMax: 220000, Interest: 4,
+		MonthOffset: -1, DayOfMonth: 4, AppliedMonthOffset: -1, AppliedDayOfMonth: 7,
+		JobType: "full_time", JobLevel: "senior", ExperienceRange: "5-7 years",
+		Tags: []string{"Remote", "TypeScript"},
+	},
+	{
+		Title: "Engineering Manager", CompanyName: "Atlassian", StageName: "Interviewing",
+		Source: "referral", Location: "New York, NY", LocationType: "hybrid",
+		SalaryMin: 200000, SalaryMax: 270000, Interest: 5,
+		MonthOffset: -1, DayOfMonth: 10, AppliedMonthOffset: -1, AppliedDayOfMonth: 14, FollowUpDays: 5,
+		JobType: "full_time", JobLevel: "manager", ExperienceRange: "8+ years",
+		Tags: []string{"Senior"},
+	},
+	{
+		Title: "Senior Software Engineer", CompanyName: "Stripe", StageName: "Applied",
+		Source: "linkedin", Location: "San Francisco, CA", LocationType: "hybrid",
+		SalaryMin: 190000, SalaryMax: 260000, Interest: 5,
+		MonthOffset: -1, DayOfMonth: 18, AppliedMonthOffset: -1, AppliedDayOfMonth: 18,
+		DeadlineDays: 14, JobType: "full_time", JobLevel: "senior", ExperienceRange: "5-8 years",
+		ApplicationURL: "https://stripe.com/jobs/listing/senior-software-engineer",
+		Tags: []string{"TypeScript", "Senior"},
+	},
+	{
+		Title: "Frontend Engineer", CompanyName: "Figma", StageName: "Applied",
+		Source: "linkedin", Location: "New York, NY", LocationType: "onsite",
+		SalaryMin: 170000, SalaryMax: 230000, Interest: 4,
+		MonthOffset: -1, DayOfMonth: 25, AppliedMonthOffset: -1, AppliedDayOfMonth: 26,
+		JobType: "full_time", JobLevel: "mid", ExperienceRange: "3-5 years",
+		Tags: []string{"React", "TypeScript"},
+	},
 
 	// --- Current month: recent activity ---
-	{"Software Engineer II", "Datadog", "Applied", "", "", "indeed", "", "Remote", "remote", 160000, 210000, 3, 0, 3, 0, 5, 0, []string{"Remote"}},
-	{"Full Stack Engineer", "Cloudflare", "Applied", "", "", "linkedin", "", "Austin, TX", "hybrid", 150000, 200000, 3, 0, 8, 0, 10, 0, []string{"TypeScript"}},
-	{"Senior Platform Engineer", "Shopify", "Applied", "", "", "company_website", "", "Remote", "remote", 175000, 240000, 4, 0, 12, 0, 14, 3, []string{"Remote", "Senior"}},
+	{
+		Title: "Software Engineer II", CompanyName: "Datadog", StageName: "Applied",
+		Source: "indeed", Location: "Remote", LocationType: "remote",
+		SalaryMin: 160000, SalaryMax: 210000, Interest: 3,
+		MonthOffset: 0, DayOfMonth: 3, AppliedMonthOffset: 0, AppliedDayOfMonth: 5,
+		DeadlineDays: 21, JobType: "full_time", JobLevel: "mid", ExperienceRange: "2-5 years",
+		Tags: []string{"Remote"},
+	},
+	{
+		Title: "Full Stack Engineer", CompanyName: "Cloudflare", StageName: "Applied",
+		Source: "linkedin", Location: "Austin, TX", LocationType: "hybrid",
+		SalaryMin: 150000, SalaryMax: 200000, Interest: 3,
+		MonthOffset: 0, DayOfMonth: 8, AppliedMonthOffset: 0, AppliedDayOfMonth: 10,
+		JobType: "full_time", JobLevel: "mid", ExperienceRange: "3-5 years",
+		Tags: []string{"TypeScript"},
+	},
+	{
+		Title: "Senior Platform Engineer", CompanyName: "Shopify", StageName: "Applied",
+		Source: "company_website", Location: "Remote", LocationType: "remote",
+		SalaryMin: 175000, SalaryMax: 240000, Interest: 4,
+		MonthOffset: 0, DayOfMonth: 12, AppliedMonthOffset: 0, AppliedDayOfMonth: 14, FollowUpDays: 3,
+		DeadlineDays: 10, JobType: "full_time", JobLevel: "senior", ExperienceRange: "5+ years",
+		ApplicationURL: "https://shopify.com/careers/senior-platform-engineer",
+		Tags: []string{"Remote", "Senior"},
+	},
 
 	// --- 1 month from now: upcoming targets ---
-	{"Staff Frontend Engineer", "Vercel", "Wishlist", "", "", "linkedin", "", "Remote", "remote", 200000, 280000, 5, 1, 5, 0, 0, 0, []string{"Remote", "React", "TypeScript"}},
-	{"Senior Full Stack Developer", "GitHub", "Wishlist", "", "", "company_website", "", "San Francisco, CA", "onsite", 180000, 250000, 4, 1, 18, 0, 0, 0, []string{"React", "TypeScript"}},
+	{
+		Title: "Staff Frontend Engineer", CompanyName: "Vercel", StageName: "Wishlist",
+		Source: "linkedin", Location: "Remote", LocationType: "remote",
+		SalaryMin: 200000, SalaryMax: 280000, Interest: 5,
+		MonthOffset: 1, DayOfMonth: 5,
+		DeadlineDays: 45, JobType: "full_time", JobLevel: "senior", ExperienceRange: "7+ years",
+		ApplicationURL: "https://vercel.com/careers/staff-frontend-engineer",
+		Tags: []string{"Remote", "React", "TypeScript"},
+	},
+	{
+		Title: "Senior Full Stack Developer", CompanyName: "GitHub", StageName: "Wishlist",
+		Source: "company_website", Location: "San Francisco, CA", LocationType: "onsite",
+		SalaryMin: 180000, SalaryMax: 250000, Interest: 4,
+		MonthOffset: 1, DayOfMonth: 18,
+		DeadlineDays: 30, JobType: "full_time", JobLevel: "senior", ExperienceRange: "5-8 years",
+		Tags: []string{"React", "TypeScript"},
+	},
 
 	// --- 2 months from now: future targets ---
-	{"Principal Engineer", "Linear", "Wishlist", "", "", "referral", "", "Remote", "remote", 220000, 300000, 5, 2, 10, 0, 0, 0, []string{"Remote", "Startup", "TypeScript"}},
+	{
+		Title: "Principal Engineer", CompanyName: "Linear", StageName: "Wishlist",
+		Source: "referral", Location: "Remote", LocationType: "remote",
+		SalaryMin: 220000, SalaryMax: 300000, Interest: 5,
+		MonthOffset: 2, DayOfMonth: 10,
+		JobType: "full_time", JobLevel: "lead", ExperienceRange: "10+ years",
+		Tags: []string{"Remote", "Startup", "TypeScript"},
+	},
+
+	// --- Contract/non-standard jobs for variety ---
+	{
+		Title: "Contract React Developer", CompanyName: "Shopify", StageName: "Applied",
+		Source: "linkedin", Location: "Remote", LocationType: "remote",
+		SalaryMin: 85, SalaryMax: 120, SalaryInterval: "hourly", Interest: 3,
+		MonthOffset: 0, DayOfMonth: 15, AppliedMonthOffset: 0, AppliedDayOfMonth: 16,
+		DeadlineDays: 7, JobType: "contract", JobLevel: "senior", ExperienceRange: "5+ years",
+		Tags: []string{"Remote", "React"},
+	},
 }
 
 // dateInMonth returns a date in the month offset from now, on the given day (1-28).
@@ -278,9 +401,34 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 			followUpAt = &t
 		}
 
+		var deadline *time.Time
+		if j.DeadlineDays != 0 {
+			t := now.Add(time.Duration(j.DeadlineDays) * 24 * time.Hour)
+			deadline = &t
+		}
+
 		var closeReason *string
 		if j.CloseReason != "" {
 			closeReason = &j.CloseReason
+		}
+
+		salaryInterval := j.SalaryInterval
+		if salaryInterval == "" {
+			salaryInterval = "annual"
+		}
+
+		var jobType, jobLevel, applicationURL, experienceRange *string
+		if j.JobType != "" {
+			jobType = &j.JobType
+		}
+		if j.JobLevel != "" {
+			jobLevel = &j.JobLevel
+		}
+		if j.ApplicationURL != "" {
+			applicationURL = &j.ApplicationURL
+		}
+		if j.ExperienceRange != "" {
+			experienceRange = &j.ExperienceRange
 		}
 
 		var jobID string
@@ -288,14 +436,18 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 			INSERT INTO jobs (
 				user_id, company_id, stage_id, title, close_reason,
 				source, location, location_type,
-				salary_min, salary_max, salary_currency,
-				interest, applied_at, follow_up_at, created_at, updated_at
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'USD', $11, $12, $13, $14, $14)
+				salary_min, salary_max, salary_currency, salary_interval,
+				interest, applied_at, follow_up_at, deadline,
+				job_type, job_level, application_url, experience_range,
+				created_at, updated_at
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'USD', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $20)
 			RETURNING id`,
 			demoUserID, companyID, stageID, j.Title, closeReason,
 			j.Source, j.Location, j.LocationType,
-			j.SalaryMin, j.SalaryMax,
-			j.Interest, appliedAt, followUpAt, createdAt).Scan(&jobID)
+			j.SalaryMin, j.SalaryMax, salaryInterval,
+			j.Interest, appliedAt, followUpAt, deadline,
+			jobType, jobLevel, applicationURL, experienceRange,
+			createdAt).Scan(&jobID)
 		if err != nil {
 			return fmt.Errorf("insert job %s at %s: %w", j.Title, j.CompanyName, err)
 		}

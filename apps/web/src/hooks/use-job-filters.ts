@@ -9,6 +9,8 @@ export interface JobFilters {
   stageIds: string[];
   locationTypes: string[];
   sources: string[];
+  jobTypes: string[];
+  jobLevels: string[];
   tagIds: string[];
   createdAfter: string;
   createdBefore: string;
@@ -24,6 +26,8 @@ const DEFAULTS: JobFilters = {
   stageIds: [],
   locationTypes: [],
   sources: [],
+  jobTypes: [],
+  jobLevels: [],
   tagIds: [],
   createdAfter: "",
   createdBefore: "",
@@ -53,6 +57,8 @@ export function useJobFilters() {
     stageIds: parseCSV(searchParams.get("stage_ids")),
     locationTypes: parseCSV(searchParams.get("location_types")),
     sources: parseCSV(searchParams.get("sources")),
+    jobTypes: parseCSV(searchParams.get("job_types")),
+    jobLevels: parseCSV(searchParams.get("job_levels")),
     tagIds: parseCSV(searchParams.get("tag_ids")),
     createdAfter: searchParams.get("created_after") ?? DEFAULTS.createdAfter,
     createdBefore: searchParams.get("created_before") ?? DEFAULTS.createdBefore,
@@ -90,6 +96,8 @@ export function useJobFilters() {
       setOrDelete("stage_ids", serializeCSV(merged.stageIds));
       setOrDelete("location_types", serializeCSV(merged.locationTypes));
       setOrDelete("sources", serializeCSV(merged.sources));
+      setOrDelete("job_types", serializeCSV(merged.jobTypes));
+      setOrDelete("job_levels", serializeCSV(merged.jobLevels));
       setOrDelete("tag_ids", serializeCSV(merged.tagIds));
       setOrDelete("created_after", merged.createdAfter);
       setOrDelete("created_before", merged.createdBefore);
@@ -146,6 +154,8 @@ export function useJobFilters() {
     if (filters.stageIds.length > 0) count++;
     if (filters.locationTypes.length > 0) count++;
     if (filters.sources.length > 0) count++;
+    if (filters.jobTypes.length > 0) count++;
+    if (filters.jobLevels.length > 0) count++;
     if (filters.tagIds.length > 0) count++;
     if (filters.createdAfter) count++;
     if (filters.createdBefore) count++;
