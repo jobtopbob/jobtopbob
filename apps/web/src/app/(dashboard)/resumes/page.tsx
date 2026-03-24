@@ -134,13 +134,13 @@ export default function ResumesPage() {
   };
 
   const handleExportPDF = (resume: Resume) => {
-    exportPDF.mutate(resume.id, {
-      onSuccess: (data) => {
-        window.open(data.url, "_blank");
-        toast.success("PDF exported");
+    exportPDF.mutate(
+      { id: resume.id, fileName: `${resume.name || "resume"}.pdf` },
+      {
+        onSuccess: () => toast.success("PDF exported"),
+        onError: (error) => toast.error(error.message),
       },
-      onError: (error) => toast.error(error.message),
-    });
+    );
   };
 
   const handleSetBase = (resume: Resume) => {

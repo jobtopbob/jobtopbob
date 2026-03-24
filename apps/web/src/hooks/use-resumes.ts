@@ -120,7 +120,13 @@ export function useDeleteResume() {
 
 export function useExportResumePDF() {
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({
+      id,
+      fileName = "resume.pdf",
+    }: {
+      id: string;
+      fileName?: string;
+    }) => {
       const baseUrl =
         process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
       const { data: tokenData } = await authClient.token();
@@ -137,7 +143,13 @@ export function useExportResumePDF() {
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      return { url };
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     },
   });
 }

@@ -85,7 +85,7 @@ func main() {
 	}
 
 	// Create RxResume client (API-only, per-user API keys stored in user_settings)
-	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.ResumePrinterHTTPURL, cfg.ResumeBuilderPrinterURL)
+	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.ResumeBuilderPublicURL, cfg.ResumePrinterHTTPURL, cfg.ResumeBuilderPrinterURL)
 
 	// Create router
 	engine := router.New(pool, cfg.JWKSURL, cfg.CORSOrigins, rxClient, cfg.ResumeBuilderPublicURL)

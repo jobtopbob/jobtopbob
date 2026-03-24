@@ -29,7 +29,8 @@
       "WebFetch(domain:github.com)",
       "Bash(gh api:*)",
       "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(go vet:*)"
     ]
   }
 }

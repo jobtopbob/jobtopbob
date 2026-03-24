@@ -16,6 +16,7 @@ import (
 // Client communicates with a Reactive Resume v5 instance.
 type Client struct {
 	baseURL        string
+	publicURL      string // Public URL of the resume builder (for URL rewriting in Docker)
 	printerHTTPURL string // Browserless Chromium HTTP endpoint for direct PDF generation
 	printerAppURL  string // URL the printer uses to reach the resume builder (Docker-internal)
 	httpClient     *http.Client
@@ -53,10 +54,12 @@ type PDFResponse struct {
 }
 
 // NewClient creates a new RxResume client.
+// publicURL is the browser-facing URL of the resume builder (used to rewrite PDF download URLs).
 // printerHTTPURL is the Browserless Chromium HTTP endpoint for direct PDF generation.
-func NewClient(baseURL, printerHTTPURL, printerAppURL string) *Client {
+func NewClient(baseURL, publicURL, printerHTTPURL, printerAppURL string) *Client {
 	return &Client{
 		baseURL:        strings.TrimRight(baseURL, "/"),
+		publicURL:      strings.TrimRight(publicURL, "/"),
 		printerHTTPURL: strings.TrimRight(printerHTTPURL, "/"),
 		printerAppURL:  strings.TrimRight(printerAppURL, "/"),
 		httpClient: &http.Client{
@@ -120,12 +123,25 @@ func (c *Client) DeleteResume(ctx context.Context, apiKey, id string) error {
 }
 
 // ExportPDF triggers PDF generation and returns the download URL.
+// The returned URL is rewritten from the public URL to the internal base URL
+// so the Go API can fetch it from inside Docker.
 func (c *Client) ExportPDF(ctx context.Context, apiKey, id string) (string, error) {
 	var resp PDFResponse
 	if err := c.doWithKey(ctx, apiKey, http.MethodGet, "/api/openapi/resumes/"+id+"/pdf", nil, &resp); err != nil {
 		return "", fmt.Errorf("rxresume export pdf %s: %w", id, err)
 	}
-	return resp.URL, nil
+	return c.rewriteURL(resp.URL), nil
+}
+
+// rewriteURL replaces the public URL prefix with the internal base URL
+// so the Go API can reach the resume builder from inside Docker.
+func (c *Client) rewriteURL(u string) string {
+	if c.publicURL != "" && c.baseURL != "" && c.publicURL != c.baseURL {
+		if strings.HasPrefix(u, c.publicURL) {
+			return c.baseURL + strings.TrimPrefix(u, c.publicURL)
+		}
+	}
+	return u
 }
 
 // ExportPDFDirect generates a PDF by calling Browserless Chromium's HTTP API directly.
@@ -155,7 +171,7 @@ func (c *Client) ExportPDFDirect(ctx context.Context, rxResumeID string) ([]byte
 		return nil, fmt.Errorf("marshal printer request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.printerHTTPURL+"/pdf", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.printerHTTPURL+"/chromium/pdf", bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create printer request: %w", err)
 	}
