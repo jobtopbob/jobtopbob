@@ -1,13 +1,13 @@
 # JobTopBob — single Compose file for dev and production.
 #
-# Dev (infrastructure only — run app services on host with hot reload):
+# Profiles are controlled by COMPOSE_PROFILES in .env (set once, use everywhere):
+#   (unset)       → infrastructure only (Postgres, Redis, etc.) for local dev
+#   prod          → infrastructure + app services (web, api, worker)
+#   prod,scrapers → everything including job discovery scrapers
+#
+# Usage (same for up, down, logs, etc.):
 #   docker compose up -d
-#
-# Production / self-hosted:
-#   docker compose --profile prod up -d
-#
-# Production + scrapers:
-#   docker compose --profile prod --profile scrapers up -d
+#   docker compose down
 #
 # Dev URLs:
 #   PostgreSQL:      localhost:5432
@@ -15,7 +15,7 @@
 #   Resume Builder:  localhost:3010
 #   Asynq Inspector: localhost:8081
 #
-# Prod URLs:
+# Prod URLs (when COMPOSE_PROFILES=prod):
 #   Frontend:        localhost:3000
 #   Go API:          localhost:8080
 #   Resume Builder:  localhost:3010

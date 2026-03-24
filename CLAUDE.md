@@ -47,8 +47,8 @@ pnpm install
 docker compose up -d
 
 # Setup (prod / self-hosted — everything in containers)
-docker compose --profile prod up -d
-docker compose --profile prod --profile scrapers up -d  # with scrapers
+# Set COMPOSE_PROFILES=prod (or prod,scrapers) in .env, then:
+docker compose up -d
 
 # Code generation
 ./scripts/sqlc-generate.sh          # SQL queries → Go functions

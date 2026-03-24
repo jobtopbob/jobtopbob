@@ -80,9 +80,21 @@ Everything runs in Docker — no host toolchain required:
 
 ```bash
 cp .env.example .env         # configure secrets and AI keys
-docker compose --profile prod up -d
-# With job discovery scrapers:
-docker compose --profile prod --profile scrapers up -d
+```
+
+Set `COMPOSE_PROFILES` in `.env` to control which services start:
+
+| Value | What starts |
+|-------|-------------|
+| *(empty)* | Infrastructure only (Postgres, Redis, etc.) — for local dev |
+| `prod` | Infrastructure + app services (web, api, worker) |
+| `prod,scrapers` | Everything including job discovery scrapers |
+
+```bash
+# Set once in .env, then use plain commands for everything:
+docker compose up -d
+docker compose down
+docker compose logs
 ```
 
 All configuration is in `.env` — see `.env.example` for the full reference.
