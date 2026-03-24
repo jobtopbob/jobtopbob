@@ -91,7 +91,7 @@ export default function ResumesPage() {
   }, [queryClient]);
 
   const openBuilder = () => {
-    if (builderURL) window.open(builderURL, "_blank");
+    if (builderURL) window.open(`${builderURL}/dashboard/resumes`, "_blank");
   };
 
   const handleEdit = (resume: Resume) => {
@@ -103,11 +103,15 @@ export default function ResumesPage() {
   };
 
   const handleExportPDF = (resume: Resume) => {
-    exportPDF.mutate(
-      { id: resume.id, fileName: `${resume.name || "resume"}.pdf` },
+    toast.promise(
+      exportPDF.mutateAsync({
+        id: resume.id,
+        fileName: `${resume.name || "resume"}.pdf`,
+      }),
       {
-        onSuccess: () => toast.success("PDF exported"),
-        onError: (error) => toast.error(error.message),
+        loading: "Exporting PDF...",
+        success: "PDF exported",
+        error: (err) => err?.message ?? "Failed to export PDF",
       },
     );
   };
@@ -160,8 +164,17 @@ export default function ResumesPage() {
               Resumes
             </h1>
             <p className="text-sm text-text-muted mt-1.5">
-              Sync from the builder, tailor for specific roles, and export when
-              ready.
+              Built with{" "}
+              <a
+                href="https://rxresu.me"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-text-primary transition-colors"
+              >
+                Reactive Resume
+              </a>
+              . Sync from the builder, tailor for specific roles, and export
+              when ready.
             </p>
           </div>
           <div className="flex items-center gap-2">
