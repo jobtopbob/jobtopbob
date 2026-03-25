@@ -26,6 +26,16 @@ type Config struct {
 	S3Endpoint  string
 	S3AccessKey string
 	S3SecretKey string
+
+	// Encryption
+	EncryptionKey string
+
+	// Gmail OAuth
+	GoogleClientID       string
+	GoogleClientSecret   string
+	GoogleRedirectURI    string
+	GoogleCloudProjectID string
+	PubSubTopicName      string
 }
 
 func Load() *Config {
@@ -49,6 +59,13 @@ func Load() *Config {
 		S3Endpoint:           getEnv("S3_ENDPOINT", "http://localhost:9000"),
 		S3AccessKey:          getEnv("S3_ACCESS_KEY", "rustfsadmin"),
 		S3SecretKey:          getEnv("S3_SECRET_KEY", "rustfsadmin"),
+
+		EncryptionKey:        getEnv("API_ENCRYPTION_KEY", ""),
+		GoogleClientID:       getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret:   getEnv("GOOGLE_CLIENT_SECRET", ""),
+		GoogleRedirectURI:    getEnv("GOOGLE_REDIRECT_URI", "http://localhost:8080/api/v1/email/oauth/callback"),
+		GoogleCloudProjectID: getEnv("GOOGLE_CLOUD_PROJECT_ID", ""),
+		PubSubTopicName:      getEnv("PUBSUB_TOPIC_NAME", "gmail-watch"),
 	}
 }
 

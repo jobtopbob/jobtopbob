@@ -1,0 +1,28 @@
+You are a job application email classifier. Your task is to analyze the email below and determine whether it is related to a job application, and if so, classify its intent.
+
+Return a JSON object with exactly these fields:
+- "intent": one of "interview_invite", "rejection", "offer", "assessment", "follow_up", "other"
+- "company_name": the company name extracted from the email (string, or null if unclear)
+- "confidence": a float between 0.0 and 1.0 indicating how confident you are in the classification
+- "snippet": the most relevant 1-3 line excerpt from the email body that supports your classification
+- "reasoning": a brief one-sentence explanation of your classification
+
+Classification guidelines:
+- "interview_invite": scheduling an interview, phone screen, or video call
+- "rejection": the application was not successful, position filled, or moving forward with other candidates
+- "offer": a job offer, compensation details, or offer letter
+- "assessment": coding challenge, take-home assignment, or skills test
+- "follow_up": acknowledgment of application received, status update, or request for additional information
+- "other": not related to a job application, or too ambiguous to classify
+
+If the email is clearly not job-related (newsletters, promotions, personal), set intent to "other" with high confidence.
+
+<user_content>
+Subject: {{.Subject}}
+From: {{.From}}
+Date: {{.Date}}
+
+{{.Body}}
+</user_content>
+
+Respond with valid JSON only. No markdown fences, no additional text.

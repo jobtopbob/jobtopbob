@@ -2,30 +2,60 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/handlers"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/middleware"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/services/rxresume"
+	"github.com/jobtopbob/jobtopbob/internal/email"
 	"github.com/jobtopbob/jobtopbob/internal/storage"
 )
 
+// Config holds all dependencies needed to configure the router.
+type Config struct {
+	Pool             *pgxpool.Pool
+	JWKSURL          string
+	CORSOrigins      []string
+	RxClient         *rxresume.Client
+	BuilderPublicURL string
+	Store            *storage.Client
+	// Email integration
+	EmailProvider email.Provider
+	MasterKey     []byte
+	AsynqClient   *asynq.Client
+	Redis         *redis.Client
+	FrontendURL   string
+}
+
 // New creates a configured Gin engine with all routes and middleware.
-func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxresume.Client, builderPublicURL string, store *storage.Client) *gin.Engine {
+func New(cfg Config) *gin.Engine {
 	r := gin.New()
 
 	// Global middleware
 	r.Use(middleware.Logging())
-	r.Use(middleware.CORS(corsOrigins))
+	r.Use(middleware.CORS(cfg.CORSOrigins))
 	r.Use(gin.Recovery())
 
 	// Public routes
 	r.GET("/health", handlers.Health())
 
+	// Public email routes (browser redirect from Google, Pub/Sub webhook)
+	if cfg.EmailProvider != nil {
+		// OAuth callback uses RLS middleware to get a DB transaction for token storage.
+		// It validates the signed state param instead of JWT.
+		callbackGroup := r.Group("/api/v1/email/oauth")
+		callbackGroup.Use(middleware.RLS(cfg.Pool))
+		callbackGroup.GET("/callback", handlers.GmailOAuthCallback(cfg.EmailProvider, cfg.MasterKey, cfg.AsynqClient, cfg.FrontendURL))
+
+		r.POST("/api/v1/email/webhook", handlers.GmailWebhook(cfg.AsynqClient))
+	}
+
 	// Authenticated routes
 	v1 := r.Group("/api/v1")
-	v1.Use(middleware.Auth(jwksURL))
-	v1.Use(middleware.RLS(pool))
+	v1.Use(middleware.Auth(cfg.JWKSURL))
+	v1.Use(middleware.RLS(cfg.Pool))
 	{
 		// Jobs
 		v1.GET("/jobs", handlers.ListJobs())
@@ -59,9 +89,9 @@ func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxr
 		{
 			settings.GET("", handlers.GetUserSettings())
 			settings.PUT("", handlers.UpdateUserSettings())
-			settings.POST("/avatar", handlers.UploadAvatar(store))
-			settings.DELETE("/avatar", handlers.DeleteAvatar(store))
-			settings.PUT("/rxresume-key", handlers.SetRxResumeKey(rxClient))
+			settings.POST("/avatar", handlers.UploadAvatar(cfg.Store))
+			settings.DELETE("/avatar", handlers.DeleteAvatar(cfg.Store))
+			settings.PUT("/rxresume-key", handlers.SetRxResumeKey(cfg.RxClient))
 			settings.DELETE("/rxresume-key", handlers.DeleteRxResumeKey())
 			settings.GET("/rxresume-key/status", handlers.GetRxResumeKeyStatus())
 		}
@@ -69,16 +99,37 @@ func New(pool *pgxpool.Pool, jwksURL string, corsOrigins []string, rxClient *rxr
 		// Resumes — sync must be registered before :id wildcard routes
 		resumes := v1.Group("/resumes")
 		{
-			resumes.GET("/config", handlers.GetResumeConfig(rxClient, builderPublicURL))
-			resumes.GET("", handlers.ListResumes(rxClient))
-			resumes.POST("", handlers.CreateResume(rxClient))
-			resumes.POST("/sync", handlers.SyncResumes(rxClient))
+			resumes.GET("/config", handlers.GetResumeConfig(cfg.RxClient, cfg.BuilderPublicURL))
+			resumes.GET("", handlers.ListResumes(cfg.RxClient))
+			resumes.POST("", handlers.CreateResume(cfg.RxClient))
+			resumes.POST("/sync", handlers.SyncResumes(cfg.RxClient))
 			resumes.GET("/base", handlers.GetBaseResume())
-			resumes.GET("/:id", handlers.GetResume(rxClient))
-			resumes.PUT("/:id", handlers.UpdateResume(rxClient))
-			resumes.DELETE("/:id", handlers.DeleteResume(rxClient))
-			resumes.GET("/:id/pdf", handlers.ExportResumePDF(rxClient))
+			resumes.GET("/:id", handlers.GetResume(cfg.RxClient))
+			resumes.PUT("/:id", handlers.UpdateResume(cfg.RxClient))
+			resumes.DELETE("/:id", handlers.DeleteResume(cfg.RxClient))
+			resumes.GET("/:id/pdf", handlers.ExportResumePDF(cfg.RxClient))
 			resumes.PUT("/:id/base", handlers.SetBaseResume())
+		}
+
+		// Email Integration
+		if cfg.EmailProvider != nil {
+			emailGroup := v1.Group("/email")
+			{
+				emailGroup.GET("/oauth/connect", handlers.GmailOAuthConnect(cfg.EmailProvider, cfg.MasterKey))
+				emailGroup.GET("/status", handlers.GmailStatus(cfg.EmailProvider))
+				emailGroup.DELETE("/disconnect", handlers.GmailDisconnect(cfg.EmailProvider, cfg.MasterKey))
+				emailGroup.GET("/events", handlers.ListEmailEvents())
+				emailGroup.GET("/events/unconfirmed", handlers.ListUnconfirmedEmailEvents())
+				emailGroup.GET("/events/unconfirmed/count", handlers.CountUnconfirmedEmailEvents())
+				emailGroup.POST("/events/:id/confirm", handlers.ConfirmEmailEvent())
+				emailGroup.POST("/events/:id/dismiss", handlers.DismissEmailEvent())
+				emailGroup.PUT("/events/:id/job", handlers.LinkEmailEventToJob())
+			}
+		}
+
+		// SSE (Server-Sent Events)
+		if cfg.Redis != nil {
+			v1.GET("/events", handlers.SSEHandler(cfg.Redis))
 		}
 	}
 

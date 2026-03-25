@@ -32,7 +32,10 @@
       "WebFetch(domain:docs.rxresu.me)",
       "WebFetch(domain:better-auth.com)",
       "Bash(grep:*)",
-      "Bash(go vet:*)"
+      "Bash(go vet:*)",
+      "WebFetch(domain:developers.google.com)",
+      "Bash(go get:*)",
+      "Bash(go mod:*)"
     ]
   }
 }

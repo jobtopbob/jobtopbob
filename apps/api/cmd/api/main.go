@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 
@@ -19,6 +21,9 @@ import (
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/router"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/seed"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/services/rxresume"
+	"github.com/jobtopbob/jobtopbob/internal/crypto"
+	"github.com/jobtopbob/jobtopbob/internal/email"
+	"github.com/jobtopbob/jobtopbob/internal/email/gmail"
 	"github.com/jobtopbob/jobtopbob/internal/storage"
 )
 
@@ -87,8 +92,57 @@ func main() {
 	// Create RxResume client (API-only, per-user API keys stored in user_settings)
 	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.ResumeBuilderPublicURL, cfg.ResumePrinterHTTPURL, cfg.ResumeBuilderPrinterURL)
 
+	// Initialize email integration (optional — only if Google OAuth credentials are configured)
+	var emailProvider email.Provider
+	var masterKey []byte
+	var asynqClient *asynq.Client
+
+	if cfg.GoogleClientID != "" && cfg.GoogleClientSecret != "" {
+		// Parse encryption key
+		if cfg.EncryptionKey == "" {
+			slog.Error("API_ENCRYPTION_KEY is required when Gmail integration is enabled")
+			os.Exit(1)
+		}
+		masterKey, err = crypto.ParseMasterKey(cfg.EncryptionKey)
+		if err != nil {
+			slog.Error("invalid API_ENCRYPTION_KEY", "error", err)
+			os.Exit(1)
+		}
+
+		// Build Pub/Sub topic path
+		pubSubTopic := ""
+		if cfg.GoogleCloudProjectID != "" && cfg.PubSubTopicName != "" {
+			pubSubTopic = fmt.Sprintf("projects/%s/topics/%s", cfg.GoogleCloudProjectID, cfg.PubSubTopicName)
+		}
+
+		emailProvider = gmail.New(gmail.Config{
+			ClientID:     cfg.GoogleClientID,
+			ClientSecret: cfg.GoogleClientSecret,
+			RedirectURI:  cfg.GoogleRedirectURI,
+			PubSubTopic:  pubSubTopic,
+		})
+
+		// Create Asynq client for enqueueing email processing tasks
+		asynqClient = asynq.NewClient(asynq.RedisClientOpt{Addr: rdb.Options().Addr, Password: rdb.Options().Password, DB: rdb.Options().DB})
+		defer asynqClient.Close()
+
+		slog.Info("email integration enabled", "provider", "gmail")
+	}
+
 	// Create router
-	engine := router.New(pool, cfg.JWKSURL, cfg.CORSOrigins, rxClient, cfg.ResumeBuilderPublicURL, store)
+	engine := router.New(router.Config{
+		Pool:             pool,
+		JWKSURL:          cfg.JWKSURL,
+		CORSOrigins:      cfg.CORSOrigins,
+		RxClient:         rxClient,
+		BuilderPublicURL: cfg.ResumeBuilderPublicURL,
+		Store:            store,
+		EmailProvider:    emailProvider,
+		MasterKey:        masterKey,
+		AsynqClient:      asynqClient,
+		Redis:            rdb,
+		FrontendURL:      cfg.CORSOrigins[0], // Use first CORS origin as frontend URL
+	})
 
 	// Start HTTP server with graceful shutdown
 	srv := &http.Server{

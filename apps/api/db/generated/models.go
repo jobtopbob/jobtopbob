@@ -161,16 +161,19 @@ type Jwk struct {
 }
 
 type OauthToken struct {
-	ID           pgtype.UUID        `json:"id"`
-	UserID       string             `json:"user_id"`
-	Provider     string             `json:"provider"`
-	AccessToken  pgtype.Text        `json:"access_token"`
-	RefreshToken pgtype.Text        `json:"refresh_token"`
-	TokenType    pgtype.Text        `json:"token_type"`
-	Scope        pgtype.Text        `json:"scope"`
-	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	ID             pgtype.UUID        `json:"id"`
+	UserID         string             `json:"user_id"`
+	Provider       string             `json:"provider"`
+	AccessToken    pgtype.Text        `json:"access_token"`
+	RefreshToken   pgtype.Text        `json:"refresh_token"`
+	TokenType      pgtype.Text        `json:"token_type"`
+	Scope          pgtype.Text        `json:"scope"`
+	ExpiresAt      pgtype.Timestamptz `json:"expires_at"`
+	LastSyncedAt   pgtype.Timestamptz `json:"last_synced_at"`
+	SyncedEmail    pgtype.Text        `json:"synced_email"`
+	GmailHistoryID pgtype.Text        `json:"gmail_history_id"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Offer struct {

@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-context";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
+import { useUnconfirmedCount } from "@/hooks/use-email";
 
 interface NavItem {
   label: string;
@@ -309,6 +310,9 @@ export function Sidebar() {
                       >
                         <item.icon className="w-[18px] h-[18px] shrink-0" />
                         <span>{item.label}</span>
+                        {item.href === "/email-integration" && (
+                          <EmailBadge />
+                        )}
                       </Link>
                     </div>
                   ))}
@@ -351,5 +355,15 @@ export function Sidebar() {
         </div>
       </aside>
     </>
+  );
+}
+
+function EmailBadge() {
+  const { data } = useUnconfirmedCount();
+  if (!data?.count) return null;
+  return (
+    <span className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+      {data.count > 99 ? "99+" : data.count}
+    </span>
   );
 }

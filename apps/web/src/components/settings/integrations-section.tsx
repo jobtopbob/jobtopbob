@@ -7,11 +7,25 @@ import {
   useConnectRxResumeKey,
   useDisconnectRxResumeKey,
 } from "@/hooks/use-resumes";
+import {
+  useGmailStatus,
+  useConnectGmail,
+  useDisconnectGmail,
+} from "@/hooks/use-email";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, Circle, FileText, Mail } from "lucide-react";
 
@@ -165,26 +179,117 @@ export function IntegrationsSection() {
           </CardContent>
         </Card>
 
-        {/* Gmail / Email Integration — Coming Soon */}
-        <Card>
-          <CardContent className="pt-2">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
-                <Mail className="w-5 h-5 text-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-text-primary">Gmail Email Integration</h3>
-                  <Badge variant="secondary">Coming Soon</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Connect your Gmail to automatically detect interview invitations, rejections, and offer emails.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Gmail / Email Integration */}
+        <GmailIntegrationCard />
       </div>
     </section>
+  );
+}
+
+function GmailIntegrationCard() {
+  const { data: gmailStatus, isLoading } = useGmailStatus();
+  const connectGmail = useConnectGmail();
+  const disconnectGmail = useDisconnectGmail();
+  const [showDisconnect, setShowDisconnect] = useState(false);
+
+  const handleDisconnect = () => {
+    disconnectGmail.mutate(undefined, {
+      onSuccess: () => {
+        toast.success("Gmail disconnected");
+        setShowDisconnect(false);
+      },
+      onError: (err) => toast.error(err.message),
+    });
+  };
+
+  return (
+    <Card>
+      <CardContent className="pt-2">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
+            <Mail className="w-5 h-5 text-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-text-primary">Gmail Email Integration</h3>
+              {isLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+              ) : gmailStatus?.connected ? (
+                <Badge variant="outline" className="gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  Connected
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="gap-1">
+                  <Circle className="w-3 h-3" />
+                  Not connected
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mb-1">
+              Connect your Gmail to automatically detect interview invitations, rejections, and offer emails.
+            </p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Read-only access. Email content is never stored. You can revoke access anytime.
+            </p>
+
+            {gmailStatus?.connected ? (
+              <div className="flex items-center gap-3">
+                {gmailStatus.email && (
+                  <span className="text-sm text-muted-foreground">
+                    {gmailStatus.email}
+                  </span>
+                )}
+                <Dialog open={showDisconnect} onOpenChange={setShowDisconnect}>
+                  <DialogTrigger>
+                    <Button variant="outline" size="sm">
+                      Disconnect
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Disconnect Gmail?</DialogTitle>
+                      <DialogDescription>
+                        This will revoke Gmail access and delete all detected email events.
+                        You can reconnect anytime.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowDisconnect(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={handleDisconnect}
+                        disabled={disconnectGmail.isPending}
+                      >
+                        {disconnectGmail.isPending && (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        )}
+                        Disconnect
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => connectGmail.mutate()}
+                disabled={connectGmail.isPending}
+              >
+                {connectGmail.isPending && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                )}
+                Connect Gmail
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
