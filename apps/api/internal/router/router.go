@@ -76,6 +76,19 @@ func New(cfg Config) *gin.Engine {
 		v1.PUT("/stages/:id", handlers.UpdateStage())
 		v1.DELETE("/stages/:id", handlers.DeleteStage())
 
+		// Companies
+		companies := v1.Group("/companies")
+		{
+			companies.GET("/search", handlers.SearchCompanies())
+			companies.GET("", handlers.ListCompanies())
+			companies.POST("", handlers.CreateCompany())
+			companies.GET("/:id", handlers.GetCompany())
+			companies.PUT("/:id", handlers.UpdateCompany())
+			companies.DELETE("/:id", handlers.DeleteCompany())
+			companies.POST("/:id/enrich", handlers.EnrichCompany(cfg.AsynqClient))
+			companies.GET("/:id/enrichment-logs", handlers.ListEnrichmentLogs())
+		}
+
 		// Tags
 		v1.GET("/tags", handlers.ListTags())
 		v1.POST("/tags", handlers.CreateTag())

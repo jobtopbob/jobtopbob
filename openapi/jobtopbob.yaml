@@ -515,6 +515,177 @@ components:
               position:
                 type: integer
 
+    Company:
+      type: object
+      required: [id, user_id, name, data_source, enrichment_status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        name:
+          type: string
+        domain:
+          type: string
+          nullable: true
+        website:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        industry:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        founded_year:
+          type: integer
+          nullable: true
+        linkedin_url:
+          type: string
+          nullable: true
+        employee_count:
+          type: integer
+          nullable: true
+        interest:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        logo_url:
+          type: string
+          nullable: true
+        data_source:
+          type: string
+          enum: [manual, api, scraped, email]
+        enrichment_status:
+          type: string
+          enum: [none, pending, enriched, failed]
+        last_enriched_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CompanyWithJobCount:
+      allOf:
+        - $ref: "#/components/schemas/Company"
+        - type: object
+          properties:
+            job_count:
+              type: integer
+
+    EnrichmentLog:
+      type: object
+      required: [id, company_id, user_id, provider, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        provider:
+          type: string
+          description: Provider name (e.g. "pdl", "webscrape", "favicon")
+        status:
+          type: string
+          enum: [success, failed, skipped]
+        fields_set:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Column names this provider populated
+        error:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    CreateCompanyRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        website:
+          type: string
+        description:
+          type: string
+        industry:
+          type: string
+        size:
+          type: string
+        location:
+          type: string
+        founded_year:
+          type: integer
+        linkedin_url:
+          type: string
+        employee_count:
+          type: integer
+        interest:
+          type: integer
+        notes:
+          type: string
+        logo_url:
+          type: string
+
+    UpdateCompanyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        website:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        industry:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        founded_year:
+          type: integer
+          nullable: true
+        linkedin_url:
+          type: string
+          nullable: true
+        employee_count:
+          type: integer
+          nullable: true
+        interest:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        logo_url:
+          type: string
+          nullable: true
+
     CreateTagRequest:
       type: object
       required: [name]
@@ -1136,6 +1307,199 @@ paths:
           description: Stage deleted
         "404":
           description: Stage not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/companies:
+    get:
+      summary: List all companies with job counts
+      responses:
+        "200":
+          description: List of companies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CompanyWithJobCount"
+    post:
+      summary: Create a new company
+      description: Deduplicates by domain (primary) and name (secondary). Returns existing company if duplicate found.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCompanyRequest"
+      responses:
+        "201":
+          description: Company created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/companies/search:
+    get:
+      summary: Search companies by name or domain
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query (matches against name and domain)
+      responses:
+        "200":
+          description: Matching companies (max 20)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Company"
+        "400":
+          description: Missing query parameter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/companies/{id}:
+    get:
+      summary: Get a company by ID with job count
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Company details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyWithJobCount"
+        "404":
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Update a company
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCompanyRequest"
+      responses:
+        "200":
+          description: Company updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Delete a company
+      description: Jobs linked to this company will have their company_id set to NULL.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Company deleted
+        "404":
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/companies/{id}/enrichment-logs:
+    get:
+      summary: List enrichment logs for a company
+      description: Returns per-provider enrichment history showing which providers ran, what fields they contributed, and any errors.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Enrichment log entries (newest first)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnrichmentLog"
+
+  /api/v1/companies/{id}/enrich:
+    post:
+      summary: Trigger company data enrichment
+      description: Enqueues a background task to enrich company data from external sources (PDL API, website scrape + AI). Returns 202 Accepted.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Enrichment queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        "404":
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Enrichment service not available
           content:
             application/json:
               schema:

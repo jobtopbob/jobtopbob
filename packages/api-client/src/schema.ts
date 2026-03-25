@@ -696,6 +696,351 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all companies with job counts */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of companies */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CompanyWithJobCount"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create a new company
+         * @description Deduplicates by domain (primary) and name (secondary). Returns existing company if duplicate found.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateCompanyRequest"];
+                };
+            };
+            responses: {
+                /** @description Company created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Company"];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search companies by name or domain */
+        get: {
+            parameters: {
+                query: {
+                    /** @description Search query (matches against name and domain) */
+                    q: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Matching companies (max 20) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Company"][];
+                    };
+                };
+                /** @description Missing query parameter */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a company by ID with job count */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Company details */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CompanyWithJobCount"];
+                    };
+                };
+                /** @description Company not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        /** Update a company */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCompanyRequest"];
+                };
+            };
+            responses: {
+                /** @description Company updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Company"];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Company not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /**
+         * Delete a company
+         * @description Jobs linked to this company will have their company_id set to NULL.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Company deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Company not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{id}/enrichment-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List enrichment logs for a company
+         * @description Returns per-provider enrichment history showing which providers ran, what fields they contributed, and any errors.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Enrichment log entries (newest first) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EnrichmentLog"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{id}/enrich": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger company data enrichment
+         * @description Enqueues a background task to enrich company data from external sources (PDL API, website scrape + AI). Returns 202 Accepted.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Enrichment queued */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            status?: string;
+                        };
+                    };
+                };
+                /** @description Company not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Enrichment service not available */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tags": {
         parameters: {
             query?: never;
@@ -1734,6 +2079,81 @@ export interface components {
                 id: string;
                 position: number;
             }[];
+        };
+        Company: {
+            /** Format: uuid */
+            id: string;
+            user_id: string;
+            name: string;
+            domain?: string | null;
+            website?: string | null;
+            description?: string | null;
+            industry?: string | null;
+            size?: string | null;
+            location?: string | null;
+            founded_year?: number | null;
+            linkedin_url?: string | null;
+            employee_count?: number | null;
+            interest?: number | null;
+            notes?: string | null;
+            logo_url?: string | null;
+            /** @enum {string} */
+            data_source: "manual" | "api" | "scraped" | "email";
+            /** @enum {string} */
+            enrichment_status: "none" | "pending" | "enriched" | "failed";
+            /** Format: date-time */
+            last_enriched_at?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        CompanyWithJobCount: components["schemas"]["Company"] & {
+            job_count?: number;
+        };
+        EnrichmentLog: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            company_id: string;
+            user_id: string;
+            /** @description Provider name (e.g. "pdl", "webscrape", "favicon") */
+            provider: string;
+            /** @enum {string} */
+            status: "success" | "failed" | "skipped";
+            /** @description Column names this provider populated */
+            fields_set?: string[] | null;
+            error?: string | null;
+            /** Format: date-time */
+            created_at: string;
+        };
+        CreateCompanyRequest: {
+            name: string;
+            website?: string;
+            description?: string;
+            industry?: string;
+            size?: string;
+            location?: string;
+            founded_year?: number;
+            linkedin_url?: string;
+            employee_count?: number;
+            interest?: number;
+            notes?: string;
+            logo_url?: string;
+        };
+        UpdateCompanyRequest: {
+            name?: string;
+            website?: string | null;
+            description?: string | null;
+            industry?: string | null;
+            size?: string | null;
+            location?: string | null;
+            founded_year?: number | null;
+            linkedin_url?: string | null;
+            employee_count?: number | null;
+            interest?: number | null;
+            notes?: string | null;
+            logo_url?: string | null;
         };
         CreateTagRequest: {
             name: string;

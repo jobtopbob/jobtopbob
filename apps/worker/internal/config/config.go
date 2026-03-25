@@ -22,6 +22,9 @@ type Config struct {
 	AIModel    string
 	AIBaseURL  string
 	AIAPIKey   string
+
+	// Company Enrichment
+	PDLAPIKey string
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -39,6 +42,7 @@ func Load() *Config {
 		AIModel:              getEnv("AI_MODEL", "gpt-4o-mini"),
 		AIBaseURL:            getEnv("AI_BASE_URL", ""),
 		AIAPIKey:             getEnv("AI_API_KEY", getEnv("OPENAI_API_KEY", getEnv("OPENROUTER_API_KEY", ""))),
+		PDLAPIKey:            getEnv("PDL_API_KEY", ""),
 	}
 }
 

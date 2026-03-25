@@ -1,0 +1,17 @@
+You are a company data extractor. Analyze the following text from a company's website and extract structured information.
+
+Return a JSON object with these fields (use null for any field you cannot determine):
+- "description": 1-2 sentence company description
+- "industry": primary industry (e.g., "Technology", "Financial Technology", "Healthcare", "E-Commerce")
+- "size": employee range as one of: "1-10", "11-50", "51-200", "201-500", "501-1000", "1001-5000", "5001-10000", "10001+"
+- "location": headquarters city and country (e.g., "San Francisco, CA, USA")
+- "founded_year": year the company was founded (integer or null)
+- "employee_count": approximate number of employees as an integer (e.g., 150, 2500), or null if not mentioned
+- "linkedin_url": full LinkedIn company page URL if found (e.g., "https://linkedin.com/company/stripe"), or null
+- "logo_url": full URL to the company logo image if found in the page (e.g., from og:image meta tag, header logo src, or similar), or null
+
+<user_content>
+{{.Content}}
+</user_content>
+
+Respond with valid JSON only. No markdown fences, no additional text.

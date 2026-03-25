@@ -5,4 +5,5 @@ package tasks
 const (
 	TypeEmailProcess    = "email:process"
 	TypeEmailWatchRenew = "email:watch-renew"
+	TypeCompanyEnrich   = "company:enrich"
 )

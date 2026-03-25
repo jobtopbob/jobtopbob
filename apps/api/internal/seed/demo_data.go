@@ -6,6 +6,7 @@ import (
 	"embed"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"strings"
 	"time"
 
@@ -356,12 +357,15 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 			}
 		}
 
+		// Extract domain from website for dedup index
+		domain := extractDomainFromURL(c.Website)
+
 		var id string
 		err = tx.QueryRow(ctx, `
-			INSERT INTO companies (user_id, name, website, industry, size, logo_url, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+			INSERT INTO companies (user_id, name, domain, website, industry, size, logo_url, data_source, enrichment_status, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual', 'none', $8, $8)
 			RETURNING id`,
-			demoUserID, c.Name, c.Website, c.Industry, c.Size, logoURL, now).Scan(&id)
+			demoUserID, c.Name, domain, c.Website, c.Industry, c.Size, logoURL, now).Scan(&id)
 		if err != nil {
 			return fmt.Errorf("insert company %s: %w", c.Name, err)
 		}
@@ -477,4 +481,22 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		"tags", len(demoTags),
 	)
 	return nil
+}
+
+// extractDomainFromURL normalizes a URL to its bare domain (e.g. "https://www.stripe.com/" → "stripe.com").
+func extractDomainFromURL(rawURL string) *string {
+	if rawURL == "" {
+		return nil
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil
+	}
+	host := u.Hostname()
+	host = strings.ToLower(host)
+	host = strings.TrimPrefix(host, "www.")
+	if host == "" {
+		return nil
+	}
+	return &host
 }

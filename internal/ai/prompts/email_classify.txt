@@ -3,6 +3,7 @@ You are a job application email classifier. Your task is to analyze the email be
 Return a JSON object with exactly these fields:
 - "intent": one of "interview_invite", "rejection", "offer", "assessment", "follow_up", "other"
 - "company_name": the company name extracted from the email (string, or null if unclear)
+- "company_domain": the company domain from the sender's email address (e.g. "stripe.com" from "recruiter@stripe.com"), or null if it appears to be a personal email service (gmail.com, outlook.com, yahoo.com, etc.)
 - "confidence": a float between 0.0 and 1.0 indicating how confident you are in the classification
 - "snippet": the most relevant 1-3 line excerpt from the email body that supports your classification
 - "reasoning": a brief one-sentence explanation of your classification

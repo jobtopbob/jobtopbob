@@ -137,3 +137,9 @@ GROUP BY status;
 -- name: CountFollowUpsDue :one
 SELECT count(*) FROM jobs
 WHERE user_id = $1 AND follow_up_at <= now() AND status NOT IN ('closed', 'rejected', 'accepted');
+
+-- name: FindMostRecentJobByCompany :one
+SELECT id FROM jobs
+WHERE user_id = $1 AND company_id = $2 AND status NOT IN ('closed', 'rejected', 'accepted')
+ORDER BY created_at DESC
+LIMIT 1;

@@ -37,17 +37,26 @@ type ActivityLog struct {
 }
 
 type Company struct {
-	ID        pgtype.UUID        `json:"id"`
-	UserID    string             `json:"user_id"`
-	Name      string             `json:"name"`
-	Website   pgtype.Text        `json:"website"`
-	Industry  pgtype.Text        `json:"industry"`
-	Size      pgtype.Text        `json:"size"`
-	Interest  pgtype.Int4        `json:"interest"`
-	Notes     pgtype.Text        `json:"notes"`
-	LogoUrl   pgtype.Text        `json:"logo_url"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID               pgtype.UUID        `json:"id"`
+	UserID           string             `json:"user_id"`
+	Name             string             `json:"name"`
+	Domain           pgtype.Text        `json:"domain"`
+	Website          pgtype.Text        `json:"website"`
+	Description      pgtype.Text        `json:"description"`
+	Industry         pgtype.Text        `json:"industry"`
+	Size             pgtype.Text        `json:"size"`
+	Location         pgtype.Text        `json:"location"`
+	FoundedYear      pgtype.Int4        `json:"founded_year"`
+	LinkedinUrl      pgtype.Text        `json:"linkedin_url"`
+	EmployeeCount    pgtype.Int4        `json:"employee_count"`
+	Interest         pgtype.Int4        `json:"interest"`
+	Notes            pgtype.Text        `json:"notes"`
+	LogoUrl          pgtype.Text        `json:"logo_url"`
+	DataSource       string             `json:"data_source"`
+	EnrichmentStatus string             `json:"enrichment_status"`
+	LastEnrichedAt   pgtype.Timestamptz `json:"last_enriched_at"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Contact struct {
@@ -77,6 +86,18 @@ type EmailEvent struct {
 	RawSnippet     pgtype.Text        `json:"raw_snippet"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type EnrichmentLog struct {
+	ID          pgtype.UUID        `json:"id"`
+	CompanyID   pgtype.UUID        `json:"company_id"`
+	UserID      string             `json:"user_id"`
+	Provider    string             `json:"provider"`
+	Status      string             `json:"status"`
+	FieldsSet   []string           `json:"fields_set"`
+	Error       pgtype.Text        `json:"error"`
+	RawResponse []byte             `json:"raw_response"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type GhostwriterMessage struct {

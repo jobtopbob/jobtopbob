@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,6 +22,7 @@ import (
 	"github.com/jobtopbob/jobtopbob/internal/crypto"
 	"github.com/jobtopbob/jobtopbob/internal/email"
 	"github.com/jobtopbob/jobtopbob/internal/email/gmail"
+	"github.com/jobtopbob/jobtopbob/internal/enrichment"
 )
 
 func main() {
@@ -113,6 +116,33 @@ func main() {
 		EmailProvider: emailProvider,
 	}
 	mux.HandleFunc(tasks.TypeEmailWatchRenew, tasks.HandleWatchRenew(watchDeps))
+
+	// Build enrichment provider registry (priority order: PDL > favicon > webscrape)
+	var enrichProviders []enrichment.Provider
+	httpClient := &http.Client{Timeout: 15 * time.Second}
+
+	if cfg.PDLAPIKey != "" {
+		enrichProviders = append(enrichProviders, &enrichment.PDL{
+			APIKey: cfg.PDLAPIKey,
+			Client: httpClient,
+		})
+		slog.Info("enrichment provider registered", "provider", "pdl")
+	}
+	enrichProviders = append(enrichProviders, &enrichment.Favicon{Client: httpClient})
+	if aiProvider != nil {
+		enrichProviders = append(enrichProviders, &enrichment.WebScrape{
+			AIProvider: aiProvider,
+			Client:     httpClient,
+		})
+		slog.Info("enrichment provider registered", "provider", "webscrape")
+	}
+
+	enrichDeps := &tasks.CompanyEnrichDeps{
+		Pool:      pool,
+		Redis:     rdb,
+		Providers: enrichProviders,
+	}
+	mux.HandleFunc(tasks.TypeCompanyEnrich, tasks.HandleCompanyEnrich(enrichDeps))
 
 	// Start Asynq server
 	go func() {

@@ -194,10 +194,11 @@ func processEmail(ctx context.Context, deps *EmailProcessDeps, q *db.Queries, us
 
 	// Parse the AI response
 	var classification struct {
-		Intent      string  `json:"intent"`
-		CompanyName string  `json:"company_name"`
-		Confidence  float64 `json:"confidence"`
-		Snippet     string  `json:"snippet"`
+		Intent        string  `json:"intent"`
+		CompanyName   string  `json:"company_name"`
+		CompanyDomain string  `json:"company_domain"`
+		Confidence    float64 `json:"confidence"`
+		Snippet       string  `json:"snippet"`
 	}
 	if err := json.Unmarshal([]byte(result), &classification); err != nil {
 		slog.Warn("failed to parse AI response", "response", result, "error", err)
@@ -243,17 +244,98 @@ func processEmail(ctx context.Context, deps *EmailProcessDeps, q *db.Queries, us
 	return nil
 }
 
-// matchEmailToJob attempts to match a sender email/company name to a job in the user's tracker.
+// personalEmailDomains are domains that indicate a personal email, not a company sender.
+var personalEmailDomains = map[string]bool{
+	"gmail.com":      true,
+	"googlemail.com": true,
+	"outlook.com":    true,
+	"hotmail.com":    true,
+	"yahoo.com":      true,
+	"aol.com":        true,
+	"protonmail.com": true,
+	"proton.me":      true,
+	"icloud.com":     true,
+	"me.com":         true,
+	"mail.com":       true,
+	"live.com":       true,
+	"msn.com":        true,
+	"ymail.com":      true,
+	"zoho.com":       true,
+}
+
+// matchEmailToJob attempts to match a sender email/company name to an existing
+// company and job in the user's tracker. If no company exists, it auto-creates one.
 func matchEmailToJob(ctx context.Context, q *db.Queries, userID string, fromHeader string, companyName string) pgtype.UUID {
-	// Extract sender domain
 	senderDomain := extractDomain(fromHeader)
+
+	// Skip personal email domains
+	if personalEmailDomains[senderDomain] {
+		senderDomain = ""
+	}
+
 	if senderDomain == "" && companyName == "" {
 		return pgtype.UUID{}
 	}
 
-	// For now, return empty UUID — company matching will be enhanced later
-	// when we have access to the companies query with website domains.
-	// The user can manually link via the UI.
+	// 1. Try domain match
+	var companyID pgtype.UUID
+	if senderDomain != "" {
+		company, err := q.FindCompanyByDomain(ctx, db.FindCompanyByDomainParams{
+			UserID: userID,
+			Domain: pgtype.Text{String: senderDomain, Valid: true},
+		})
+		if err == nil {
+			companyID = company.ID
+		}
+	}
+
+	// 2. Fallback: try name match
+	if !companyID.Valid && companyName != "" {
+		matches, err := q.FindCompanyByNameFuzzy(ctx, db.FindCompanyByNameFuzzyParams{
+			UserID: userID,
+			Lower:  companyName,
+		})
+		if err == nil && len(matches) > 0 {
+			companyID = matches[0].ID
+
+			// Backfill domain if the matched company doesn't have one yet
+			if !matches[0].Domain.Valid && senderDomain != "" {
+				_, _ = q.UpdateCompany(ctx, db.UpdateCompanyParams{
+					ID:     matches[0].ID,
+					UserID: userID,
+					Domain: pgtype.Text{String: senderDomain, Valid: true},
+				})
+			}
+		}
+	}
+
+	// 3. Auto-create company if we have a name but no match
+	if !companyID.Valid && companyName != "" {
+		newCompany, err := q.CreateCompany(ctx, db.CreateCompanyParams{
+			UserID:     userID,
+			Name:       companyName,
+			Domain:     pgtype.Text{String: senderDomain, Valid: senderDomain != ""},
+			DataSource: "email",
+		})
+		if err != nil {
+			slog.Warn("failed to auto-create company from email", "company", companyName, "error", err)
+		} else {
+			companyID = newCompany.ID
+			slog.Info("auto-created company from email", "company", companyName, "domain", senderDomain, "id", newCompany.ID)
+		}
+	}
+
+	// 4. Find the most recent open job for this company
+	if companyID.Valid {
+		job, err := q.FindMostRecentJobByCompany(ctx, db.FindMostRecentJobByCompanyParams{
+			UserID:    userID,
+			CompanyID: companyID,
+		})
+		if err == nil {
+			return job
+		}
+	}
+
 	return pgtype.UUID{}
 }
 

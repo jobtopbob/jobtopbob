@@ -270,6 +270,25 @@ func (q *Queries) DeleteJob(ctx context.Context, arg DeleteJobParams) (pgconn.Co
 	return q.db.Exec(ctx, deleteJob, arg.ID, arg.UserID)
 }
 
+const findMostRecentJobByCompany = `-- name: FindMostRecentJobByCompany :one
+SELECT id FROM jobs
+WHERE user_id = $1 AND company_id = $2 AND status NOT IN ('closed', 'rejected', 'accepted')
+ORDER BY created_at DESC
+LIMIT 1
+`
+
+type FindMostRecentJobByCompanyParams struct {
+	UserID    string      `json:"user_id"`
+	CompanyID pgtype.UUID `json:"company_id"`
+}
+
+func (q *Queries) FindMostRecentJobByCompany(ctx context.Context, arg FindMostRecentJobByCompanyParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, findMostRecentJobByCompany, arg.UserID, arg.CompanyID)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getJob = `-- name: GetJob :one
 SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at,
        c.name AS company_name,

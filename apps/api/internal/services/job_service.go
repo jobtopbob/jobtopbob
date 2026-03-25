@@ -219,18 +219,13 @@ func DeleteJob(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID
 }
 
 // ImportJob creates a job from an external source, optionally resolving the company by name.
+// Uses dedup-aware company creation (domain-first, then name match).
 func ImportJob(ctx context.Context, q *db.Queries, userID string, params db.CreateJobParams, companyName string) (db.Job, error) {
 	if companyName != "" {
-		company, err := q.FindCompanyByName(ctx, db.FindCompanyByNameParams{
-			UserID: userID,
-			Name:   companyName,
+		company, err := CreateCompany(ctx, q, userID, CreateCompanyParams{
+			Name:       companyName,
+			DataSource: "email",
 		})
-		if errors.Is(err, pgx.ErrNoRows) {
-			company, err = q.CreateCompany(ctx, db.CreateCompanyParams{
-				UserID: userID,
-				Name:   companyName,
-			})
-		}
 		if err != nil {
 			return db.Job{}, err
 		}
