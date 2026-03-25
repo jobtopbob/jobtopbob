@@ -15,7 +15,7 @@ const statusStylesLight: Record<string, { bg: string; text: string }> = {
   accepted: { bg: "#EAFBE7", text: "#83BF6E" },
   rejected: { bg: "#FEE8E8", text: "#E53E3E" },
   closed: { bg: "#F5F5F7", text: "#8B8FA3" },
-  wishlist: { bg: "#F5F5F7", text: "#8B8FA3" },
+  "yet to apply": { bg: "#F5F5F7", text: "#8B8FA3" },
   saved: { bg: "#F5F5F7", text: "#8B8FA3" },
   withdrawn: { bg: "#FEE8E8", text: "#E53E3E" },
 };
@@ -28,7 +28,7 @@ const statusStylesDark: Record<string, { bg: string; text: string }> = {
   accepted: { bg: "rgba(140,201,122,0.15)", text: "#8CC97A" },
   rejected: { bg: "rgba(255,117,99,0.15)", text: "#FF7563" },
   closed: { bg: "rgba(139,144,165,0.12)", text: "#8B90A5" },
-  wishlist: { bg: "rgba(139,144,165,0.12)", text: "#8B90A5" },
+  "yet to apply": { bg: "rgba(139,144,165,0.12)", text: "#8B90A5" },
   saved: { bg: "rgba(139,144,165,0.12)", text: "#8B90A5" },
   withdrawn: { bg: "rgba(255,117,99,0.15)", text: "#FF7563" },
 };

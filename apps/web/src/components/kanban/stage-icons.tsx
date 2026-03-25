@@ -123,7 +123,7 @@ const STAGE_ICON_MAP: Record<string, React.FC<IconProps>> = {
   accepted: AcceptedIcon,
   rejected: ClosedIcon,
   withdrawn: ClosedIcon,
-  wishlist: SavedIcon,
+  "yet to apply": SavedIcon,
 };
 
 interface StageIconProps {

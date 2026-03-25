@@ -126,7 +126,7 @@ func (q *Queries) ListStages(ctx context.Context, userID string) ([]Stage, error
 
 const seedDefaultStages = `-- name: SeedDefaultStages :exec
 INSERT INTO stages (user_id, name, position, is_terminal, color, mapped_status) VALUES
-    ($1, 'Wishlist',    0, false, '#6B7280', 'open'),
+    ($1, 'Yet to Apply', 0, false, '#6B7280', 'open'),
     ($1, 'Applied',     1, false, '#3B82F6', 'open'),
     ($1, 'Screening',   2, false, '#8B5CF6', 'open'),
     ($1, 'Interviewing',3, false, '#F59E0B', 'open'),

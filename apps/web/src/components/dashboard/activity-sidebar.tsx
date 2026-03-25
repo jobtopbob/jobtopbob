@@ -39,7 +39,7 @@ const activityDotColors: Record<string, string> = {
   screening: "#8E59FF",
   offer: "#FF8400",
   saved: "#8B8FA3",
-  wishlist: "#8B8FA3",
+  "yet to apply": "#8B8FA3",
 };
 
 export function ActivitySidebar() {
@@ -64,7 +64,7 @@ export function ActivitySidebar() {
       .map((job) => {
         const stageName = job.stage_name?.toLowerCase() ?? "applied";
         const action =
-          stageName === "saved" || stageName === "wishlist"
+          stageName === "saved" || stageName === "yet to apply"
             ? `Saved ${job.title} at ${job.company_name ?? "Unknown"}`
             : stageName === "interviewing"
               ? `Interview scheduled with ${job.company_name ?? "Unknown"}`

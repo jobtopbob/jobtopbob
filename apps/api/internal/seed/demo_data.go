@@ -64,7 +64,7 @@ type job struct {
 }
 
 var demoStages = []stage{
-	{"Wishlist", 0, false, "#6B7280", "open"},
+	{"Yet to Apply", 0, false, "#6B7280", "open"},
 	{"Applied", 1, false, "#3B82F6", "open"},
 	{"Screening", 2, false, "#8B5CF6", "open"},
 	{"Interviewing", 3, false, "#F59E0B", "open"},
@@ -213,7 +213,7 @@ var demoJobs = []job{
 
 	// --- 1 month from now: upcoming targets ---
 	{
-		Title: "Staff Frontend Engineer", CompanyName: "Vercel", StageName: "Wishlist",
+		Title: "Staff Frontend Engineer", CompanyName: "Vercel", StageName: "Yet to Apply",
 		Source: "linkedin", Location: "Remote", LocationType: "remote",
 		SalaryMin: 200000, SalaryMax: 280000, Interest: 5,
 		MonthOffset: 1, DayOfMonth: 5,
@@ -222,7 +222,7 @@ var demoJobs = []job{
 		Tags: []string{"Remote", "React", "TypeScript"},
 	},
 	{
-		Title: "Senior Full Stack Developer", CompanyName: "GitHub", StageName: "Wishlist",
+		Title: "Senior Full Stack Developer", CompanyName: "GitHub", StageName: "Yet to Apply",
 		Source: "company_website", Location: "San Francisco, CA", LocationType: "onsite",
 		SalaryMin: 180000, SalaryMax: 250000, Interest: 4,
 		MonthOffset: 1, DayOfMonth: 18,
@@ -232,7 +232,7 @@ var demoJobs = []job{
 
 	// --- 2 months from now: future targets ---
 	{
-		Title: "Principal Engineer", CompanyName: "Linear", StageName: "Wishlist",
+		Title: "Principal Engineer", CompanyName: "Linear", StageName: "Yet to Apply",
 		Source: "referral", Location: "Remote", LocationType: "remote",
 		SalaryMin: 220000, SalaryMax: 300000, Interest: 5,
 		MonthOffset: 2, DayOfMonth: 10,

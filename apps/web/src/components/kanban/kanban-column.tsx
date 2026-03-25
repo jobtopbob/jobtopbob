@@ -8,6 +8,7 @@ import { StageIcon } from "./stage-icons";
 
 export const STAGE_DOT_COLORS: Record<string, string> = {
   saved: "#7B8494",
+  "yet to apply": "#7B8494",
   applied: "#3366CC",
   interviewing: "#C49B30",
   offer: "#0F7B4F",
