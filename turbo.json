@@ -1,5 +1,17 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "MIGRATION_DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "RXRESUME_OAUTH_CLIENT_ID",
+    "RXRESUME_OAUTH_CLIENT_SECRET",
+    "RESUME_BUILDER_PUBLIC_URL",
+    "NEXT_PUBLIC_API_URL",
+    "NEXT_PUBLIC_RESUME_BUILDER_URL",
+    "NEXT_PUBLIC_SEED_DEMO_DATA"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

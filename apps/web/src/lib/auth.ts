@@ -8,7 +8,10 @@ const resumeBuilderPublicURL =
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   database: new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString:
+      process.env.MIGRATION_DATABASE_URL ??
+      process.env.DATABASE_URL ??
+      "postgres://postgres:changeme@localhost:5432/jobtopbob?sslmode=disable",
   }),
   emailAndPassword: { enabled: true },
   trustedOrigins: [resumeBuilderPublicURL],

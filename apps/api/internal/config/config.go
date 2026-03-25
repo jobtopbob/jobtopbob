@@ -43,7 +43,7 @@ func Load() *Config {
 	migrationURL := getEnv("MIGRATION_DATABASE_URL", "postgres://postgres:changeme@localhost:5432/jobtopbob?sslmode=disable")
 
 	return &Config{
-		Port:                 getEnv("PORT", "8080"),
+		Port:                 getEnv("API_PORT", "8080"),
 		DatabaseURL:          dbURL,
 		MigrationDatabaseURL: migrationURL,
 		RedisURL:             getEnv("REDIS_URL", "redis://:changeme@localhost:6379/0"),
