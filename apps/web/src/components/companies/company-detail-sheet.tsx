@@ -93,7 +93,7 @@ export function CompanyDetailSheet({
 
   return (
     <Sheet open={!!companyId} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-[560px] sm:max-w-[560px] overflow-y-auto flex flex-col p-0">
+      <SheetContent className="w-full sm:w-[560px] sm:max-w-[560px] overflow-y-auto flex flex-col p-0">
         <SheetHeader className="px-6 pt-6 pb-0 space-y-4">
           {/* Logo + Name */}
           <div className="flex items-start gap-4">

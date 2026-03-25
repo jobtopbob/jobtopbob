@@ -114,7 +114,7 @@ function actionLabel(action: string | null | undefined): string {
   }
 }
 
-export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
+export function JobDetailSheet({ job: jobProp, onClose, stages }: JobDetailSheetProps) {
   const updateJob = useUpdateJob();
   const deleteJob = useDeleteJob();
   const assignTag = useAssignTag();
@@ -143,7 +143,7 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
   // (activeTab may already be "details" from a previous close, so the callback
   // reference won't change — job?.id ensures we re-measure when the tab bar
   // re-enters the DOM for a different job).
-  const jobId = job?.id;
+  const jobId = jobProp?.id;
   useEffect(() => {
     measureTabIndicator();
   }, [measureTabIndicator, jobId]);
@@ -151,11 +151,18 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
   const {
     data: activityEntries,
     isLoading: activityLoading,
-  } = useActivityLog(activeTab === "activity" ? job?.id : undefined);
+  } = useActivityLog(activeTab === "activity" ? jobProp?.id : undefined);
 
-  const [prevJobId, setPrevJobId] = useState(job?.id);
-  if (job?.id !== prevJobId) {
-    setPrevJobId(job?.id);
+  // Keep a ref to the last non-null job so content stays visible during close animation
+  const lastJobRef = useRef<Job | null>(jobProp);
+  if (jobProp) {
+    lastJobRef.current = jobProp;
+  }
+  const job = jobProp ?? lastJobRef.current;
+
+  const [prevJobId, setPrevJobId] = useState(jobProp?.id);
+  if (jobProp?.id !== prevJobId) {
+    setPrevJobId(jobProp?.id);
     setActiveTab("details");
     setEditingDescription(false);
     setDescriptionDraft("");
@@ -226,8 +233,8 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
   ];
 
   return (
-    <Sheet open={!!job} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-[640px] sm:max-w-[640px] overflow-y-auto flex flex-col p-0">
+    <Sheet open={!!jobProp} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="w-full sm:w-[640px] sm:max-w-[640px] overflow-y-auto flex flex-col p-0">
         {/* Header */}
         <SheetHeader className="px-6 pt-6 pb-0 space-y-3">
           <div className="flex items-center gap-2.5">
