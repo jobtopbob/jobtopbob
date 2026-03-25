@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import {
   Sheet,
@@ -31,6 +31,8 @@ import {
   useUpdateCompany,
   useDeleteCompany,
   useEnrichCompany,
+  useUploadCompanyLogo,
+  useDeleteCompanyLogo,
   useEnrichmentLogs,
   type EnrichmentLog,
 } from "@/hooks/use-companies";
@@ -67,7 +69,10 @@ export function CompanyDetailSheet({
   const updateCompany = useUpdateCompany();
   const deleteCompany = useDeleteCompany();
   const enrichCompany = useEnrichCompany();
+  const uploadLogo = useUploadCompanyLogo();
+  const deleteLogo = useDeleteCompanyLogo();
   const [editing, setEditing] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   if (!company) return null;
 
@@ -92,23 +97,53 @@ export function CompanyDetailSheet({
         <SheetHeader className="px-6 pt-6 pb-0 space-y-4">
           {/* Logo + Name */}
           <div className="flex items-start gap-4">
-            {company.logo_url ? (
-              <Image
-                src={company.logo_url}
-                alt={company.name}
-                width={48}
-                height={48}
-                unoptimized
-                className="w-12 h-12 rounded-xl object-contain bg-card border border-border-subtle p-0.5"
-              />
-            ) : (
-              <div
-                className="flex items-center justify-center w-12 h-12 rounded-xl shrink-0"
-                style={{ backgroundColor: color }}
-              >
-                <span className="text-lg font-bold text-white">{initial}</span>
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file || !companyId) return;
+                uploadLogo.mutate(
+                  { id: companyId, file },
+                  {
+                    onSuccess: () => toast.success("Logo uploaded"),
+                    onError: (err) => toast.error(err.message),
+                  }
+                );
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => logoInputRef.current?.click()}
+              className="relative group shrink-0 rounded-xl focus:outline-none"
+              title="Click to upload logo"
+            >
+              {company.logo_url ? (
+                <Image
+                  src={company.logo_url}
+                  alt={company.name}
+                  width={48}
+                  height={48}
+                  unoptimized
+                  className="w-12 h-12 rounded-xl object-contain bg-card border border-border-subtle p-0.5"
+                />
+              ) : (
+                <div
+                  className="flex items-center justify-center w-12 h-12 rounded-xl"
+                  style={{ backgroundColor: color }}
+                >
+                  <span className="text-lg font-bold text-white">
+                    {initial}
+                  </span>
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-colors">
+                <Pencil className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-            )}
+            </button>
             <div className="flex-1 min-w-0">
               <SheetTitle className="text-lg font-semibold text-text-primary truncate">
                 {company.name}
@@ -164,9 +199,24 @@ export function CompanyDetailSheet({
               <Briefcase className="w-3 h-3" />
               {jobCount} {jobCount === 1 ? "application" : "applications"}
             </Badge>
-            <Badge variant="outline" className="capitalize">
-              {company.enrichment_status}
-            </Badge>
+            {company.enrichment_status !== "none" && (
+              <Badge
+                variant={
+                  company.enrichment_status === "enriched"
+                    ? "secondary"
+                    : company.enrichment_status === "failed"
+                      ? "destructive"
+                      : "outline"
+                }
+              >
+                <Sparkles className="w-3 h-3" />
+                {company.enrichment_status === "enriched"
+                  ? "Enriched"
+                  : company.enrichment_status === "pending"
+                    ? "Enriching..."
+                    : "Enrichment Failed"}
+              </Badge>
+            )}
           </div>
         </SheetHeader>
 
@@ -331,7 +381,7 @@ function DetailView({
 
       {/* Data source info */}
       <div className="flex items-center gap-2 pt-2 text-xs text-text-muted">
-        <span>Source: {company.data_source}</span>
+        <span>Source: {company.data_source.charAt(0).toUpperCase() + company.data_source.slice(1)}</span>
         {company.last_enriched_at && (
           <>
             <span>&middot;</span>

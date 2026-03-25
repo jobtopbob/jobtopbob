@@ -703,23 +703,40 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List all companies with job counts */
+        /** List companies with pagination, filtering, and sorting */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Search in name, domain, location, industry */
+                    search?: string;
+                    /** @description Comma-separated list of industries to filter by */
+                    industries?: string;
+                    /** @description Comma-separated list of company sizes to filter by */
+                    sizes?: string;
+                    /** @description Comma-separated list of data sources to filter by (manual, api, scraped, email) */
+                    data_sources?: string;
+                    /** @description Comma-separated list of enrichment statuses to filter by (none, pending, enriched, failed) */
+                    enrichment_statuses?: string;
+                    sort_by?: "name" | "industry" | "job_count" | "created_at" | "updated_at";
+                    sort_order?: "asc" | "desc";
+                    page?: number;
+                    per_page?: number;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
             };
             requestBody?: never;
             responses: {
-                /** @description List of companies */
+                /** @description Paginated list of companies */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["CompanyWithJobCount"][];
+                        "application/json": components["schemas"]["PaginatedResponse"] & {
+                            data?: components["schemas"]["CompanyWithJobCount"][];
+                        };
                     };
                 };
             };
@@ -922,6 +939,110 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+                /** @description Company not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{id}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload company logo
+         * @description Upload a logo image (max 5 MB, JPEG/PNG/WebP/GIF/SVG). Stores in RustFS and updates company logo_url.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Logo uploaded */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            url?: string;
+                        };
+                    };
+                };
+                /** @description Invalid file */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Company not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        /**
+         * Remove company logo
+         * @description Removes the logo from storage and clears the company logo_url.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Logo removed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            url?: string;
+                        };
+                    };
                 };
                 /** @description Company not found */
                 404: {

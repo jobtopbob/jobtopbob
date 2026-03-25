@@ -12,12 +12,39 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const countCompaniesByUser = `-- name: CountCompaniesByUser :one
-SELECT count(*) FROM companies WHERE user_id = $1
+const countCompanies = `-- name: CountCompanies :one
+SELECT count(*) FROM companies c
+WHERE c.user_id = $1
+  AND ($2::text[] IS NULL OR c.industry = ANY($2::text[]))
+  AND ($3::text[] IS NULL OR c.size = ANY($3::text[]))
+  AND ($4::text[] IS NULL OR c.data_source = ANY($4::text[]))
+  AND ($5::text[] IS NULL OR c.enrichment_status = ANY($5::text[]))
+  AND ($6::text IS NULL OR (
+      c.name ILIKE '%' || $6 || '%'
+      OR c.domain ILIKE '%' || $6 || '%'
+      OR c.location ILIKE '%' || $6 || '%'
+      OR c.industry ILIKE '%' || $6 || '%'
+  ))
 `
 
-func (q *Queries) CountCompaniesByUser(ctx context.Context, userID string) (int64, error) {
-	row := q.db.QueryRow(ctx, countCompaniesByUser, userID)
+type CountCompaniesParams struct {
+	UserID             string      `json:"user_id"`
+	Industries         []string    `json:"industries"`
+	Sizes              []string    `json:"sizes"`
+	DataSources        []string    `json:"data_sources"`
+	EnrichmentStatuses []string    `json:"enrichment_statuses"`
+	Search             pgtype.Text `json:"search"`
+}
+
+func (q *Queries) CountCompanies(ctx context.Context, arg CountCompaniesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countCompanies,
+		arg.UserID,
+		arg.Industries,
+		arg.Sizes,
+		arg.DataSources,
+		arg.EnrichmentStatuses,
+		arg.Search,
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -345,18 +372,93 @@ func (q *Queries) GetCompanyWithJobCount(ctx context.Context, arg GetCompanyWith
 }
 
 const listCompanies = `-- name: ListCompanies :many
-SELECT id, user_id, name, domain, website, description, industry, size, location, founded_year, linkedin_url, employee_count, interest, notes, logo_url, data_source, enrichment_status, last_enriched_at, created_at, updated_at FROM companies WHERE user_id = $1 ORDER BY name ASC
+SELECT c.id, c.user_id, c.name, c.domain, c.website, c.description, c.industry, c.size, c.location, c.founded_year, c.linkedin_url, c.employee_count, c.interest, c.notes, c.logo_url, c.data_source, c.enrichment_status, c.last_enriched_at, c.created_at, c.updated_at,
+       count(j.id)::int AS job_count
+FROM companies c
+LEFT JOIN jobs j ON j.company_id = c.id
+WHERE c.user_id = $1
+  AND ($4::text[] IS NULL OR c.industry = ANY($4::text[]))
+  AND ($5::text[] IS NULL OR c.size = ANY($5::text[]))
+  AND ($6::text[] IS NULL OR c.data_source = ANY($6::text[]))
+  AND ($7::text[] IS NULL OR c.enrichment_status = ANY($7::text[]))
+  AND ($8::text IS NULL OR (
+      c.name ILIKE '%' || $8 || '%'
+      OR c.domain ILIKE '%' || $8 || '%'
+      OR c.location ILIKE '%' || $8 || '%'
+      OR c.industry ILIKE '%' || $8 || '%'
+  ))
+GROUP BY c.id
+ORDER BY
+  CASE WHEN $9::text = 'name' AND $10::text = 'asc' THEN c.name END ASC,
+  CASE WHEN $9::text = 'name' AND $10::text = 'desc' THEN c.name END DESC,
+  CASE WHEN $9::text = 'industry' AND $10::text = 'asc' THEN c.industry END ASC NULLS LAST,
+  CASE WHEN $9::text = 'industry' AND $10::text = 'desc' THEN c.industry END DESC NULLS LAST,
+  CASE WHEN $9::text = 'job_count' AND $10::text = 'asc' THEN count(j.id) END ASC,
+  CASE WHEN $9::text = 'job_count' AND $10::text = 'desc' THEN count(j.id) END DESC,
+  CASE WHEN $9::text = 'updated_at' AND $10::text = 'asc' THEN c.updated_at END ASC,
+  CASE WHEN $9::text = 'updated_at' AND $10::text = 'desc' THEN c.updated_at END DESC,
+  CASE WHEN $9::text = 'created_at' AND $10::text = 'asc' THEN c.created_at END ASC,
+  c.created_at DESC
+LIMIT $2 OFFSET $3
 `
 
-func (q *Queries) ListCompanies(ctx context.Context, userID string) ([]Company, error) {
-	rows, err := q.db.Query(ctx, listCompanies, userID)
+type ListCompaniesParams struct {
+	UserID             string      `json:"user_id"`
+	Limit              int32       `json:"limit"`
+	Offset             int32       `json:"offset"`
+	Industries         []string    `json:"industries"`
+	Sizes              []string    `json:"sizes"`
+	DataSources        []string    `json:"data_sources"`
+	EnrichmentStatuses []string    `json:"enrichment_statuses"`
+	Search             pgtype.Text `json:"search"`
+	SortBy             string      `json:"sort_by"`
+	SortOrder          string      `json:"sort_order"`
+}
+
+type ListCompaniesRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	UserID           string             `json:"user_id"`
+	Name             string             `json:"name"`
+	Domain           pgtype.Text        `json:"domain"`
+	Website          pgtype.Text        `json:"website"`
+	Description      pgtype.Text        `json:"description"`
+	Industry         pgtype.Text        `json:"industry"`
+	Size             pgtype.Text        `json:"size"`
+	Location         pgtype.Text        `json:"location"`
+	FoundedYear      pgtype.Int4        `json:"founded_year"`
+	LinkedinUrl      pgtype.Text        `json:"linkedin_url"`
+	EmployeeCount    pgtype.Int4        `json:"employee_count"`
+	Interest         pgtype.Int4        `json:"interest"`
+	Notes            pgtype.Text        `json:"notes"`
+	LogoUrl          pgtype.Text        `json:"logo_url"`
+	DataSource       string             `json:"data_source"`
+	EnrichmentStatus string             `json:"enrichment_status"`
+	LastEnrichedAt   pgtype.Timestamptz `json:"last_enriched_at"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	JobCount         int32              `json:"job_count"`
+}
+
+func (q *Queries) ListCompanies(ctx context.Context, arg ListCompaniesParams) ([]ListCompaniesRow, error) {
+	rows, err := q.db.Query(ctx, listCompanies,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+		arg.Industries,
+		arg.Sizes,
+		arg.DataSources,
+		arg.EnrichmentStatuses,
+		arg.Search,
+		arg.SortBy,
+		arg.SortOrder,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Company{}
+	items := []ListCompaniesRow{}
 	for rows.Next() {
-		var i Company
+		var i ListCompaniesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -378,6 +480,7 @@ func (q *Queries) ListCompanies(ctx context.Context, userID string) ([]Company, 
 			&i.LastEnrichedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.JobCount,
 		); err != nil {
 			return nil, err
 		}
@@ -431,82 +534,6 @@ func (q *Queries) ListCompaniesNeedingEnrichment(ctx context.Context, arg ListCo
 			&i.LastEnrichedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listCompaniesWithJobCount = `-- name: ListCompaniesWithJobCount :many
-SELECT c.id, c.user_id, c.name, c.domain, c.website, c.description, c.industry, c.size, c.location, c.founded_year, c.linkedin_url, c.employee_count, c.interest, c.notes, c.logo_url, c.data_source, c.enrichment_status, c.last_enriched_at, c.created_at, c.updated_at,
-       count(j.id)::int AS job_count
-FROM companies c
-LEFT JOIN jobs j ON j.company_id = c.id
-WHERE c.user_id = $1
-GROUP BY c.id
-ORDER BY c.name ASC
-`
-
-type ListCompaniesWithJobCountRow struct {
-	ID               pgtype.UUID        `json:"id"`
-	UserID           string             `json:"user_id"`
-	Name             string             `json:"name"`
-	Domain           pgtype.Text        `json:"domain"`
-	Website          pgtype.Text        `json:"website"`
-	Description      pgtype.Text        `json:"description"`
-	Industry         pgtype.Text        `json:"industry"`
-	Size             pgtype.Text        `json:"size"`
-	Location         pgtype.Text        `json:"location"`
-	FoundedYear      pgtype.Int4        `json:"founded_year"`
-	LinkedinUrl      pgtype.Text        `json:"linkedin_url"`
-	EmployeeCount    pgtype.Int4        `json:"employee_count"`
-	Interest         pgtype.Int4        `json:"interest"`
-	Notes            pgtype.Text        `json:"notes"`
-	LogoUrl          pgtype.Text        `json:"logo_url"`
-	DataSource       string             `json:"data_source"`
-	EnrichmentStatus string             `json:"enrichment_status"`
-	LastEnrichedAt   pgtype.Timestamptz `json:"last_enriched_at"`
-	CreatedAt        pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
-	JobCount         int32              `json:"job_count"`
-}
-
-func (q *Queries) ListCompaniesWithJobCount(ctx context.Context, userID string) ([]ListCompaniesWithJobCountRow, error) {
-	rows, err := q.db.Query(ctx, listCompaniesWithJobCount, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListCompaniesWithJobCountRow{}
-	for rows.Next() {
-		var i ListCompaniesWithJobCountRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.Name,
-			&i.Domain,
-			&i.Website,
-			&i.Description,
-			&i.Industry,
-			&i.Size,
-			&i.Location,
-			&i.FoundedYear,
-			&i.LinkedinUrl,
-			&i.EmployeeCount,
-			&i.Interest,
-			&i.Notes,
-			&i.LogoUrl,
-			&i.DataSource,
-			&i.EnrichmentStatus,
-			&i.LastEnrichedAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.JobCount,
 		); err != nil {
 			return nil, err
 		}

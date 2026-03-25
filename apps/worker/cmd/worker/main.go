@@ -23,6 +23,7 @@ import (
 	"github.com/jobtopbob/jobtopbob/internal/email"
 	"github.com/jobtopbob/jobtopbob/internal/email/gmail"
 	"github.com/jobtopbob/jobtopbob/internal/enrichment"
+	"github.com/jobtopbob/jobtopbob/internal/storage"
 )
 
 func main() {
@@ -117,6 +118,21 @@ func main() {
 	}
 	mux.HandleFunc(tasks.TypeEmailWatchRenew, tasks.HandleWatchRenew(watchDeps))
 
+	// Initialize S3-compatible storage (RustFS) for logo uploads
+	var store *storage.Client
+	if cfg.S3Endpoint != "" {
+		store, err = storage.New(ctx, storage.Config{
+			Bucket:    cfg.S3Bucket,
+			Region:    cfg.S3Region,
+			Endpoint:  cfg.S3Endpoint,
+			AccessKey: cfg.S3AccessKey,
+			SecretKey: cfg.S3SecretKey,
+		})
+		if err != nil {
+			slog.Warn("failed to initialize storage for worker — logo storage disabled", "error", err)
+		}
+	}
+
 	// Build enrichment provider registry (priority order: PDL > favicon > webscrape)
 	var enrichProviders []enrichment.Provider
 	httpClient := &http.Client{Timeout: 15 * time.Second}
@@ -138,9 +154,11 @@ func main() {
 	}
 
 	enrichDeps := &tasks.CompanyEnrichDeps{
-		Pool:      pool,
-		Redis:     rdb,
-		Providers: enrichProviders,
+		Pool:       pool,
+		Redis:      rdb,
+		Store:      store,
+		HTTPClient: httpClient,
+		Providers:  enrichProviders,
 	}
 	mux.HandleFunc(tasks.TypeCompanyEnrich, tasks.HandleCompanyEnrich(enrichDeps))
 

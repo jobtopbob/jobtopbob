@@ -1314,16 +1314,69 @@ paths:
 
   /api/v1/companies:
     get:
-      summary: List all companies with job counts
+      summary: List companies with pagination, filtering, and sorting
+      parameters:
+        - name: search
+          in: query
+          description: Search in name, domain, location, industry
+          schema:
+            type: string
+        - name: industries
+          in: query
+          description: Comma-separated list of industries to filter by
+          schema:
+            type: string
+        - name: sizes
+          in: query
+          description: Comma-separated list of company sizes to filter by
+          schema:
+            type: string
+        - name: data_sources
+          in: query
+          description: Comma-separated list of data sources to filter by (manual, api, scraped, email)
+          schema:
+            type: string
+        - name: enrichment_statuses
+          in: query
+          description: Comma-separated list of enrichment statuses to filter by (none, pending, enriched, failed)
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [name, industry, job_count, created_at, updated_at]
+            default: name
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
       responses:
         "200":
-          description: List of companies
+          description: Paginated list of companies
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CompanyWithJobCount"
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/CompanyWithJobCount"
     post:
       summary: Create a new company
       description: Deduplicates by domain (primary) and name (secondary). Returns existing company if duplicate found.
@@ -1443,6 +1496,77 @@ paths:
       responses:
         "204":
           description: Company deleted
+        "404":
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/companies/{id}/logo:
+    post:
+      summary: Upload company logo
+      description: Upload a logo image (max 5 MB, JPEG/PNG/WebP/GIF/SVG). Stores in RustFS and updates company logo_url.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Logo uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        "400":
+          description: Invalid file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Remove company logo
+      description: Removes the logo from storage and clears the company logo_url.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Logo removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
         "404":
           description: Company not found
           content:

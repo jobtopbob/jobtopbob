@@ -85,6 +85,8 @@ func New(cfg Config) *gin.Engine {
 			companies.GET("/:id", handlers.GetCompany())
 			companies.PUT("/:id", handlers.UpdateCompany())
 			companies.DELETE("/:id", handlers.DeleteCompany())
+			companies.POST("/:id/logo", handlers.UploadCompanyLogo(cfg.Store))
+			companies.DELETE("/:id/logo", handlers.DeleteCompanyLogo(cfg.Store))
 			companies.POST("/:id/enrich", handlers.EnrichCompany(cfg.AsynqClient))
 			companies.GET("/:id/enrichment-logs", handlers.ListEnrichmentLogs())
 		}

@@ -25,6 +25,13 @@ type Config struct {
 
 	// Company Enrichment
 	PDLAPIKey string
+
+	// S3-compatible Storage (RustFS)
+	S3Bucket    string
+	S3Region    string
+	S3Endpoint  string
+	S3AccessKey string
+	S3SecretKey string
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -43,6 +50,11 @@ func Load() *Config {
 		AIBaseURL:            getEnv("AI_BASE_URL", ""),
 		AIAPIKey:             getEnv("AI_API_KEY", getEnv("OPENAI_API_KEY", getEnv("OPENROUTER_API_KEY", ""))),
 		PDLAPIKey:            getEnv("PDL_API_KEY", ""),
+		S3Bucket:             getEnv("S3_BUCKET", "jobtopbob"),
+		S3Region:             getEnv("S3_REGION", "us-east-1"),
+		S3Endpoint:           getEnv("S3_ENDPOINT", "http://localhost:9000"),
+		S3AccessKey:          getEnv("S3_ACCESS_KEY", "rustfsadmin"),
+		S3SecretKey:          getEnv("S3_SECRET_KEY", "rustfsadmin"),
 	}
 }
 

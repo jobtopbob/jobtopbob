@@ -1,14 +1,46 @@
 -- name: ListCompanies :many
-SELECT * FROM companies WHERE user_id = $1 ORDER BY name ASC;
-
--- name: ListCompaniesWithJobCount :many
 SELECT c.*,
        count(j.id)::int AS job_count
 FROM companies c
 LEFT JOIN jobs j ON j.company_id = c.id
 WHERE c.user_id = $1
+  AND (sqlc.narg('industries')::text[] IS NULL OR c.industry = ANY(sqlc.narg('industries')::text[]))
+  AND (sqlc.narg('sizes')::text[] IS NULL OR c.size = ANY(sqlc.narg('sizes')::text[]))
+  AND (sqlc.narg('data_sources')::text[] IS NULL OR c.data_source = ANY(sqlc.narg('data_sources')::text[]))
+  AND (sqlc.narg('enrichment_statuses')::text[] IS NULL OR c.enrichment_status = ANY(sqlc.narg('enrichment_statuses')::text[]))
+  AND (sqlc.narg('search')::text IS NULL OR (
+      c.name ILIKE '%' || sqlc.narg('search') || '%'
+      OR c.domain ILIKE '%' || sqlc.narg('search') || '%'
+      OR c.location ILIKE '%' || sqlc.narg('search') || '%'
+      OR c.industry ILIKE '%' || sqlc.narg('search') || '%'
+  ))
 GROUP BY c.id
-ORDER BY c.name ASC;
+ORDER BY
+  CASE WHEN @sort_by::text = 'name' AND @sort_order::text = 'asc' THEN c.name END ASC,
+  CASE WHEN @sort_by::text = 'name' AND @sort_order::text = 'desc' THEN c.name END DESC,
+  CASE WHEN @sort_by::text = 'industry' AND @sort_order::text = 'asc' THEN c.industry END ASC NULLS LAST,
+  CASE WHEN @sort_by::text = 'industry' AND @sort_order::text = 'desc' THEN c.industry END DESC NULLS LAST,
+  CASE WHEN @sort_by::text = 'job_count' AND @sort_order::text = 'asc' THEN count(j.id) END ASC,
+  CASE WHEN @sort_by::text = 'job_count' AND @sort_order::text = 'desc' THEN count(j.id) END DESC,
+  CASE WHEN @sort_by::text = 'updated_at' AND @sort_order::text = 'asc' THEN c.updated_at END ASC,
+  CASE WHEN @sort_by::text = 'updated_at' AND @sort_order::text = 'desc' THEN c.updated_at END DESC,
+  CASE WHEN @sort_by::text = 'created_at' AND @sort_order::text = 'asc' THEN c.created_at END ASC,
+  c.created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountCompanies :one
+SELECT count(*) FROM companies c
+WHERE c.user_id = $1
+  AND (sqlc.narg('industries')::text[] IS NULL OR c.industry = ANY(sqlc.narg('industries')::text[]))
+  AND (sqlc.narg('sizes')::text[] IS NULL OR c.size = ANY(sqlc.narg('sizes')::text[]))
+  AND (sqlc.narg('data_sources')::text[] IS NULL OR c.data_source = ANY(sqlc.narg('data_sources')::text[]))
+  AND (sqlc.narg('enrichment_statuses')::text[] IS NULL OR c.enrichment_status = ANY(sqlc.narg('enrichment_statuses')::text[]))
+  AND (sqlc.narg('search')::text IS NULL OR (
+      c.name ILIKE '%' || sqlc.narg('search') || '%'
+      OR c.domain ILIKE '%' || sqlc.narg('search') || '%'
+      OR c.location ILIKE '%' || sqlc.narg('search') || '%'
+      OR c.industry ILIKE '%' || sqlc.narg('search') || '%'
+  ));
 
 -- name: GetCompany :one
 SELECT * FROM companies WHERE id = $1 AND user_id = $2;
@@ -96,5 +128,3 @@ WHERE user_id = $1 AND enrichment_status IN ('none', 'failed')
 ORDER BY created_at DESC
 LIMIT $2;
 
--- name: CountCompaniesByUser :one
-SELECT count(*) FROM companies WHERE user_id = $1;

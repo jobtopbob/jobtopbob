@@ -70,10 +70,12 @@ export function CompanyCard({ company, onClick }: CompanyCardProps) {
             <span className="text-sm font-semibold text-text-primary truncate">
               {company.name}
             </span>
-            <span
-              className={`w-2 h-2 rounded-full shrink-0 ${enrichmentDot[company.enrichment_status] ?? enrichmentDot.none}`}
-              title={`Enrichment: ${company.enrichment_status}`}
-            />
+            {company.enrichment_status !== "none" && (
+              <span
+                className={`w-2 h-2 rounded-full shrink-0 ${enrichmentDot[company.enrichment_status] ?? enrichmentDot.none}`}
+                title={`Enrichment: ${company.enrichment_status}`}
+              />
+            )}
           </div>
           {company.domain && (
             <span className="text-xs text-text-muted">{company.domain}</span>
