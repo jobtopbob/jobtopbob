@@ -1,0 +1,89 @@
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface StepperProps {
+  currentStep: number;
+  steps: { label: string }[];
+  onStepClick?: (step: number) => void;
+  canAdvance?: boolean;
+  className?: string;
+}
+
+export function Stepper({
+  currentStep,
+  steps,
+  onStepClick,
+  canAdvance = true,
+  className,
+}: StepperProps) {
+  function isClickable(index: number) {
+    if (index < currentStep) return true;
+    if (index === currentStep + 1 && canAdvance) return true;
+    return false;
+  }
+
+  return (
+    <div className={cn("flex items-start", className)}>
+      {steps.map((step, index) => {
+        const isLast = index === steps.length - 1;
+
+        return (
+          <div
+            key={index}
+            className={cn("flex items-start", isLast ? "shrink-0" : "flex-1")}
+          >
+            {/* Step circle + label */}
+            <div className="flex flex-col items-center gap-1.5">
+              <button
+                type="button"
+                disabled={!isClickable(index) && index !== currentStep}
+                onClick={() => isClickable(index) && onStepClick?.(index)}
+                className={cn(
+                  "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors",
+                  index < currentStep &&
+                    "bg-brand text-white cursor-pointer hover:bg-brand/80",
+                  index === currentStep && "bg-brand text-white",
+                  index > currentStep && "bg-surface-hover text-text-muted",
+                  isClickable(index) &&
+                    index !== currentStep &&
+                    "cursor-pointer",
+                  !isClickable(index) &&
+                    index !== currentStep &&
+                    "cursor-default"
+                )}
+                aria-current={index === currentStep ? "step" : undefined}
+                aria-label={`Step ${index + 1}: ${step.label}`}
+              >
+                {index < currentStep ? (
+                  <Check className="size-3.5" strokeWidth={2.5} />
+                ) : (
+                  index + 1
+                )}
+              </button>
+              <span
+                className={cn(
+                  "text-[11px] leading-tight text-center whitespace-nowrap",
+                  index === currentStep
+                    ? "text-text-primary font-medium"
+                    : "text-text-muted"
+                )}
+              >
+                {step.label}
+              </span>
+            </div>
+
+            {/* Connector line */}
+            {!isLast && (
+              <div
+                className={cn(
+                  "mt-3.5 mx-2 h-[2px] flex-1 rounded-full transition-colors",
+                  index < currentStep ? "bg-brand" : "bg-surface-hover"
+                )}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
