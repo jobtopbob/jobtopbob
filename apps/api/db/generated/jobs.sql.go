@@ -53,6 +53,20 @@ func (q *Queries) BulkUpdateJobStatus(ctx context.Context, arg BulkUpdateJobStat
 	return q.db.Exec(ctx, bulkUpdateJobStatus, arg.Status, arg.Column2, arg.UserID)
 }
 
+const clearJobCompany = `-- name: ClearJobCompany :exec
+UPDATE jobs SET company_id = NULL WHERE id = $1 AND user_id = $2
+`
+
+type ClearJobCompanyParams struct {
+	ID     pgtype.UUID `json:"id"`
+	UserID string      `json:"user_id"`
+}
+
+func (q *Queries) ClearJobCompany(ctx context.Context, arg ClearJobCompanyParams) error {
+	_, err := q.db.Exec(ctx, clearJobCompany, arg.ID, arg.UserID)
+	return err
+}
+
 const countFollowUpsDue = `-- name: CountFollowUpsDue :one
 SELECT count(*) FROM jobs
 WHERE user_id = $1 AND follow_up_at <= now() AND status NOT IN ('closed', 'rejected', 'accepted')

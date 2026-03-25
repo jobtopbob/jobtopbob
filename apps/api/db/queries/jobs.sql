@@ -138,6 +138,9 @@ GROUP BY status;
 SELECT count(*) FROM jobs
 WHERE user_id = $1 AND follow_up_at <= now() AND status NOT IN ('closed', 'rejected', 'accepted');
 
+-- name: ClearJobCompany :exec
+UPDATE jobs SET company_id = NULL WHERE id = $1 AND user_id = $2;
+
 -- name: FindMostRecentJobByCompany :one
 SELECT id FROM jobs
 WHERE user_id = $1 AND company_id = $2 AND status NOT IN ('closed', 'rejected', 'accepted')

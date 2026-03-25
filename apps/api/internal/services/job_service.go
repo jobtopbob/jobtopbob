@@ -196,8 +196,11 @@ func UpdateJob(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID
 		return updated, err
 	}
 
-	// Log field changes
+	// Log field changes, resolving company names for human-readable activity log
 	changes := detectJobChanges(old, updated)
+	if _, ok := changes["company_id"]; ok {
+		resolveCompanyNames(ctx, q, userID, old, updated, changes)
+	}
 	if len(changes) > 0 {
 		_ = LogActivity(ctx, q, userID, "job", id, "updated", nil, changes)
 	}
@@ -382,4 +385,32 @@ func detectJobChanges(old db.GetJobRow, updated db.Job) map[string]any {
 	}
 
 	return changes
+}
+
+// resolveCompanyNames replaces the raw company_id UUID change entry with
+// human-readable company names for the activity log.
+func resolveCompanyNames(ctx context.Context, q *db.Queries, userID string, old db.GetJobRow, updated db.Job, changes map[string]any) {
+	oldName := ""
+	newName := ""
+
+	// Old company name is available from the GetJob JOIN
+	if old.CompanyName.Valid {
+		oldName = old.CompanyName.String
+	}
+
+	// New company name needs a lookup
+	if updated.CompanyID.Valid {
+		company, err := q.GetCompany(ctx, db.GetCompanyParams{
+			ID:     updated.CompanyID,
+			UserID: userID,
+		})
+		if err == nil {
+			newName = company.Name
+		}
+	}
+
+	changes["company_id"] = map[string]string{
+		"old": oldName,
+		"new": newName,
+	}
 }

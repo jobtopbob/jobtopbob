@@ -40,11 +40,13 @@ import {
 } from "@/lib/constants";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CompanySelector } from "@/components/companies/company-selector";
 
 // --- Schema ---
 
 const formSchema = z.object({
   title: z.string().min(1, "Job title is required"),
+  companyId: z.string(),
   companyName: z.string(),
   stageId: z.string(),
   jobType: z.string(),
@@ -70,6 +72,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const defaultValues: FormValues = {
   title: "",
+  companyId: "",
   companyName: "",
   stageId: "",
   jobType: "",
@@ -144,7 +147,7 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
     mode: "onTouched",
   });
 
-  const { control, handleSubmit, reset, trigger, watch, formState } = form;
+  const { control, handleSubmit, reset, trigger, watch, setValue, formState } = form;
   const [currentStep, setCurrentStep] = useState(0);
   const isLastStep = currentStep === LAST_STEP;
 
@@ -188,6 +191,7 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
     createJob.mutate(
       {
         title: data.title.trim(),
+        company_id: data.companyId || undefined,
         stage_id: data.stageId || undefined,
         source: data.source || undefined,
         source_url: data.sourceUrl || undefined,
@@ -251,7 +255,7 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
         <div ref={contentRef} className="min-h-[280px]">
           <div key={currentStep} className="animate-in fade-in-0 duration-200">
             {currentStep === 0 && (
-              <StepBasics control={control} stages={stages} />
+              <StepBasics control={control} watch={watch} setValue={setValue} stages={stages} />
             )}
             {currentStep === 1 && (
               <StepSourceLocation control={control} />
@@ -300,7 +304,14 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
 
 // --- Step Components ---
 
-function StepBasics({ control, stages }: { control: Control<FormValues>; stages: Stage[] }) {
+function StepBasics({ control, watch, setValue, stages }: {
+  control: Control<FormValues>;
+  watch: UseFormReturn<FormValues>["watch"];
+  setValue: UseFormReturn<FormValues>["setValue"];
+  stages: Stage[];
+}) {
+  const companyId = watch("companyId");
+  const companyName = watch("companyName");
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div className="sm:col-span-2">
@@ -325,16 +336,17 @@ function StepBasics({ control, stages }: { control: Control<FormValues>; stages:
           )}
         />
       </div>
-      <Controller
-        name="companyName"
-        control={control}
-        render={({ field }) => (
-          <Field>
-            <FieldLabel>Company</FieldLabel>
-            <Input {...field} placeholder="e.g. Stripe" />
-          </Field>
-        )}
-      />
+      <Field>
+        <FieldLabel>Company</FieldLabel>
+        <CompanySelector
+          value={companyId || null}
+          displayName={companyName || null}
+          onChange={(id, name) => {
+            setValue("companyId", id ?? "");
+            setValue("companyName", name ?? "");
+          }}
+        />
+      </Field>
       <Controller
         name="stageId"
         control={control}

@@ -226,11 +226,19 @@ func UpdateJob() gin.HandlerFunc {
 		q := db.New(getTx(c))
 		userID := getUserID(c)
 
+		// Handle explicit company unlinking (empty string = clear)
+		if req.CompanyID != nil && *req.CompanyID == "" {
+			_ = q.ClearJobCompany(c.Request.Context(), db.ClearJobCompanyParams{
+				ID:     id,
+				UserID: userID,
+			})
+		}
+
 		var params db.UpdateJobParams
 		if req.Title != nil {
 			params.Title = pgtextValid(*req.Title)
 		}
-		if req.CompanyID != nil {
+		if req.CompanyID != nil && *req.CompanyID != "" {
 			params.CompanyID = parseUUID(*req.CompanyID)
 		}
 		if req.StageID != nil {

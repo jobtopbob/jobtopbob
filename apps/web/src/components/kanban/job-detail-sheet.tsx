@@ -37,6 +37,7 @@ import {
 import type { Stage } from "@/hooks/use-stages";
 import { useTags, type Tag } from "@/hooks/use-tags";
 import { InlineEditField } from "./inline-edit-field";
+import { CompanySelector } from "@/components/companies/company-selector";
 import { StageIcon } from "./stage-icons";
 import { SectionIcon, type SectionIconName } from "./section-icons";
 import { SOURCES, LOCATION_TYPES, CURRENCIES, JOB_TYPES, JOB_LEVELS, SALARY_INTERVALS } from "@/lib/constants";
@@ -176,6 +177,9 @@ export function JobDetailSheet({ job, onClose, stages }: JobDetailSheetProps) {
       body[field] = value ? parseInt(value) : null;
     } else if (field === "applied_at" || field === "follow_up_at" || field === "deadline") {
       body[field] = value ? new Date(value).toISOString() : null;
+    } else if (field === "company_id") {
+      // Send empty string to explicitly clear (Go handler treats "" as "unlink company")
+      body[field] = value || "";
     } else {
       body[field] = value || null;
     }
@@ -478,15 +482,20 @@ function DetailsTab({
         {/* Job Info */}
         <div className="px-4 py-5 space-y-0.5">
           <SectionHeader icon="job-info">Job Info</SectionHeader>
-          <InlineEditField
-            icon={Building2}
-            label="Company"
-            value={job.company_name}
-            type="text"
-            placeholder="Add company"
-            disabled
-            onSave={() => {}}
-          />
+          <div className="group flex items-center sm:flex-row flex-col sm:items-center items-start gap-2 min-h-[36px] py-1">
+            <div className="flex items-center gap-2 sm:w-32 w-full shrink-0">
+              <Building2 className="w-4 h-4 text-text-muted shrink-0" />
+              <span className="text-[13px] text-text-muted">Company</span>
+            </div>
+            <CompanySelector
+              value={job.company_id}
+              displayName={job.company_name}
+              logoUrl={job.company_logo_url}
+              onChange={(companyId) => onUpdate("company_id", companyId ?? "")}
+              placeholder="Add company"
+              variant="inline"
+            />
+          </div>
           <InlineEditField
             icon={MapPin}
             label="Location"
@@ -1009,7 +1018,10 @@ const FIELD_META: Record<string, {
     label: "Stage",
     format: (v, stages) => stages.find((s) => s.id === v)?.name ?? v,
   },
-  company_id: { label: "Company" },
+  company_id: {
+    label: "Company",
+    format: (v) => v || "None",
+  },
   location: { label: "Location" },
   location_type: {
     label: "Location Type",
