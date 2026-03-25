@@ -32,22 +32,18 @@ Open-source alternatives exist for resume building (Reactive Resume, 1M+ users) 
 # 1. Clone and configure
 git clone https://github.com/jobtopbob/jobtopbob.git
 cd jobtopbob
-cp .env.example .env        # Docker infrastructure config (service hostnames, passwords)
+cp .env.example .env        # Configure secrets, API keys, and passwords
 
-# 2. (Optional) Create .env.local for host-specific secrets
-cp .env.local.example .env.local
-# Edit .env.local to add API keys — see below
-
-# 3. Install TypeScript dependencies
+# 2. Install TypeScript dependencies
 pnpm install
 
-# 4. Start infrastructure (Postgres, Redis, Resume Builder, Asynq Inspector)
+# 3. Start infrastructure (Postgres, Redis, Resume Builder, Asynq Inspector)
 docker compose up -d
 
-# 5. Start the Next.js frontend (terminal 1)
+# 4. Start the Next.js frontend (terminal 1)
 pnpm dev
 
-# 6. Start Go services (terminals 2 & 3)
+# 5. Start Go services (terminals 2 & 3)
 go run ./apps/api/cmd/api
 go run ./apps/worker/cmd/worker
 ```
@@ -63,16 +59,11 @@ go run ./apps/worker/cmd/worker
 
 #### Environment files
 
-There are two env files, each for a different context:
+The root `.env` (copied from `.env.example`) holds all configuration — Docker service hostnames, passwords, API keys, and secrets. It's loaded by Docker Compose and referenced by `.env.example` for the full variable list.
 
-| File | Purpose | Loaded by |
-|------|---------|-----------|
-| `.env` | Docker infrastructure — service hostnames (`redis`, `web`), passwords, ports | Docker Compose |
-| `.env.local` | Host-based dev secrets — API keys and overrides that use `localhost` | Go API (via godotenv) |
+The root `.env` uses Docker service names (e.g. `REDIS_URL=redis://:changeme@redis:6379/0`) which don't resolve on the host. The Go API's `config.go` already defaults to `localhost` for all connection strings, so for host-based dev you typically only need environment variables for API provider keys.
 
-The root `.env` uses Docker service names (e.g. `REDIS_URL=redis://:changeme@redis:6379/0`) which don't resolve on the host. The Go API's `config.go` already defaults to `localhost` for all connection strings, so you typically only need `.env.local` for API provider keys.
-
-Both files are gitignored. Next.js uses its own `apps/web/.env.local` (loaded automatically by Next.js).
+The root `.env` is gitignored. Next.js uses its own `apps/web/.env.local` (loaded automatically by Next.js).
 
 ### Self-hosting (production)
 

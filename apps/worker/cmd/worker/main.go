@@ -10,7 +10,6 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/jobtopbob/jobtopbob/apps/worker/internal/config"
@@ -25,8 +24,6 @@ import (
 
 func main() {
 	ctx := context.Background()
-
-	_ = godotenv.Load(".env.local", "../../.env.local")
 
 	cfg := config.Load()
 

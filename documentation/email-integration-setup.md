@@ -59,7 +59,7 @@ This guide covers how to set up Gmail integration for your JobTopBob deployment.
 
 ## Step 5: Set Environment Variables
 
-Add these to your `.env` or `.env.local`:
+Add these to your `.env`:
 
 ```bash
 # Gmail OAuth (from Step 2)

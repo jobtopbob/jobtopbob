@@ -6,7 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `documentation/Implementation Plan.md` — full engineering spec (repo structure, tech stack, database schema, auth, AI layer, scrapers, deployment, testing, security)
 - `documentation/internal/Project Details.md` — product vision, business model, competitive analysis (gitignored from public)
 - `.env.example` — complete environment variable reference for all services (Docker-oriented)
-- `.env.local.example` — host-based dev overrides (API keys, secrets for `go run`)
 
 ## Architecture
 
@@ -42,7 +41,6 @@ Prompts are `.txt` files loaded via Go `embed.FS` in `internal/ai/prompts/`.
 ```bash
 # Setup (dev — infrastructure only, app services run on host)
 cp .env.example .env                # Docker infrastructure config
-cp .env.local.example .env.local    # host-based dev secrets (API keys)
 pnpm install
 docker compose up -d
 
