@@ -43,7 +43,6 @@ const navGroups: NavGroup[] = [
     icon: Briefcase,
     items: [
       { label: "Applications", icon: Briefcase, href: "/applications" },
-      { label: "Companies", icon: Building2, href: "/companies" },
       { label: "Offers", icon: HandCoins, href: "/offers" },
     ],
   },
@@ -320,6 +319,27 @@ export function Sidebar() {
               </div>
             </div>
           ))}
+
+          {/* Companies */}
+          <Link
+            href="/companies"
+            className={cn(
+              "flex items-center rounded-xl transition-colors duration-200",
+              collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 lg:gap-0 gap-3 px-3 py-3" : "gap-3 px-3 py-3",
+              pathname === "/companies"
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+            )}
+            title="Companies"
+          >
+            <Building2 className="w-5 h-5 shrink-0" />
+            <span className={cn(
+              "leading-6 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
+              collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
+            )}>
+              Companies
+            </span>
+          </Link>
 
           {/* Settings */}
           <Link
