@@ -165,7 +165,7 @@ export function IntegrationsSection() {
           </CardContent>
         </Card>
 
-        {/* Gmail / Smart Router — Coming Soon */}
+        {/* Gmail / Email Integration — Coming Soon */}
         <Card>
           <CardContent className="pt-2">
             <div className="flex items-start gap-4">
@@ -174,7 +174,7 @@ export function IntegrationsSection() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-text-primary">Gmail Smart Router</h3>
+                  <h3 className="font-semibold text-text-primary">Gmail Email Integration</h3>
                   <Badge variant="secondary">Coming Soon</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">

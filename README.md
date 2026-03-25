@@ -6,11 +6,11 @@ JobTopBob combines a job application tracker, integrated resume builder (powered
 
 No feature gates. No crippled free tier. No data selling.
 
-### Smart Router — your inbox updates your tracker
+### Email Integration — your inbox updates your tracker
 
 Connect your Gmail and JobTopBob automatically detects recruiter replies, interview invites, rejections, and offers — then updates your application status for you. No more manually dragging cards after every email. The AI classifies each message's intent and surfaces it in a Tracking Inbox for you to confirm before anything changes. Your email content is never stored — only a short excerpt and the classification result are kept. Revoke access anytime and all data is deleted instantly.
 
-**This is the feature that makes job tracking actually stick.** Most trackers die because users stop updating them. Smart Router keeps your board accurate without lifting a finger.
+**This is the feature that makes job tracking actually stick.** Most trackers die because users stop updating them. Email Integration keeps your board accurate without lifting a finger.
 
 ---
 
@@ -155,7 +155,7 @@ The sign-in page shows a **Try Demo** button when `SEED_DEMO_DATA` is enabled.
 - Version history with restore
 - Resume-to-application linking with A/B analytics
 
-### Smart Router (flagship feature)
+### Email Integration (flagship feature)
 - **Gmail integration** — connects your inbox via OAuth (`gmail.readonly` only — the app never sends or modifies emails)
 - **AI email classification** — detects recruiter replies, interview invites, rejections, and offers automatically
 - **Tracking Inbox** — every detected event surfaces for your review before any status change commits

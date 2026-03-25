@@ -14,7 +14,7 @@
 6. [Authentication & multi-tenancy](#6-authentication--multi-tenancy)
 7. [AI integration layer](#7-ai-integration-layer)
 8. [Job discovery pipeline](#8-job-discovery-pipeline)
-9. [Email & Smart Router](#9-email--smart-router)
+9. [Email Integration](#9-email-integration)
 10. [Self-hosting & deployment](#10-self-hosting--deployment)
 11. [Phase 1 — Foundation](#11-phase-1--foundation-months-16)
 12. [Phase 2 — Growth](#12-phase-2--growth-months-612)
@@ -1022,13 +1022,13 @@ The Go worker deduplicates on two signals before writing to Postgres:
 
 ---
 
-## 9. Email & Smart Router
+## 9. Email Integration
 
-> **Flagship feature.** The Smart Router is JobTopBob's primary differentiator. Most job trackers fail because users stop manually updating them. By passively reading recruiter emails and surfacing status changes for confirmation, the Smart Router keeps the tracker accurate without user effort — solving the core abandonment problem that plagues every competitor. Marketing and product copy should position this as the headline capability.
+> **Flagship feature.** Email Integration is JobTopBob's primary differentiator. Most job trackers fail because users stop manually updating them. By passively reading recruiter emails and surfacing status changes for confirmation, Email Integration keeps the tracker accurate without user effort — solving the core abandonment problem that plagues every competitor. Marketing and product copy should position this as the headline capability.
 
 ### Gmail OAuth
 
-The Smart Router requires Gmail read access via OAuth 2.0. Scopes requested:
+Email Integration requires Gmail read access via OAuth 2.0. Scopes requested:
 
 - `gmail.readonly` — read email metadata and body
 - No `gmail.send`, no `gmail.modify` — the app never sends email or modifies inbox state
@@ -1042,7 +1042,7 @@ Asynq cron job: email:poll (every 5 min, Go worker)
   → fetch new emails via Gmail API (Go: google.golang.org/api/gmail)
   → for each email:
       → check sender domain against applied company domains
-      → call AI provider with Smart Router prompt
+      → call AI provider with Email Integration prompt
           → returns: { intent, company_match, confidence }
       → write email_event record (sqlc)
       → log to activity_log
@@ -1200,7 +1200,7 @@ On first launch, a setup wizard guides the user through:
 1. Creating an admin account
 2. Verifying AI provider key is set via env var (or skipping for manual-only use)
 3. (Optional) Configuring the job discovery pipeline — target job boards, countries, role types
-4. (Optional) Connecting Gmail for the Smart Router
+4. (Optional) Connecting Gmail for Email Integration
 
 All steps are skippable. The tracker is fully functional with no AI key and no Gmail connection.
 
@@ -1218,7 +1218,7 @@ An Asynq cron task (`backup:daily`, configurable schedule) dumps Postgres using 
 
 Goal: a fully functional self-hosted product that solves the core problem completely. No pipeline automation yet.
 
-**Timeline: 14–16 weeks** (revised from 13 weeks based on feasibility assessment; the RxResume integration and AI provider reduction recover ~8–10 weeks from the original scope, making this timeline realistic).
+**Timeline: 17–18 weeks** (revised to include Email Integration — the flagship differentiator — in Phase 1; the AI provider abstraction and Asynq worker from Milestone 1.4 provide the foundation it needs).
 
 ### Milestone 1.1 — Project scaffold (weeks 1–2)
 
@@ -1273,7 +1273,19 @@ Goal: a fully functional self-hosted product that solves the core problem comple
 - [ ] Ghostwriter: `GET /api/v1/jobs/:id/ghostwriter` (SSE stream via Redis Pub/Sub), `POST /api/v1/jobs/:id/ghostwriter/messages`
 - [ ] SSE endpoint: `GET /api/v1/events` — subscribes to Redis Pub/Sub `sse:{userID}` channel
 
-### Milestone 1.5 — Networking & data (weeks 9–12)
+### Milestone 1.5 — Email Integration (weeks 10–13)
+
+- [ ] Gmail OAuth setup (Google Cloud project, consent screen)
+- [ ] Go worker: Asynq cron task `email:poll` (every 5 min) using `google.golang.org/api/gmail`
+- [ ] Email intent classification prompt + Go AI provider call
+- [ ] Company matching: fuzzy match sender domain against user's applied company names
+- [ ] `email_events` sqlc queries: insert, list unconfirmed, confirm, dismiss
+- [ ] Tracking Inbox view: confirm / dismiss / override per event
+- [ ] Email event audit log page
+- [ ] Settings: revoke Gmail access (deletes OAuth tokens + email events via sqlc)
+- [ ] Self-hosting guide: Google Cloud project setup, OAuth credential registration
+
+### Milestone 1.6 — Networking & data (weeks 12–15)
 
 - [ ] Contacts CRM with relationship status
 - [ ] Company profiles database
@@ -1283,7 +1295,7 @@ Goal: a fully functional self-hosted product that solves the core problem comple
 - [ ] Automated backup scheduling (daily Postgres dump)
 - [ ] Resource library (tagged bookmarks per job search)
 
-### Milestone 1.6 — Polish & launch (weeks 12–16)
+### Milestone 1.7 — Polish & launch (weeks 15–18)
 
 - [ ] Onboarding wizard (first-run setup flow)
 - [ ] Weekly goal targets + consistency dashboard
@@ -1292,13 +1304,13 @@ Goal: a fully functional self-hosted product that solves the core problem comple
 - [ ] Public GitHub release (AGPL-3.0)
 - [ ] Product Hunt launch preparation
 
-**Phase 1 definition of done:** A developer can `git clone`, `docker compose up`, and have a fully functional job tracker with integrated resume builder running in under 10 minutes. No paid API key required to use core features.
+**Phase 1 definition of done:** A developer can `git clone`, `docker compose up`, and have a fully functional job tracker with integrated resume builder running in under 10 minutes. No paid API key required to use core features. Email Integration available as opt-in for users with a Gmail account and AI provider key.
 
 ---
 
 ## 12. Phase 2 — Growth (months 6–12)
 
-Goal: add the discovery pipeline, Smart Router, browser extension, and deeper integrations.
+Goal: add the discovery pipeline, browser extension, and deeper integrations.
 
 ### Milestone 2.1 — Discovery pipeline (weeks 1–5)
 
@@ -1317,19 +1329,7 @@ Goal: add the discovery pipeline, Smart Router, browser extension, and deeper in
 - [ ] Asynq Inspector UI exposed at `/internal/asynq` (basic auth protected)
 - [ ] Turbo pipeline: `turbo run build` covers all scraper packages alongside `apps/web`
 
-### Milestone 2.2 — Smart Router (weeks 4–7)
-
-- [ ] Gmail OAuth setup (Google Cloud project, consent screen)
-- [ ] Go worker: Asynq cron task `email:poll` (every 5 min) using `google.golang.org/api/gmail`
-- [ ] Email intent classification prompt + Go AI provider call
-- [ ] Company matching: fuzzy match sender domain against user's applied company names
-- [ ] `email_events` sqlc queries: insert, list unconfirmed, confirm, dismiss
-- [ ] Tracking Inbox view: confirm / dismiss / override per event
-- [ ] Email event audit log page
-- [ ] Settings: revoke Gmail access (deletes OAuth tokens + email events via sqlc)
-- [ ] Self-hosting guide: Google Cloud project setup, OAuth credential registration
-
-### Milestone 2.3 — Browser extension (weeks 6–9)
+### Milestone 2.2 — Browser extension (weeks 4–7)
 
 - [ ] Chrome extension (Manifest V3)
 - [ ] One-click "Add to JobTopBob" button injected on supported job boards
@@ -1338,7 +1338,7 @@ Goal: add the discovery pipeline, Smart Router, browser extension, and deeper in
 - [ ] Popup shows current tracker stats (applications this week, response rate)
 - [ ] Sync to any JobTopBob instance (configurable endpoint)
 
-### Milestone 2.4 — Webhooks & integrations (weeks 8–10)
+### Milestone 2.3 — Webhooks & integrations (weeks 6–9)
 
 - [ ] Webhook configuration UI (URL, events, signing secret)
 - [ ] HMAC-signed payloads for all job state change events
@@ -1346,7 +1346,7 @@ Goal: add the discovery pipeline, Smart Router, browser extension, and deeper in
 - [ ] Read-only public share mode (share job search dashboard publicly)
 - [ ] Zapier / Make.com webhook documentation
 
-### Milestone 2.5 — Deeper RxResume integration (weeks 9–12)
+### Milestone 2.4 — Deeper RxResume integration (weeks 8–12)
 
 - [ ] SSO via OIDC: configure RxResume custom OAuth provider to use JobTopBob's Better Auth as identity provider
 - [ ] AI resume tailoring via RxResume MCP endpoint (`/mcp`) or REST API JSON Patch
@@ -1354,7 +1354,7 @@ Goal: add the discovery pipeline, Smart Router, browser extension, and deeper in
 - [ ] Consider adding native Anthropic/Gemini AI providers if OpenRouter passthrough shows latency issues
 - [ ] Evaluate scraper migration to Redis Streams with `XREADGROUP` consumer groups if HTTP timeouts are a problem
 
-**Phase 2 definition of done:** Self-hosted users can upgrade to the discovery pipeline and Smart Router with minimal configuration. Browser extension available for Chrome.
+**Phase 2 definition of done:** Self-hosted users can upgrade to the discovery pipeline with minimal configuration. Browser extension available for Chrome.
 
 ---
 

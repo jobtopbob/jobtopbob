@@ -51,7 +51,7 @@ const navGroups: NavGroup[] = [
     icon: Wrench,
     items: [
       { label: "Resumes", icon: FileText, href: "/resumes" },
-      { label: "Smart Router", icon: Mail, href: "/smart-router" },
+      { label: "Email Integration", icon: Mail, href: "/email-integration" },
       { label: "Contacts", icon: Users, href: "/contacts" },
     ],
   },
