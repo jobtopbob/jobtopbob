@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Loader2, Sparkles } from "lucide-react";
+import { FileSearch, FileText, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +36,7 @@ export function ResumeSearchDialog() {
       <DialogTrigger
         className="group/button inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium whitespace-nowrap transition-all hover:bg-muted hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
       >
-        <Sparkles className="h-4 w-4" />
+        <FileSearch className="h-4 w-4" />
         Search from Resume
       </DialogTrigger>
       <DialogContent>

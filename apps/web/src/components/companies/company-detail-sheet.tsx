@@ -23,7 +23,7 @@ import {
   Trash2,
   Building2,
   Briefcase,
-  Sparkles,
+  Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -166,7 +166,7 @@ export function CompanyDetailSheet({
                   });
                 }}
               >
-                <Sparkles className="w-4 h-4" />
+                <Wand2 className="w-4 h-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -209,7 +209,7 @@ export function CompanyDetailSheet({
                       : "outline"
                 }
               >
-                <Sparkles className="w-3 h-3" />
+                <Wand2 className="w-3 h-3" />
                 {company.enrichment_status === "enriched"
                   ? "Enriched"
                   : company.enrichment_status === "pending"
