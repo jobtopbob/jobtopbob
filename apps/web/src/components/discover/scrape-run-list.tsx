@@ -54,11 +54,11 @@ export function ScrapeRunList() {
 
   if (isLoading) {
     return (
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex gap-3 pb-2">
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton
             key={i}
-            className="h-[120px] min-w-[280px] shrink-0 rounded-xl"
+            className="h-[120px] min-w-[280px] flex-1 rounded-xl"
           />
         ))}
       </div>
