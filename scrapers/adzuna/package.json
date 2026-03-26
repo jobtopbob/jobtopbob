@@ -4,16 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo 'TODO: scraper dev'",
-    "build": "echo 'TODO: tsc'",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
     "lint": "echo 'TODO: eslint .'",
-    "check-types": "echo 'TODO: tsc --noEmit'",
+    "check-types": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
     "@jobtopbob/scraper-shared": "workspace:*"
   },
   "devDependencies": {
-    "@jobtopbob/config": "workspace:*"
+    "@jobtopbob/config": "workspace:*",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
   }
 }

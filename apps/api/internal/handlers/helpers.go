@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -84,6 +85,14 @@ func splitCSV(s string) []string {
 		return nil
 	}
 	return result
+}
+
+// uuidToString converts a pgtype.UUID to its string representation.
+func uuidToString(u pgtype.UUID) string {
+	if !u.Valid {
+		return ""
+	}
+	return fmt.Sprintf("%x-%x-%x-%x-%x", u.Bytes[0:4], u.Bytes[4:6], u.Bytes[6:8], u.Bytes[8:10], u.Bytes[10:16])
 }
 
 // parseUUIDs parses a comma-separated string of UUIDs into a slice.

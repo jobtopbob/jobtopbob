@@ -6,4 +6,6 @@ const (
 	TypeEmailProcess    = "email:process"
 	TypeEmailWatchRenew = "email:watch-renew"
 	TypeCompanyEnrich   = "company:enrich"
+	TypeScrapeDispatch  = "scrape:dispatch"
+	TypeScrapeSource    = "scrape:source"
 )

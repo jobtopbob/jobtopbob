@@ -67,6 +67,31 @@ func (q *Queries) ClearJobCompany(ctx context.Context, arg ClearJobCompanyParams
 	return err
 }
 
+const countDiscoveredJobs = `-- name: CountDiscoveredJobs :one
+SELECT count(*) FROM jobs j
+LEFT JOIN companies c ON c.id = j.company_id
+WHERE j.user_id = $1 AND j.status = 'discovered'
+  AND ($2::uuid IS NULL OR j.scrape_run_id = $2::uuid)
+  AND ($3::text IS NULL OR (
+      j.title ILIKE '%' || $3 || '%'
+      OR c.name ILIKE '%' || $3 || '%'
+      OR j.location ILIKE '%' || $3 || '%'
+  ))
+`
+
+type CountDiscoveredJobsParams struct {
+	UserID      string      `json:"user_id"`
+	ScrapeRunID pgtype.UUID `json:"scrape_run_id"`
+	Search      pgtype.Text `json:"search"`
+}
+
+func (q *Queries) CountDiscoveredJobs(ctx context.Context, arg CountDiscoveredJobsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countDiscoveredJobs, arg.UserID, arg.ScrapeRunID, arg.Search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countFollowUpsDue = `-- name: CountFollowUpsDue :one
 SELECT count(*) FROM jobs
 WHERE user_id = $1 AND follow_up_at <= now() AND status NOT IN ('closed', 'rejected', 'accepted')
@@ -177,7 +202,7 @@ INSERT INTO jobs (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
     $17, $18, $19, $20, $21, $22, $23
-) RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at
+) RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
 `
 
 type CreateJobParams struct {
@@ -267,6 +292,102 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, erro
 		&i.ExperienceRange,
 		&i.Skills,
 		&i.ClosedAt,
+		&i.DedupHash,
+		&i.ScrapeRunID,
+	)
+	return i, err
+}
+
+const createScrapedJob = `-- name: CreateScrapedJob :one
+INSERT INTO jobs (
+    user_id, title, source, source_url, location, location_type,
+    salary_min, salary_max, salary_currency, salary_interval,
+    jd_raw, job_type, job_level, application_url, skills,
+    status, dedup_hash, scrape_run_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+    'discovered', $16, $17
+) ON CONFLICT (user_id, dedup_hash) WHERE dedup_hash IS NOT NULL DO NOTHING
+RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
+`
+
+type CreateScrapedJobParams struct {
+	UserID         string      `json:"user_id"`
+	Title          string      `json:"title"`
+	Source         pgtype.Text `json:"source"`
+	SourceUrl      pgtype.Text `json:"source_url"`
+	Location       pgtype.Text `json:"location"`
+	LocationType   pgtype.Text `json:"location_type"`
+	SalaryMin      pgtype.Int4 `json:"salary_min"`
+	SalaryMax      pgtype.Int4 `json:"salary_max"`
+	SalaryCurrency pgtype.Text `json:"salary_currency"`
+	SalaryInterval pgtype.Text `json:"salary_interval"`
+	JdRaw          pgtype.Text `json:"jd_raw"`
+	JobType        pgtype.Text `json:"job_type"`
+	JobLevel       pgtype.Text `json:"job_level"`
+	ApplicationUrl pgtype.Text `json:"application_url"`
+	Skills         []byte      `json:"skills"`
+	DedupHash      pgtype.Text `json:"dedup_hash"`
+	ScrapeRunID    pgtype.UUID `json:"scrape_run_id"`
+}
+
+func (q *Queries) CreateScrapedJob(ctx context.Context, arg CreateScrapedJobParams) (Job, error) {
+	row := q.db.QueryRow(ctx, createScrapedJob,
+		arg.UserID,
+		arg.Title,
+		arg.Source,
+		arg.SourceUrl,
+		arg.Location,
+		arg.LocationType,
+		arg.SalaryMin,
+		arg.SalaryMax,
+		arg.SalaryCurrency,
+		arg.SalaryInterval,
+		arg.JdRaw,
+		arg.JobType,
+		arg.JobLevel,
+		arg.ApplicationUrl,
+		arg.Skills,
+		arg.DedupHash,
+		arg.ScrapeRunID,
+	)
+	var i Job
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CompanyID,
+		&i.StageID,
+		&i.Title,
+		&i.Status,
+		&i.CloseReason,
+		&i.Source,
+		&i.SourceUrl,
+		&i.Location,
+		&i.LocationType,
+		&i.SalaryMin,
+		&i.SalaryMax,
+		&i.SalaryMarket,
+		&i.SalaryCurrency,
+		&i.Interest,
+		&i.Suitability,
+		&i.SuitabilityReason,
+		&i.ResumeVersionID,
+		&i.JdRaw,
+		&i.JdSnapshot,
+		&i.AppliedAt,
+		&i.FollowUpAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Deadline,
+		&i.JobType,
+		&i.JobLevel,
+		&i.SalaryInterval,
+		&i.ApplicationUrl,
+		&i.ExperienceRange,
+		&i.Skills,
+		&i.ClosedAt,
+		&i.DedupHash,
+		&i.ScrapeRunID,
 	)
 	return i, err
 }
@@ -304,7 +425,7 @@ func (q *Queries) FindMostRecentJobByCompany(ctx context.Context, arg FindMostRe
 }
 
 const getJob = `-- name: GetJob :one
-SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at,
+SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at, j.dedup_hash, j.scrape_run_id,
        c.name AS company_name,
        c.logo_url AS company_logo_url,
        s.name AS stage_name
@@ -353,6 +474,8 @@ type GetJobRow struct {
 	ExperienceRange   pgtype.Text        `json:"experience_range"`
 	Skills            []byte             `json:"skills"`
 	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
+	DedupHash         pgtype.Text        `json:"dedup_hash"`
+	ScrapeRunID       pgtype.UUID        `json:"scrape_run_id"`
 	CompanyName       pgtype.Text        `json:"company_name"`
 	CompanyLogoUrl    pgtype.Text        `json:"company_logo_url"`
 	StageName         pgtype.Text        `json:"stage_name"`
@@ -395,6 +518,8 @@ func (q *Queries) GetJob(ctx context.Context, arg GetJobParams) (GetJobRow, erro
 		&i.ExperienceRange,
 		&i.Skills,
 		&i.ClosedAt,
+		&i.DedupHash,
+		&i.ScrapeRunID,
 		&i.CompanyName,
 		&i.CompanyLogoUrl,
 		&i.StageName,
@@ -402,8 +527,141 @@ func (q *Queries) GetJob(ctx context.Context, arg GetJobParams) (GetJobRow, erro
 	return i, err
 }
 
+const listDiscoveredJobs = `-- name: ListDiscoveredJobs :many
+SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at, j.dedup_hash, j.scrape_run_id,
+       c.name AS company_name,
+       c.logo_url AS company_logo_url,
+       s.name AS stage_name
+FROM jobs j
+LEFT JOIN companies c ON c.id = j.company_id
+LEFT JOIN stages s ON s.id = j.stage_id
+WHERE j.user_id = $1 AND j.status = 'discovered'
+  AND ($4::uuid IS NULL OR j.scrape_run_id = $4::uuid)
+  AND ($5::text IS NULL OR (
+      j.title ILIKE '%' || $5 || '%'
+      OR c.name ILIKE '%' || $5 || '%'
+      OR j.location ILIKE '%' || $5 || '%'
+  ))
+ORDER BY j.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type ListDiscoveredJobsParams struct {
+	UserID      string      `json:"user_id"`
+	Limit       int32       `json:"limit"`
+	Offset      int32       `json:"offset"`
+	ScrapeRunID pgtype.UUID `json:"scrape_run_id"`
+	Search      pgtype.Text `json:"search"`
+}
+
+type ListDiscoveredJobsRow struct {
+	ID                pgtype.UUID        `json:"id"`
+	UserID            string             `json:"user_id"`
+	CompanyID         pgtype.UUID        `json:"company_id"`
+	StageID           pgtype.UUID        `json:"stage_id"`
+	Title             string             `json:"title"`
+	Status            pgtype.Text        `json:"status"`
+	CloseReason       pgtype.Text        `json:"close_reason"`
+	Source            pgtype.Text        `json:"source"`
+	SourceUrl         pgtype.Text        `json:"source_url"`
+	Location          pgtype.Text        `json:"location"`
+	LocationType      pgtype.Text        `json:"location_type"`
+	SalaryMin         pgtype.Int4        `json:"salary_min"`
+	SalaryMax         pgtype.Int4        `json:"salary_max"`
+	SalaryMarket      pgtype.Int4        `json:"salary_market"`
+	SalaryCurrency    pgtype.Text        `json:"salary_currency"`
+	Interest          pgtype.Int4        `json:"interest"`
+	Suitability       pgtype.Int4        `json:"suitability"`
+	SuitabilityReason pgtype.Text        `json:"suitability_reason"`
+	ResumeVersionID   pgtype.UUID        `json:"resume_version_id"`
+	JdRaw             pgtype.Text        `json:"jd_raw"`
+	JdSnapshot        []byte             `json:"jd_snapshot"`
+	AppliedAt         pgtype.Timestamptz `json:"applied_at"`
+	FollowUpAt        pgtype.Timestamptz `json:"follow_up_at"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	Deadline          pgtype.Timestamptz `json:"deadline"`
+	JobType           pgtype.Text        `json:"job_type"`
+	JobLevel          pgtype.Text        `json:"job_level"`
+	SalaryInterval    pgtype.Text        `json:"salary_interval"`
+	ApplicationUrl    pgtype.Text        `json:"application_url"`
+	ExperienceRange   pgtype.Text        `json:"experience_range"`
+	Skills            []byte             `json:"skills"`
+	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
+	DedupHash         pgtype.Text        `json:"dedup_hash"`
+	ScrapeRunID       pgtype.UUID        `json:"scrape_run_id"`
+	CompanyName       pgtype.Text        `json:"company_name"`
+	CompanyLogoUrl    pgtype.Text        `json:"company_logo_url"`
+	StageName         pgtype.Text        `json:"stage_name"`
+}
+
+func (q *Queries) ListDiscoveredJobs(ctx context.Context, arg ListDiscoveredJobsParams) ([]ListDiscoveredJobsRow, error) {
+	rows, err := q.db.Query(ctx, listDiscoveredJobs,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+		arg.ScrapeRunID,
+		arg.Search,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListDiscoveredJobsRow{}
+	for rows.Next() {
+		var i ListDiscoveredJobsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.CompanyID,
+			&i.StageID,
+			&i.Title,
+			&i.Status,
+			&i.CloseReason,
+			&i.Source,
+			&i.SourceUrl,
+			&i.Location,
+			&i.LocationType,
+			&i.SalaryMin,
+			&i.SalaryMax,
+			&i.SalaryMarket,
+			&i.SalaryCurrency,
+			&i.Interest,
+			&i.Suitability,
+			&i.SuitabilityReason,
+			&i.ResumeVersionID,
+			&i.JdRaw,
+			&i.JdSnapshot,
+			&i.AppliedAt,
+			&i.FollowUpAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Deadline,
+			&i.JobType,
+			&i.JobLevel,
+			&i.SalaryInterval,
+			&i.ApplicationUrl,
+			&i.ExperienceRange,
+			&i.Skills,
+			&i.ClosedAt,
+			&i.DedupHash,
+			&i.ScrapeRunID,
+			&i.CompanyName,
+			&i.CompanyLogoUrl,
+			&i.StageName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listJobs = `-- name: ListJobs :many
-SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at,
+SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at, j.dedup_hash, j.scrape_run_id,
        c.name AS company_name,
        c.logo_url AS company_logo_url,
        s.name AS stage_name
@@ -496,6 +754,8 @@ type ListJobsRow struct {
 	ExperienceRange   pgtype.Text        `json:"experience_range"`
 	Skills            []byte             `json:"skills"`
 	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
+	DedupHash         pgtype.Text        `json:"dedup_hash"`
+	ScrapeRunID       pgtype.UUID        `json:"scrape_run_id"`
 	CompanyName       pgtype.Text        `json:"company_name"`
 	CompanyLogoUrl    pgtype.Text        `json:"company_logo_url"`
 	StageName         pgtype.Text        `json:"stage_name"`
@@ -560,6 +820,8 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]ListJobsR
 			&i.ExperienceRange,
 			&i.Skills,
 			&i.ClosedAt,
+			&i.DedupHash,
+			&i.ScrapeRunID,
 			&i.CompanyName,
 			&i.CompanyLogoUrl,
 			&i.StageName,
@@ -605,7 +867,7 @@ UPDATE jobs SET
     skills = COALESCE($29, skills),
     closed_at = COALESCE($30, closed_at)
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at
+RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
 `
 
 type UpdateJobParams struct {
@@ -709,6 +971,8 @@ func (q *Queries) UpdateJob(ctx context.Context, arg UpdateJobParams) (Job, erro
 		&i.ExperienceRange,
 		&i.Skills,
 		&i.ClosedAt,
+		&i.DedupHash,
+		&i.ScrapeRunID,
 	)
 	return i, err
 }

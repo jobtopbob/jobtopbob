@@ -17,7 +17,7 @@ export function AppShell({ userName, children }: AppShellProps) {
         <Sidebar />
         <div className="flex flex-col flex-1 min-w-0 transition-[margin] duration-300 ease-out">
           <TopBar userName={userName} />
-          <main className="flex-1 overflow-hidden">{children}</main>
+          <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
         </div>
       </div>
       <Toaster position="bottom-right" />

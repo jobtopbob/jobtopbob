@@ -5,6 +5,7 @@ import { AppLogo } from "@/components/app-logo";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  Compass,
   Briefcase,
   FileText,
   Building2,
@@ -228,6 +229,27 @@ export function Sidebar() {
               collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
             )}>
               Dashboard
+            </span>
+          </Link>
+
+          {/* Discover */}
+          <Link
+            href="/discover"
+            className={cn(
+              "flex items-center rounded-xl transition-colors duration-200",
+              collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 lg:gap-0 gap-3 px-3 py-3" : "gap-3 px-3 py-3",
+              pathname === "/discover"
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+            )}
+            title="Discover"
+          >
+            <Compass className="w-5 h-5 shrink-0" />
+            <span className={cn(
+              "leading-6 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
+              collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
+            )}>
+              Discover
             </span>
           </Link>
 

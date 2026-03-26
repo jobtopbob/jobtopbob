@@ -146,3 +146,44 @@ SELECT id FROM jobs
 WHERE user_id = $1 AND company_id = $2 AND status NOT IN ('closed', 'rejected', 'accepted')
 ORDER BY created_at DESC
 LIMIT 1;
+
+-- name: CreateScrapedJob :one
+INSERT INTO jobs (
+    user_id, title, source, source_url, location, location_type,
+    salary_min, salary_max, salary_currency, salary_interval,
+    jd_raw, job_type, job_level, application_url, skills,
+    status, dedup_hash, scrape_run_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+    'discovered', $16, $17
+) ON CONFLICT (user_id, dedup_hash) WHERE dedup_hash IS NOT NULL DO NOTHING
+RETURNING *;
+
+-- name: ListDiscoveredJobs :many
+SELECT j.*,
+       c.name AS company_name,
+       c.logo_url AS company_logo_url,
+       s.name AS stage_name
+FROM jobs j
+LEFT JOIN companies c ON c.id = j.company_id
+LEFT JOIN stages s ON s.id = j.stage_id
+WHERE j.user_id = $1 AND j.status = 'discovered'
+  AND (sqlc.narg('scrape_run_id')::uuid IS NULL OR j.scrape_run_id = sqlc.narg('scrape_run_id')::uuid)
+  AND (sqlc.narg('search')::text IS NULL OR (
+      j.title ILIKE '%' || sqlc.narg('search') || '%'
+      OR c.name ILIKE '%' || sqlc.narg('search') || '%'
+      OR j.location ILIKE '%' || sqlc.narg('search') || '%'
+  ))
+ORDER BY j.created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountDiscoveredJobs :one
+SELECT count(*) FROM jobs j
+LEFT JOIN companies c ON c.id = j.company_id
+WHERE j.user_id = $1 AND j.status = 'discovered'
+  AND (sqlc.narg('scrape_run_id')::uuid IS NULL OR j.scrape_run_id = sqlc.narg('scrape_run_id')::uuid)
+  AND (sqlc.narg('search')::text IS NULL OR (
+      j.title ILIKE '%' || sqlc.narg('search') || '%'
+      OR c.name ILIKE '%' || sqlc.narg('search') || '%'
+      OR j.location ILIKE '%' || sqlc.narg('search') || '%'
+  ));

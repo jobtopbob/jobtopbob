@@ -10,16 +10,13 @@ interface SidebarContextValue {
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
 
-function getIsMobile() {
-  if (typeof window === "undefined") return false;
-  return window.innerWidth < 1024;
-}
-
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(() => getIsMobile());
+  // Always start expanded (matches SSR) — correct on mount via useEffect
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
+    setCollapsed(mql.matches);
     const handler = (e: MediaQueryListEvent) => setCollapsed(e.matches);
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);

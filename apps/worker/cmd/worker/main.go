@@ -162,6 +162,45 @@ func main() {
 	}
 	mux.HandleFunc(tasks.TypeCompanyEnrich, tasks.HandleCompanyEnrich(enrichDeps))
 
+	// Scraper tasks (conditional on SCRAPERS_ENABLED)
+	if cfg.ScrapersEnabled {
+		asynqClient := asynq.NewClient(asynqRedis)
+		defer asynqClient.Close()
+
+		scraperURLs := make(map[string]string)
+		if cfg.ScraperAdzunaURL != "" {
+			scraperURLs["adzuna"] = cfg.ScraperAdzunaURL
+		}
+
+		dispatchDeps := &tasks.ScrapeDispatchDeps{
+			Pool:        pool,
+			Redis:       rdb,
+			AsynqClient: asynqClient,
+			ScraperURLs: scraperURLs,
+		}
+		mux.HandleFunc(tasks.TypeScrapeDispatch, tasks.HandleScrapeDispatch(dispatchDeps))
+
+		sourceDeps := &tasks.ScrapeSourceDeps{
+			Pool:       pool,
+			Redis:      rdb,
+			HTTPClient: httpClient,
+		}
+		mux.HandleFunc(tasks.TypeScrapeSource, tasks.HandleScrapeSource(sourceDeps))
+
+		slog.Info("scraper tasks registered", "sources", fmt.Sprintf("%v", scraperURLs))
+
+		// Resume analysis task (uses AI provider)
+		if aiProvider != nil {
+			resumeDeps := &tasks.ResumeAnalyzeDeps{
+				Pool:       pool,
+				Redis:      rdb,
+				AIProvider: aiProvider,
+			}
+			mux.HandleFunc(tasks.TypeResumeAnalyze, tasks.HandleResumeAnalyze(resumeDeps))
+			slog.Info("resume analysis task registered")
+		}
+	}
+
 	// Start Asynq server
 	go func() {
 		slog.Info("starting asynq worker")

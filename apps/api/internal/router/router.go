@@ -26,7 +26,8 @@ type Config struct {
 	MasterKey     []byte
 	AsynqClient   *asynq.Client
 	Redis         *redis.Client
-	FrontendURL   string
+	FrontendURL     string
+	ScrapersEnabled bool
 }
 
 // New creates a configured Gin engine with all routes and middleware.
@@ -140,6 +141,32 @@ func New(cfg Config) *gin.Engine {
 				emailGroup.POST("/events/:id/dismiss", handlers.DismissEmailEvent())
 				emailGroup.PUT("/events/:id/job", handlers.LinkEmailEventToJob())
 			}
+		}
+
+		// Job Discovery (scrapers)
+		if cfg.ScrapersEnabled {
+			// Search Profiles
+			searchProfiles := v1.Group("/search-profiles")
+			{
+				searchProfiles.GET("", handlers.ListSearchProfiles())
+				searchProfiles.POST("", handlers.CreateSearchProfile())
+				searchProfiles.GET("/:id", handlers.GetSearchProfile())
+				searchProfiles.PUT("/:id", handlers.UpdateSearchProfile())
+				searchProfiles.DELETE("/:id", handlers.DeleteSearchProfile())
+				searchProfiles.POST("/:id/run", handlers.RunSearchProfile(cfg.AsynqClient))
+			}
+
+			// Discover
+			discover := v1.Group("/discover")
+			{
+				discover.POST("/search", handlers.QuickSearch(cfg.AsynqClient))
+				discover.GET("/jobs", handlers.ListDiscoveredJobs())
+				discover.POST("/from-resume/:id", handlers.SearchFromExistingResume(cfg.AsynqClient))
+			}
+
+			// Scrape Runs
+			v1.GET("/scrape-runs", handlers.ListScrapeRuns())
+			v1.GET("/scrape-runs/:id", handlers.GetScrapeRun())
 		}
 
 		// SSE (Server-Sent Events)

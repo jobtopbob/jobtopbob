@@ -85,10 +85,21 @@ func main() {
 	// Create RxResume client (API-only, per-user API keys stored in user_settings)
 	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.ResumeBuilderPublicURL, cfg.ResumePrinterHTTPURL, cfg.ResumeBuilderPrinterURL)
 
+	// Initialize Asynq client for background tasks (email + scrapers)
+	var asynqClient *asynq.Client
+	needsAsynq := cfg.ScrapersEnabled || (cfg.GoogleClientID != "" && cfg.GoogleClientSecret != "")
+	if needsAsynq {
+		asynqClient = asynq.NewClient(asynq.RedisClientOpt{Addr: rdb.Options().Addr, Password: rdb.Options().Password, DB: rdb.Options().DB})
+		defer asynqClient.Close()
+	}
+
+	if cfg.ScrapersEnabled {
+		slog.Info("scrapers enabled")
+	}
+
 	// Initialize email integration (optional — only if Google OAuth credentials are configured)
 	var emailProvider email.Provider
 	var masterKey []byte
-	var asynqClient *asynq.Client
 
 	if cfg.GoogleClientID != "" && cfg.GoogleClientSecret != "" {
 		// Parse encryption key
@@ -115,10 +126,6 @@ func main() {
 			PubSubTopic:  pubSubTopic,
 		})
 
-		// Create Asynq client for enqueueing email processing tasks
-		asynqClient = asynq.NewClient(asynq.RedisClientOpt{Addr: rdb.Options().Addr, Password: rdb.Options().Password, DB: rdb.Options().DB})
-		defer asynqClient.Close()
-
 		slog.Info("email integration enabled", "provider", "gmail")
 	}
 
@@ -135,6 +142,7 @@ func main() {
 		AsynqClient:      asynqClient,
 		Redis:            rdb,
 		FrontendURL:      cfg.CORSOrigins[0], // Use first CORS origin as frontend URL
+		ScrapersEnabled:  cfg.ScrapersEnabled,
 	})
 
 	// Start HTTP server with graceful shutdown

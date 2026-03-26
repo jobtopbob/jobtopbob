@@ -30,6 +30,9 @@ type Config struct {
 	// Encryption
 	EncryptionKey string
 
+	// Scrapers
+	ScrapersEnabled bool
+
 	// Gmail OAuth
 	GoogleClientID       string
 	GoogleClientSecret   string
@@ -59,6 +62,8 @@ func Load() *Config {
 		S3Endpoint:           getEnv("S3_ENDPOINT", "http://localhost:9000"),
 		S3AccessKey:          getEnv("S3_ACCESS_KEY", "rustfsadmin"),
 		S3SecretKey:          getEnv("S3_SECRET_KEY", "rustfsadmin"),
+
+		ScrapersEnabled:      getEnv("SCRAPERS_ENABLED", "false") == "true",
 
 		EncryptionKey:        getEnv("API_ENCRYPTION_KEY", ""),
 		GoogleClientID:       getEnv("GOOGLE_CLIENT_ID", ""),

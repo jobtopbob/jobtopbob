@@ -159,6 +159,8 @@ type Job struct {
 	ExperienceRange   pgtype.Text        `json:"experience_range"`
 	Skills            []byte             `json:"skills"`
 	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
+	DedupHash         pgtype.Text        `json:"dedup_hash"`
+	ScrapeRunID       pgtype.UUID        `json:"scrape_run_id"`
 }
 
 type JobAsset struct {
@@ -247,16 +249,43 @@ type ResumeVersion struct {
 }
 
 type ScrapeRun struct {
-	ID          pgtype.UUID        `json:"id"`
-	UserID      string             `json:"user_id"`
-	Status      pgtype.Text        `json:"status"`
-	Sources     []string           `json:"sources"`
-	JobsFound   pgtype.Int4        `json:"jobs_found"`
-	JobsNew     pgtype.Int4        `json:"jobs_new"`
-	StartedAt   pgtype.Timestamptz `json:"started_at"`
-	CompletedAt pgtype.Timestamptz `json:"completed_at"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID              pgtype.UUID        `json:"id"`
+	UserID          string             `json:"user_id"`
+	SearchProfileID pgtype.UUID        `json:"search_profile_id"`
+	Status          pgtype.Text        `json:"status"`
+	Sources         []string           `json:"sources"`
+	Keywords        []string           `json:"keywords"`
+	Location        pgtype.Text        `json:"location"`
+	Country         pgtype.Text        `json:"country"`
+	JobsFound       pgtype.Int4        `json:"jobs_found"`
+	JobsNew         pgtype.Int4        `json:"jobs_new"`
+	ErrorMessage    pgtype.Text        `json:"error_message"`
+	StartedAt       pgtype.Timestamptz `json:"started_at"`
+	CompletedAt     pgtype.Timestamptz `json:"completed_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type SearchProfile struct {
+	ID              pgtype.UUID        `json:"id"`
+	UserID          string             `json:"user_id"`
+	Name            string             `json:"name"`
+	Source          string             `json:"source"`
+	ResumeID        pgtype.UUID        `json:"resume_id"`
+	Keywords        []string           `json:"keywords"`
+	Location        pgtype.Text        `json:"location"`
+	Country         pgtype.Text        `json:"country"`
+	JobType         pgtype.Text        `json:"job_type"`
+	ExperienceLevel pgtype.Text        `json:"experience_level"`
+	RemoteOnly      pgtype.Bool        `json:"remote_only"`
+	SalaryMin       pgtype.Int4        `json:"salary_min"`
+	SalaryMax       pgtype.Int4        `json:"salary_max"`
+	Skills          []string           `json:"skills"`
+	TargetRoles     []string           `json:"target_roles"`
+	IsActive        pgtype.Bool        `json:"is_active"`
+	LastRunAt       pgtype.Timestamptz `json:"last_run_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Session struct {
