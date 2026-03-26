@@ -8,4 +8,6 @@ const (
 	TypeCompanyEnrich   = "company:enrich"
 	TypeScrapeDispatch  = "scrape:dispatch"
 	TypeScrapeSource    = "scrape:source"
+	TypeJobExtract      = "job:extract"
+	TypeJobScore        = "job:score"
 )

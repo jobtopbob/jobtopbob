@@ -10,10 +10,18 @@ type CompletionRequest struct {
 	Temperature  float32
 }
 
+// StreamChunk represents a single chunk from a streaming AI response.
+type StreamChunk struct {
+	Delta string
+	Done  bool
+}
+
 // Provider defines the interface for AI model providers.
 type Provider interface {
 	// Complete sends a prompt and returns the full response text.
 	Complete(ctx context.Context, req CompletionRequest) (string, error)
+	// Stream sends a prompt and returns a channel of response chunks.
+	Stream(ctx context.Context, req CompletionRequest) (<-chan StreamChunk, error)
 }
 
 // ProviderConfig holds the configuration for creating a provider.

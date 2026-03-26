@@ -976,3 +976,129 @@ func (q *Queries) UpdateJob(ctx context.Context, arg UpdateJobParams) (Job, erro
 	)
 	return i, err
 }
+
+const updateJobJDSnapshot = `-- name: UpdateJobJDSnapshot :one
+UPDATE jobs SET
+    jd_snapshot = $3,
+    skills = $4
+WHERE id = $1 AND user_id = $2
+RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
+`
+
+type UpdateJobJDSnapshotParams struct {
+	ID         pgtype.UUID `json:"id"`
+	UserID     string      `json:"user_id"`
+	JdSnapshot []byte      `json:"jd_snapshot"`
+	Skills     []byte      `json:"skills"`
+}
+
+func (q *Queries) UpdateJobJDSnapshot(ctx context.Context, arg UpdateJobJDSnapshotParams) (Job, error) {
+	row := q.db.QueryRow(ctx, updateJobJDSnapshot,
+		arg.ID,
+		arg.UserID,
+		arg.JdSnapshot,
+		arg.Skills,
+	)
+	var i Job
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CompanyID,
+		&i.StageID,
+		&i.Title,
+		&i.Status,
+		&i.CloseReason,
+		&i.Source,
+		&i.SourceUrl,
+		&i.Location,
+		&i.LocationType,
+		&i.SalaryMin,
+		&i.SalaryMax,
+		&i.SalaryMarket,
+		&i.SalaryCurrency,
+		&i.Interest,
+		&i.Suitability,
+		&i.SuitabilityReason,
+		&i.ResumeVersionID,
+		&i.JdRaw,
+		&i.JdSnapshot,
+		&i.AppliedAt,
+		&i.FollowUpAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Deadline,
+		&i.JobType,
+		&i.JobLevel,
+		&i.SalaryInterval,
+		&i.ApplicationUrl,
+		&i.ExperienceRange,
+		&i.Skills,
+		&i.ClosedAt,
+		&i.DedupHash,
+		&i.ScrapeRunID,
+	)
+	return i, err
+}
+
+const updateJobSuitability = `-- name: UpdateJobSuitability :one
+UPDATE jobs SET
+    suitability = $3,
+    suitability_reason = $4
+WHERE id = $1 AND user_id = $2
+RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
+`
+
+type UpdateJobSuitabilityParams struct {
+	ID                pgtype.UUID `json:"id"`
+	UserID            string      `json:"user_id"`
+	Suitability       pgtype.Int4 `json:"suitability"`
+	SuitabilityReason pgtype.Text `json:"suitability_reason"`
+}
+
+func (q *Queries) UpdateJobSuitability(ctx context.Context, arg UpdateJobSuitabilityParams) (Job, error) {
+	row := q.db.QueryRow(ctx, updateJobSuitability,
+		arg.ID,
+		arg.UserID,
+		arg.Suitability,
+		arg.SuitabilityReason,
+	)
+	var i Job
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CompanyID,
+		&i.StageID,
+		&i.Title,
+		&i.Status,
+		&i.CloseReason,
+		&i.Source,
+		&i.SourceUrl,
+		&i.Location,
+		&i.LocationType,
+		&i.SalaryMin,
+		&i.SalaryMax,
+		&i.SalaryMarket,
+		&i.SalaryCurrency,
+		&i.Interest,
+		&i.Suitability,
+		&i.SuitabilityReason,
+		&i.ResumeVersionID,
+		&i.JdRaw,
+		&i.JdSnapshot,
+		&i.AppliedAt,
+		&i.FollowUpAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Deadline,
+		&i.JobType,
+		&i.JobLevel,
+		&i.SalaryInterval,
+		&i.ApplicationUrl,
+		&i.ExperienceRange,
+		&i.Skills,
+		&i.ClosedAt,
+		&i.DedupHash,
+		&i.ScrapeRunID,
+	)
+	return i, err
+}

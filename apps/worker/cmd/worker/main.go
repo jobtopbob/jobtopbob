@@ -162,6 +162,32 @@ func main() {
 	}
 	mux.HandleFunc(tasks.TypeCompanyEnrich, tasks.HandleCompanyEnrich(enrichDeps))
 
+	// AI tasks (independent of scrapers)
+	if aiProvider != nil {
+		resumeDeps := &tasks.ResumeAnalyzeDeps{
+			Pool:       pool,
+			Redis:      rdb,
+			AIProvider: aiProvider,
+		}
+		mux.HandleFunc(tasks.TypeResumeAnalyze, tasks.HandleResumeAnalyze(resumeDeps))
+
+		jobExtractDeps := &tasks.JobExtractDeps{
+			Pool:       pool,
+			Redis:      rdb,
+			AIProvider: aiProvider,
+		}
+		mux.HandleFunc(tasks.TypeJobExtract, tasks.HandleJobExtract(jobExtractDeps))
+
+		jobScoreDeps := &tasks.JobScoreDeps{
+			Pool:       pool,
+			Redis:      rdb,
+			AIProvider: aiProvider,
+		}
+		mux.HandleFunc(tasks.TypeJobScore, tasks.HandleJobScore(jobScoreDeps))
+
+		slog.Info("AI tasks registered", "tasks", []string{tasks.TypeResumeAnalyze, tasks.TypeJobExtract, tasks.TypeJobScore})
+	}
+
 	// Scraper tasks (conditional on SCRAPERS_ENABLED)
 	if cfg.ScrapersEnabled {
 		asynqClient := asynq.NewClient(asynqRedis)
@@ -188,17 +214,6 @@ func main() {
 		mux.HandleFunc(tasks.TypeScrapeSource, tasks.HandleScrapeSource(sourceDeps))
 
 		slog.Info("scraper tasks registered", "sources", fmt.Sprintf("%v", scraperURLs))
-
-		// Resume analysis task (uses AI provider)
-		if aiProvider != nil {
-			resumeDeps := &tasks.ResumeAnalyzeDeps{
-				Pool:       pool,
-				Redis:      rdb,
-				AIProvider: aiProvider,
-			}
-			mux.HandleFunc(tasks.TypeResumeAnalyze, tasks.HandleResumeAnalyze(resumeDeps))
-			slog.Info("resume analysis task registered")
-		}
 	}
 
 	// Start Asynq server

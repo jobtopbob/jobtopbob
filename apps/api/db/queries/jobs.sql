@@ -187,3 +187,17 @@ WHERE j.user_id = $1 AND j.status = 'discovered'
       OR c.name ILIKE '%' || sqlc.narg('search') || '%'
       OR j.location ILIKE '%' || sqlc.narg('search') || '%'
   ));
+
+-- name: UpdateJobJDSnapshot :one
+UPDATE jobs SET
+    jd_snapshot = $3,
+    skills = $4
+WHERE id = $1 AND user_id = $2
+RETURNING *;
+
+-- name: UpdateJobSuitability :one
+UPDATE jobs SET
+    suitability = $3,
+    suitability_reason = $4
+WHERE id = $1 AND user_id = $2
+RETURNING *;

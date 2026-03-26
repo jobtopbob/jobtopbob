@@ -20,6 +20,8 @@ import (
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/router"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/seed"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/services/rxresume"
+	"github.com/jobtopbob/jobtopbob/internal/ai"
+	"github.com/jobtopbob/jobtopbob/internal/ai/providers"
 	"github.com/jobtopbob/jobtopbob/internal/crypto"
 	"github.com/jobtopbob/jobtopbob/internal/email"
 	"github.com/jobtopbob/jobtopbob/internal/email/gmail"
@@ -85,9 +87,25 @@ func main() {
 	// Create RxResume client (API-only, per-user API keys stored in user_settings)
 	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.ResumeBuilderPublicURL, cfg.ResumePrinterHTTPURL, cfg.ResumeBuilderPrinterURL)
 
-	// Initialize Asynq client for background tasks (email + scrapers)
+	// Create AI provider (optional — only if an API key is configured)
+	var aiProvider ai.Provider
+	if cfg.AIAPIKey != "" {
+		aiProvider, err = providers.New(ai.ProviderConfig{
+			Provider: cfg.AIProvider,
+			APIKey:   cfg.AIAPIKey,
+			BaseURL:  cfg.AIBaseURL,
+			Model:    cfg.AIModel,
+		})
+		if err != nil {
+			slog.Error("failed to create AI provider", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("AI provider initialized", "provider", cfg.AIProvider, "model", cfg.AIModel)
+	}
+
+	// Initialize Asynq client for background tasks (AI + email + scrapers)
 	var asynqClient *asynq.Client
-	needsAsynq := cfg.ScrapersEnabled || (cfg.GoogleClientID != "" && cfg.GoogleClientSecret != "")
+	needsAsynq := cfg.ScrapersEnabled || aiProvider != nil || (cfg.GoogleClientID != "" && cfg.GoogleClientSecret != "")
 	if needsAsynq {
 		asynqClient = asynq.NewClient(asynq.RedisClientOpt{Addr: rdb.Options().Addr, Password: rdb.Options().Password, DB: rdb.Options().DB})
 		defer asynqClient.Close()
@@ -142,6 +160,7 @@ func main() {
 		AsynqClient:      asynqClient,
 		Redis:            rdb,
 		FrontendURL:      cfg.CORSOrigins[0], // Use first CORS origin as frontend URL
+		AIProvider:       aiProvider,
 		ScrapersEnabled:  cfg.ScrapersEnabled,
 	})
 

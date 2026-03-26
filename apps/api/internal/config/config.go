@@ -30,6 +30,12 @@ type Config struct {
 	// Encryption
 	EncryptionKey string
 
+	// AI Provider
+	AIProvider string
+	AIModel    string
+	AIBaseURL  string
+	AIAPIKey   string
+
 	// Scrapers
 	ScrapersEnabled bool
 
@@ -62,6 +68,11 @@ func Load() *Config {
 		S3Endpoint:           getEnv("S3_ENDPOINT", "http://localhost:9000"),
 		S3AccessKey:          getEnv("S3_ACCESS_KEY", "rustfsadmin"),
 		S3SecretKey:          getEnv("S3_SECRET_KEY", "rustfsadmin"),
+
+		AIProvider:           getEnv("AI_PROVIDER", "openai"),
+		AIModel:              getEnv("AI_MODEL", "gpt-4o-mini"),
+		AIBaseURL:            getEnv("AI_BASE_URL", ""),
+		AIAPIKey:             getEnv("AI_API_KEY", getEnv("OPENAI_API_KEY", getEnv("OPENROUTER_API_KEY", ""))),
 
 		ScrapersEnabled:      getEnv("SCRAPERS_ENABLED", "false") == "true",
 

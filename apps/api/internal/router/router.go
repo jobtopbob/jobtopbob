@@ -9,6 +9,7 @@ import (
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/handlers"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/middleware"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/services/rxresume"
+	"github.com/jobtopbob/jobtopbob/internal/ai"
 	"github.com/jobtopbob/jobtopbob/internal/email"
 	"github.com/jobtopbob/jobtopbob/internal/storage"
 )
@@ -27,6 +28,7 @@ type Config struct {
 	AsynqClient   *asynq.Client
 	Redis         *redis.Client
 	FrontendURL     string
+	AIProvider      ai.Provider
 	ScrapersEnabled bool
 }
 
@@ -168,6 +170,22 @@ func New(cfg Config) *gin.Engine {
 			v1.GET("/scrape-runs", handlers.ListScrapeRuns())
 			v1.GET("/scrape-runs/:id", handlers.GetScrapeRun())
 		}
+
+		// AI Features
+		if cfg.AIProvider != nil {
+			v1.POST("/jobs/:id/extract", handlers.ExtractJob(cfg.AsynqClient))
+			v1.POST("/jobs/:id/score", handlers.ScoreJob(cfg.AsynqClient))
+			v1.POST("/jobs/:id/ats-score", handlers.ATSScore(cfg.AIProvider))
+			v1.POST("/jobs/:id/tailor-resume", handlers.TailorResume(cfg.AIProvider))
+			v1.POST("/jobs/:id/cover-letter", handlers.GenerateCoverLetter(cfg.AIProvider))
+			v1.POST("/jobs/:id/interview-prep", handlers.GenerateInterviewPrep(cfg.AIProvider))
+			v1.GET("/jobs/:id/ghostwriter", handlers.ListGhostwriterMessages())
+			v1.POST("/jobs/:id/ghostwriter", handlers.SendGhostwriterMessage(cfg.AIProvider))
+		}
+
+		// Job assets (always available)
+		v1.GET("/jobs/:id/assets", handlers.ListJobAssets())
+		v1.DELETE("/jobs/:id/assets/:assetId", handlers.DeleteJobAsset())
 
 		// SSE (Server-Sent Events)
 		if cfg.Redis != nil {

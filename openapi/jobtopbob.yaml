@@ -872,6 +872,65 @@ components:
           type: integer
           format: int64
 
+    JobAsset:
+      type: object
+      required: [id, user_id, job_id, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        job_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [cover_letter, interview_prep, ats_score, tailored_resume]
+        content:
+          type: string
+        storage_key:
+          type: string
+        model_used:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    GhostwriterMessage:
+      type: object
+      required: [id, user_id, job_id, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        job_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    GhostwriterSendRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
 security:
   - bearerAuth: []
 
@@ -2012,3 +2071,191 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RxResumeKeyStatus"
+
+  /api/v1/jobs/{id}/extract:
+    post:
+      summary: Extract structured fields from job description
+      description: Enqueues a background task to parse the raw JD and extract salary, location, skills, etc.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Extraction task queued
+        "422":
+          description: Job has no raw description
+
+  /api/v1/jobs/{id}/score:
+    post:
+      summary: Score job suitability
+      description: Enqueues a background task to score the job against the user's base resume.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Scoring task queued
+        "422":
+          description: Job has no raw description
+
+  /api/v1/jobs/{id}/ats-score:
+    post:
+      summary: ATS keyword match analysis
+      description: Streams an ATS keyword match analysis comparing resume against job description.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: SSE stream of ATS analysis chunks
+          content:
+            text/event-stream: {}
+
+  /api/v1/jobs/{id}/tailor-resume:
+    post:
+      summary: Resume tailoring suggestions
+      description: Streams tailoring suggestions for the user's resume based on the job description.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: SSE stream of tailoring suggestion chunks
+          content:
+            text/event-stream: {}
+
+  /api/v1/jobs/{id}/cover-letter:
+    post:
+      summary: Generate cover letter
+      description: Streams a cover letter and saves it as a job asset.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: SSE stream of cover letter chunks
+          content:
+            text/event-stream: {}
+
+  /api/v1/jobs/{id}/interview-prep:
+    post:
+      summary: Generate interview preparation
+      description: Generates interview questions and suggested answers. Non-streaming, saves to job assets.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Interview preparation content
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/v1/jobs/{id}/ghostwriter:
+    get:
+      summary: List ghostwriter messages
+      description: Returns the conversation history for a job's ghostwriter chat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Conversation messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GhostwriterMessage"
+    post:
+      summary: Send ghostwriter message
+      description: Sends a message to the ghostwriter and streams the AI response.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GhostwriterSendRequest"
+      responses:
+        "200":
+          description: SSE stream of AI response chunks
+          content:
+            text/event-stream: {}
+
+  /api/v1/jobs/{id}/assets:
+    get:
+      summary: List AI-generated assets for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Job assets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobAsset"
+
+  /api/v1/jobs/{id}/assets/{assetId}:
+    delete:
+      summary: Delete a job asset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Asset deleted
+        "404":
+          description: Asset not found
