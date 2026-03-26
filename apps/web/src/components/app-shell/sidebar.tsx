@@ -53,7 +53,6 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Resumes", icon: FileText, href: "/resumes" },
       { label: "Email Integration", icon: Mail, href: "/email-integration" },
-      { label: "Contacts", icon: Users, href: "/contacts" },
     ],
   },
 ];
@@ -341,6 +340,27 @@ export function Sidebar() {
               </div>
             </div>
           ))}
+
+          {/* Contacts */}
+          <Link
+            href="/contacts"
+            className={cn(
+              "flex items-center rounded-xl transition-colors duration-200",
+              collapsed ? "lg:justify-center lg:px-0 lg:py-2.5 lg:gap-0 gap-3 px-3 py-3" : "gap-3 px-3 py-3",
+              pathname === "/contacts"
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+            )}
+            title="Contacts"
+          >
+            <Users className="w-5 h-5 shrink-0" />
+            <span className={cn(
+              "leading-6 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
+              collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
+            )}>
+              Contacts
+            </span>
+          </Link>
 
           {/* Companies */}
           <Link
