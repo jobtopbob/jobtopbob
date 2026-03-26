@@ -169,6 +169,15 @@ func ListJobs(ctx context.Context, q *db.Queries, userID string, p ListJobsParam
 // CreateJob creates a new job and logs the activity.
 func CreateJob(ctx context.Context, q *db.Queries, userID string, params db.CreateJobParams) (db.Job, error) {
 	params.UserID = userID
+
+	// Auto-set follow_up_at to 7 days after applied_at if not explicitly provided
+	if params.AppliedAt.Valid && !params.FollowUpAt.Valid {
+		params.FollowUpAt = pgtype.Timestamptz{
+			Time:  params.AppliedAt.Time.AddDate(0, 0, 7),
+			Valid: true,
+		}
+	}
+
 	job, err := q.CreateJob(ctx, params)
 	if err != nil {
 		return job, err

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, SlidersHorizontal, X } from "lucide-react";
+import { Plus, SlidersHorizontal, X, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FilterPanel } from "./filter-panel";
 import { SortPopover } from "./sort-popover";
@@ -15,6 +15,7 @@ interface ToolbarProps {
   activeView: View;
   onViewChange: (view: View) => void;
   onAddJob: () => void;
+  onManageStages?: () => void;
   filters: JobFilters;
   activeFilterCount: number;
   onApplyFilters: (draft: Partial<JobFilters>) => void;
@@ -36,6 +37,7 @@ export function Toolbar({
   activeView,
   onViewChange,
   onAddJob,
+  onManageStages,
   filters,
   activeFilterCount,
   onApplyFilters,
@@ -68,6 +70,15 @@ export function Toolbar({
       <div className="flex items-center justify-between h-[52px] px-4 lg:px-7">
         {/* Left: View Switcher */}
         <div className="flex items-center gap-2">
+          {onManageStages && (
+            <button
+              onClick={onManageStages}
+              className="flex items-center justify-center w-9 h-9 rounded-full bg-surface text-text-muted hover:text-text-primary transition-colors"
+              title="Manage stages"
+            >
+              <Settings2 className="w-4 h-4" />
+            </button>
+          )}
           <div ref={viewContainerRef} className="relative flex items-center gap-1 rounded-full bg-surface p-1 h-9">
             {pillStyle && (
               <span

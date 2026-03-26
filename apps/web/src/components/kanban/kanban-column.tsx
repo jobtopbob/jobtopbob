@@ -17,7 +17,8 @@ export const STAGE_DOT_COLORS: Record<string, string> = {
   default: "#7B8494",
 };
 
-export function getDotColor(stageName: string): string {
+export function getDotColor(stageName: string, stageColor?: string | null): string {
+  if (stageColor) return stageColor;
   const key = stageName.toLowerCase();
   return STAGE_DOT_COLORS[key] ?? STAGE_DOT_COLORS.default;
 }
@@ -33,7 +34,7 @@ export function KanbanColumn({ stage, jobs, onJobClick }: KanbanColumnProps) {
     id: stage.id,
   });
 
-  const dotColor = getDotColor(stage.name);
+  const dotColor = getDotColor(stage.name, stage.color);
   const isClosed = !!stage.is_terminal && stage.mapped_status === "closed";
 
   return (

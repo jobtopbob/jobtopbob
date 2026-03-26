@@ -68,7 +68,7 @@ export function StatsRow() {
   if (statsLoading || jobsLoading) {
     return (
       <div className="flex gap-4">
-        {Array.from({ length: 3 }).map((_, i) => (
+        {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="flex-1 h-[88px] rounded-xl" />
         ))}
       </div>
@@ -86,10 +86,12 @@ export function StatsRow() {
         value={responseRate ?? "--"}
       />
       <StatCard
-        label="Avg. Time to Reply"
-        value="--"
-        change=""
-        changeColor="#2A85FF"
+        label="Active Interviews"
+        value={String(stats?.by_status?.["interviewing"] ?? 0)}
+      />
+      <StatCard
+        label="Follow-ups Due"
+        value={String(stats?.follow_ups_due ?? 0)}
       />
     </div>
   );

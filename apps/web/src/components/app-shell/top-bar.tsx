@@ -47,13 +47,23 @@ export function TopBar({ userName: initialUserName }: TopBarProps) {
         </button>
       )}
 
-      {/* Search */}
-      <div className="flex items-center gap-2 w-full max-w-[280px] px-3 py-2 rounded-xl bg-surface border border-border-subtle">
+      {/* Search — triggers Cmd+K command palette */}
+      <button
+        onClick={() => {
+          document.dispatchEvent(
+            new KeyboardEvent("keydown", { key: "k", metaKey: true })
+          );
+        }}
+        className="flex items-center gap-2 w-full max-w-[280px] px-3 py-2 rounded-xl bg-surface border border-border-subtle cursor-pointer hover:bg-surface-hover transition-colors"
+      >
         <Search className="w-4 h-4 text-text-muted shrink-0" />
-        <span className="text-sm text-text-muted">
-          Search or type a command...
+        <span className="text-sm text-text-muted flex-1 text-left">
+          Search...
         </span>
-      </div>
+        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-card text-[10px] font-medium text-text-muted border border-border-subtle">
+          ⌘K
+        </kbd>
+      </button>
 
       {/* Spacer */}
       <div className="flex-1" />

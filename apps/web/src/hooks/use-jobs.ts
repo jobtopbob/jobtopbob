@@ -158,6 +158,29 @@ export function useUpdateJob() {
   });
 }
 
+export interface BulkUpdateRequest {
+  job_ids: string[];
+  stage_id?: string;
+  status?: string;
+  delete?: boolean;
+}
+
+export function useBulkUpdateJobs() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (body: BulkUpdateRequest) => {
+      const { data, error } = await api.PATCH("/api/v1/jobs/bulk", { body });
+      if (error) throw new Error((error as { error?: string })?.error ?? "Bulk update failed");
+      return data as { affected: number };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+    },
+  });
+}
+
 export function useDeleteJob() {
   const queryClient = useQueryClient();
 

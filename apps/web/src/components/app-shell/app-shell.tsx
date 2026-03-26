@@ -3,6 +3,7 @@
 import { SidebarProvider } from "./sidebar-context";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
+import { CommandPalette } from "@/components/command-palette";
 import { Toaster } from "sonner";
 
 interface AppShellProps {
@@ -20,6 +21,7 @@ export function AppShell({ userName, children }: AppShellProps) {
           <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
         </div>
       </div>
+      <CommandPalette />
       <Toaster position="bottom-right" />
     </SidebarProvider>
   );

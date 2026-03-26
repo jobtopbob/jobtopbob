@@ -56,7 +56,7 @@ export function MobileJobList({
       {stages.map((stage) => {
         const jobs = jobsByStage.get(stage.id) ?? [];
         const isExpanded = expandedStages.has(stage.id);
-        const dotColor = getDotColor(stage.name);
+        const dotColor = getDotColor(stage.name, stage.color);
 
         return (
           <div
@@ -179,7 +179,7 @@ function MobileJobRow({ job, stages, onClick }: MobileJobRowProps) {
           <SelectContent align="end">
             {stages.map((stage) => (
               <SelectItem key={stage.id} value={stage.id}>
-                <StageIcon stageName={stage.name} className="w-3.5 h-3.5 shrink-0" color={getDotColor(stage.name)} />
+                <StageIcon stageName={stage.name} className="w-3.5 h-3.5 shrink-0" color={getDotColor(stage.name, stage.color)} />
                 {stage.name}
               </SelectItem>
             ))}

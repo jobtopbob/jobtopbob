@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback, Suspense } from "react";
+import { useState, useMemo, useCallback, useEffect, Suspense } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useStages } from "@/hooks/use-stages";
-import { useJobs, type Job } from "@/hooks/use-jobs";
+import { useJobs, useJob, type Job } from "@/hooks/use-jobs";
 import { useTags } from "@/hooks/use-tags";
 import { useJobFilters } from "@/hooks/use-job-filters";
 import { Toolbar } from "./toolbar";
@@ -14,6 +15,8 @@ import { JobDetailSheet } from "./job-detail-sheet";
 import { MobileJobList } from "./mobile-job-list";
 import { ApplicationsTable } from "./applications-table";
 import { ApplicationsCalendar } from "./applications-calendar";
+import { BulkActionBar } from "./bulk-action-bar";
+import { StageManagerDialog } from "./stage-manager-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function KanbanBoardInner() {
@@ -27,10 +30,35 @@ function KanbanBoardInner() {
     activeFilterCount,
   } = useJobFilters();
   const [addJobOpen, setAddJobOpen] = useState(false);
+  const [stageManagerOpen, setStageManagerOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeView, setActiveView] = useState<"kanban" | "table" | "calendar">(
     "kanban"
   );
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Handle ?job= and ?action=add from command palette deep links
+  useEffect(() => {
+    const jobParam = searchParams.get("job");
+    const actionParam = searchParams.get("action");
+
+    if (jobParam) {
+      setSelectedJobId(jobParam);
+      router.replace(pathname, { scroll: false });
+    } else if (actionParam === "add") {
+      setAddJobOpen(true);
+      router.replace(pathname, { scroll: false });
+    }
+  }, [searchParams, router, pathname]);
+
+  const handleViewChange = useCallback((view: "kanban" | "table" | "calendar") => {
+    setActiveView(view);
+    setSelectedIds(new Set());
+  }, []);
 
   // View-specific filter overrides
   const viewFilters = useMemo(() => {
@@ -43,10 +71,16 @@ function KanbanBoardInner() {
 
   const { data: jobsData, isLoading: jobsLoading, error: jobsError } = useJobs(viewFilters);
 
-  const selectedJob = useMemo(
+  // Try to find the job in the current list first; fall back to a standalone fetch
+  // (e.g. when navigating from command palette with ?job= param)
+  const jobFromList = useMemo(
     () => (selectedJobId ? jobsData?.data?.find((j) => j.id === selectedJobId) ?? null : null),
     [selectedJobId, jobsData]
   );
+  const { data: fetchedJob } = useJob(
+    selectedJobId && !jobFromList ? selectedJobId : undefined
+  );
+  const selectedJob = jobFromList ?? fetchedJob ?? null;
 
   const jobsByStage = useMemo(() => {
     const map = new Map<string, Job[]>();
@@ -110,8 +144,9 @@ function KanbanBoardInner() {
       {/* Toolbar */}
       <Toolbar
         activeView={activeView}
-        onViewChange={setActiveView}
+        onViewChange={handleViewChange}
         onAddJob={() => setAddJobOpen(true)}
+        onManageStages={() => setStageManagerOpen(true)}
         filters={filters}
         activeFilterCount={activeFilterCount}
         onApplyFilters={applyFilters}
@@ -162,15 +197,24 @@ function KanbanBoardInner() {
         ) : (
           <div key={activeView} className="h-full animate-in fade-in-0 duration-150">
             {activeView === "table" ? (
-              <ApplicationsTable
-                jobs={jobsData?.data ?? []}
-                stages={stages!}
-                onJobClick={handleJobClick}
-                page={filters.page}
-                perPage={filters.perPage}
-                total={jobsData?.total ?? 0}
-                onPageChange={handlePageChange}
-              />
+              <>
+                <BulkActionBar
+                  selectedIds={selectedIds}
+                  onClear={() => setSelectedIds(new Set())}
+                  stages={stages!}
+                />
+                <ApplicationsTable
+                  jobs={jobsData?.data ?? []}
+                  stages={stages!}
+                  onJobClick={handleJobClick}
+                  page={filters.page}
+                  perPage={filters.perPage}
+                  total={jobsData?.total ?? 0}
+                  onPageChange={handlePageChange}
+                  selectedIds={selectedIds}
+                  onSelectionChange={setSelectedIds}
+                />
+              </>
             ) : activeView === "calendar" ? (
               <ApplicationsCalendar
                 jobs={jobsData?.data ?? []}
@@ -217,6 +261,10 @@ function KanbanBoardInner() {
         job={selectedJob}
         onClose={() => setSelectedJobId(null)}
         stages={stages ?? []}
+      />
+      <StageManagerDialog
+        open={stageManagerOpen}
+        onOpenChange={setStageManagerOpen}
       />
     </div>
   );

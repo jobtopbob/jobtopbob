@@ -25,6 +25,8 @@ interface ApplicationsTableProps {
   perPage?: number;
   total?: number;
   onPageChange?: (page: number) => void;
+  selectedIds?: Set<string>;
+  onSelectionChange?: (ids: Set<string>) => void;
 }
 
 function getStagePillStyle(stage: Stage | undefined): {
@@ -123,8 +125,30 @@ export function ApplicationsTable({
   perPage = 25,
   total = 0,
   onPageChange,
+  selectedIds = new Set<string>(),
+  onSelectionChange,
 }: ApplicationsTableProps) {
   const stageMap = new Map(stages.map((s) => [s.id, s]));
+
+  const allSelected = jobs.length > 0 && jobs.every((j) => selectedIds.has(j.id));
+  const someSelected = jobs.some((j) => selectedIds.has(j.id)) && !allSelected;
+
+  const toggleAll = () => {
+    if (!onSelectionChange) return;
+    if (allSelected) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(jobs.map((j) => j.id)));
+    }
+  };
+
+  const toggleOne = (id: string) => {
+    if (!onSelectionChange) return;
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onSelectionChange(next);
+  };
 
   if (jobs.length === 0) {
     return (
@@ -147,7 +171,12 @@ export function ApplicationsTable({
         <TableHeader>
           <TableRow className="border-b border-border-subtle hover:bg-transparent">
             <TableHead className="w-10 bg-surface pl-4">
-              <Checkbox aria-label="Select all" />
+              <Checkbox
+                aria-label="Select all"
+                checked={allSelected}
+                indeterminate={someSelected}
+                onCheckedChange={toggleAll}
+              />
             </TableHead>
             <TableHead className="bg-surface text-text-muted text-xs font-semibold">
               Product / Job
@@ -195,13 +224,17 @@ export function ApplicationsTable({
               <TableRow
                 key={job.id}
                 onClick={() => onJobClick(job)}
-                className="border-b border-border-subtle cursor-pointer hover:bg-surface-hover"
+                className={`border-b border-border-subtle cursor-pointer hover:bg-surface-hover ${selectedIds.has(job.id) ? "bg-brand/5" : ""}`}
               >
                 <TableCell
                   className="pl-4"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Checkbox aria-label={`Select ${job.title}`} />
+                  <Checkbox
+                    aria-label={`Select ${job.title}`}
+                    checked={selectedIds.has(job.id)}
+                    onCheckedChange={() => toggleOne(job.id)}
+                  />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2.5">
@@ -243,6 +276,7 @@ export function ApplicationsTable({
                     <StageIcon
                       stageName={stage?.name ?? "default"}
                       className="w-3.5 h-3.5 shrink-0"
+                      color={stage?.color ?? undefined}
                     />
                     {stage?.name ?? "—"}
                   </span>
