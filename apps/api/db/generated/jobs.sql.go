@@ -198,10 +198,10 @@ INSERT INTO jobs (
     location, location_type, salary_min, salary_max, salary_currency,
     salary_offered, interest, jd_raw, applied_at, follow_up_at,
     deadline, job_type, job_level, salary_interval, application_url,
-    experience_range, skills
+    experience_range, skills, resume_version_id
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-    $17, $18, $19, $20, $21, $22, $23, $24
+    $17, $18, $19, $20, $21, $22, $23, $24, $25
 ) RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
 `
 
@@ -230,6 +230,7 @@ type CreateJobParams struct {
 	ApplicationUrl  pgtype.Text        `json:"application_url"`
 	ExperienceRange pgtype.Text        `json:"experience_range"`
 	Skills          []byte             `json:"skills"`
+	ResumeVersionID pgtype.UUID        `json:"resume_version_id"`
 }
 
 func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, error) {
@@ -258,6 +259,7 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, erro
 		arg.ApplicationUrl,
 		arg.ExperienceRange,
 		arg.Skills,
+		arg.ResumeVersionID,
 	)
 	var i Job
 	err := row.Scan(

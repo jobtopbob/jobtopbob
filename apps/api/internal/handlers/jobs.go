@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 	db "github.com/jobtopbob/jobtopbob/apps/api/db/generated"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/services"
+	"github.com/jobtopbob/jobtopbob/apps/api/internal/services/rxresume"
 )
 
 // ListJobs handles GET /api/v1/jobs
@@ -85,10 +87,11 @@ type createJobRequest struct {
 	JobLevel        string  `json:"job_level"`
 	ApplicationURL  string  `json:"application_url"`
 	ExperienceRange string  `json:"experience_range"`
+	ResumeID        *string `json:"resume_id"`
 }
 
 // CreateJob handles POST /api/v1/jobs
-func CreateJob() gin.HandlerFunc {
+func CreateJob(rxClient *rxresume.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req createJobRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -148,6 +151,18 @@ func CreateJob() gin.HandlerFunc {
 			}
 		}
 
+		// Snapshot resume version if a resume is provided (best-effort)
+		if req.ResumeID != nil {
+			resumeUUID := parseUUID(*req.ResumeID)
+			userAPIKey := getUserRxAPIKey(c)
+			versionID, snapErr := services.SnapshotResumeVersion(c.Request.Context(), q, userID, resumeUUID, userAPIKey, rxClient)
+			if snapErr != nil {
+				slog.Warn("resume snapshot skipped", "resume_id", *req.ResumeID, "error", snapErr)
+			} else {
+				params.ResumeVersionID = versionID
+			}
+		}
+
 		job, err := services.CreateJob(c.Request.Context(), q, userID, params)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create job"})
@@ -203,6 +218,7 @@ type updateJobRequest struct {
 	Suitability       *int32  `json:"suitability"`
 	SuitabilityReason *string `json:"suitability_reason"`
 	ResumeVersionID   *string `json:"resume_version_id"`
+	ResumeID          *string `json:"resume_id"`
 	JdRaw             *string `json:"jd_raw"`
 	AppliedAt         *string `json:"applied_at"`
 	FollowUpAt        *string `json:"follow_up_at"`
@@ -215,7 +231,7 @@ type updateJobRequest struct {
 }
 
 // UpdateJob handles PUT /api/v1/jobs/:id
-func UpdateJob() gin.HandlerFunc {
+func UpdateJob(rxClient *rxresume.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, ok := parsePathUUID(c, "id")
 		if !ok {
@@ -291,7 +307,18 @@ func UpdateJob() gin.HandlerFunc {
 		if req.SuitabilityReason != nil {
 			params.SuitabilityReason = pgtextValid(*req.SuitabilityReason)
 		}
-		if req.ResumeVersionID != nil {
+		if req.ResumeID != nil {
+			// Snapshot a new resume version when resume_id is provided
+			resumeUUID := parseUUID(*req.ResumeID)
+			userAPIKey := getUserRxAPIKey(c)
+			versionID, snapErr := services.SnapshotResumeVersion(c.Request.Context(), q, userID, resumeUUID, userAPIKey, rxClient)
+			if snapErr != nil {
+				slog.Warn("resume snapshot skipped on update", "resume_id", *req.ResumeID, "error", snapErr)
+			} else {
+				params.ResumeVersionID = versionID
+			}
+		} else if req.ResumeVersionID != nil {
+			// Allow setting an existing resume version directly
 			params.ResumeVersionID = parseUUID(*req.ResumeVersionID)
 		}
 		if req.JdRaw != nil {

@@ -365,7 +365,7 @@ Phase 2: Deeper integration
 - Resume A/B analytics (response rate by version)
 
 **Trade-offs:**
-- No DOCX export (RxResume supports PDF + JSON only) — can add via `docx.js` in JobTopBob's worker
+- No DOCX export (RxResume supports PDF + JSON only) — not planned; PDF and JSON exports cover user needs
 - Adds 2 containers to the stack (RxResume app + Chromium printer) — but removes the need for JobTopBob's own Puppeteer
 - RxResume's template customisation is CSS-based, not a visual editor — sufficient for most users
 - Users see RxResume's UI for resume editing (can be embedded via iframe or linked) — not a fully seamless experience without deeper integration
@@ -1257,7 +1257,6 @@ Goal: a fully functional self-hosted product that solves the core problem comple
 - [ ] Go API proxy endpoints for resume CRUD via RxResume REST API
 - [ ] Resume-to-application linking (`jobs.resume_version_id` → `resume_versions.id`)
 - [ ] Resume snapshot on application submit (create `resume_versions` row with RxResume JSON, link to job)
-- [ ] DOCX export via `docx.js` in Go worker (RxResume handles PDF)
 
 ### Milestone 1.4 — AI features (BYOK) (weeks 7–10)
 

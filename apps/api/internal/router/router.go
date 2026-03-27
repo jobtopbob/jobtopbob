@@ -62,11 +62,11 @@ func New(cfg Config) *gin.Engine {
 	{
 		// Jobs
 		v1.GET("/jobs", handlers.ListJobs())
-		v1.POST("/jobs", handlers.CreateJob())
+		v1.POST("/jobs", handlers.CreateJob(cfg.RxClient))
 		v1.POST("/jobs/import", handlers.ImportJob())
 		v1.PATCH("/jobs/bulk", handlers.BulkUpdate())
 		v1.GET("/jobs/:id", handlers.GetJob())
-		v1.PUT("/jobs/:id", handlers.UpdateJob())
+		v1.PUT("/jobs/:id", handlers.UpdateJob(cfg.RxClient))
 		v1.DELETE("/jobs/:id", handlers.DeleteJob())
 		v1.GET("/jobs/:id/activity", handlers.GetJobActivity())
 		v1.POST("/jobs/:id/tags", handlers.AssignJobTag())
@@ -166,7 +166,14 @@ func New(cfg Config) *gin.Engine {
 			resumes.PUT("/:id", handlers.UpdateResume(cfg.RxClient))
 			resumes.DELETE("/:id", handlers.DeleteResume(cfg.RxClient))
 			resumes.GET("/:id/pdf", handlers.ExportResumePDF(cfg.RxClient))
+			resumes.GET("/:id/versions", handlers.ListResumeVersions())
 			resumes.PUT("/:id/base", handlers.SetBaseResume())
+		}
+
+		// Resume versions
+		resumeVersions := v1.Group("/resume-versions")
+		{
+			resumeVersions.GET("/:id", handlers.GetResumeVersion())
 		}
 
 		// Email Integration

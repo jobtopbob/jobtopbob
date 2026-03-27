@@ -276,3 +276,49 @@ func SetBaseResume() gin.HandlerFunc {
 		c.JSON(http.StatusOK, resume)
 	}
 }
+
+// ListResumeVersions handles GET /api/v1/resumes/:id/versions
+func ListResumeVersions() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		resumeID, ok := parsePathUUID(c, "id")
+		if !ok {
+			return
+		}
+
+		q := db.New(getTx(c))
+		userID := getUserID(c)
+
+		versions, err := services.ListResumeVersionsByResume(c.Request.Context(), q, userID, resumeID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list resume versions"})
+			return
+		}
+
+		c.JSON(http.StatusOK, versions)
+	}
+}
+
+// GetResumeVersion handles GET /api/v1/resume-versions/:id
+func GetResumeVersion() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, ok := parsePathUUID(c, "id")
+		if !ok {
+			return
+		}
+
+		q := db.New(getTx(c))
+		userID := getUserID(c)
+
+		version, err := services.GetResumeVersion(c.Request.Context(), q, userID, id)
+		if errors.Is(err, services.ErrNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "resume version not found"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get resume version"})
+			return
+		}
+
+		c.JSON(http.StatusOK, version)
+	}
+}

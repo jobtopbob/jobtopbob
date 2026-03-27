@@ -624,3 +624,97 @@ func listResumesFromDB(ctx context.Context, q *db.Queries, userID string) ([]Res
 	}
 	return result, nil
 }
+
+// ---------- Resume Versions ----------
+
+// ResumeVersionResponse is the API response for a resume version snapshot.
+type ResumeVersionResponse struct {
+	ID        string          `json:"id"`
+	ResumeID  string          `json:"resume_id"`
+	Content   json.RawMessage `json:"content"`
+	CreatedAt string          `json:"created_at"`
+}
+
+func resumeVersionToResponse(rv db.ResumeVersion) ResumeVersionResponse {
+	return ResumeVersionResponse{
+		ID:        uuidToString(rv.ID),
+		ResumeID:  uuidToString(rv.ResumeID),
+		Content:   json.RawMessage(rv.Content),
+		CreatedAt: rv.CreatedAt.Time.Format(time.RFC3339),
+	}
+}
+
+// SnapshotResumeVersion fetches the full resume JSON from RxResume and stores
+// it as a resume_versions row. Returns the new version's UUID.
+// This is best-effort: if RxResume is not configured or the resume is not
+// linked, it returns a zero UUID and an error the caller can choose to ignore.
+func SnapshotResumeVersion(ctx context.Context, q *db.Queries, userID string, resumeID pgtype.UUID, userAPIKey string, rxClient *rxresume.Client) (pgtype.UUID, error) {
+	var zero pgtype.UUID
+
+	if userAPIKey == "" {
+		return zero, fmt.Errorf("%w: connect your Resume Builder API key to enable resume snapshots", ErrNotConfigured)
+	}
+
+	resume, err := q.GetResume(ctx, db.GetResumeParams{ID: resumeID, UserID: userID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return zero, ErrNotFound
+	}
+	if err != nil {
+		return zero, err
+	}
+
+	if !resume.RxresumeID.Valid || resume.RxresumeID.String == "" {
+		return zero, fmt.Errorf("%w: resume is not linked to Resume Builder", ErrNotLinked)
+	}
+
+	detail, err := rxClient.GetResume(ctx, userAPIKey, resume.RxresumeID.String)
+	if err != nil {
+		return zero, fmt.Errorf("fetch resume from builder: %w", err)
+	}
+	if detail == nil || len(detail.Data) == 0 {
+		return zero, fmt.Errorf("resume builder returned empty data")
+	}
+
+	version, err := q.CreateResumeVersion(ctx, db.CreateResumeVersionParams{
+		UserID:   userID,
+		ResumeID: resumeID,
+		Content:  detail.Data,
+	})
+	if err != nil {
+		return zero, fmt.Errorf("create resume version: %w", err)
+	}
+
+	_ = LogActivity(ctx, q, userID, "resume_version", version.ID, "created", nil, map[string]string{
+		"resume_id": uuidToString(resumeID),
+	})
+
+	return version.ID, nil
+}
+
+// GetResumeVersion returns a single resume version snapshot.
+func GetResumeVersion(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID) (ResumeVersionResponse, error) {
+	rv, err := q.GetResumeVersion(ctx, db.GetResumeVersionParams{ID: id, UserID: userID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ResumeVersionResponse{}, ErrNotFound
+	}
+	if err != nil {
+		return ResumeVersionResponse{}, err
+	}
+	return resumeVersionToResponse(rv), nil
+}
+
+// ListResumeVersionsByResume returns all version snapshots for a given resume.
+func ListResumeVersionsByResume(ctx context.Context, q *db.Queries, userID string, resumeID pgtype.UUID) ([]ResumeVersionResponse, error) {
+	versions, err := q.ListResumeVersionsByResume(ctx, db.ListResumeVersionsByResumeParams{
+		ResumeID: resumeID,
+		UserID:   userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]ResumeVersionResponse, len(versions))
+	for i, rv := range versions {
+		result[i] = resumeVersionToResponse(rv)
+	}
+	return result, nil
+}
