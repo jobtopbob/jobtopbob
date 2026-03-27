@@ -548,6 +548,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("job_level", v)}
           />
           <InlineEditField
+            icon={Star}
             label="Experience"
             value={job.experience_range}
             type="text"
@@ -592,6 +593,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("salary_max", v)}
           />
           <InlineEditField
+            icon={Globe}
             label="Currency"
             value={job.salary_currency}
             type="select"
@@ -600,6 +602,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("salary_currency", v)}
           />
           <InlineEditField
+            icon={Clock}
             label="Interval"
             value={job.salary_interval}
             type="select"
