@@ -74,6 +74,7 @@ type createJobRequest struct {
 	SalaryMin       *int32  `json:"salary_min"`
 	SalaryMax       *int32  `json:"salary_max"`
 	SalaryCurrency  string  `json:"salary_currency"`
+	SalaryOffered   *int32  `json:"salary_offered"`
 	SalaryInterval  string  `json:"salary_interval"`
 	Interest        *int32  `json:"interest"`
 	JdRaw           string  `json:"jd_raw"`
@@ -124,6 +125,9 @@ func CreateJob() gin.HandlerFunc {
 		}
 		if req.SalaryMax != nil {
 			params.SalaryMax = pgtype.Int4{Int32: *req.SalaryMax, Valid: true}
+		}
+		if req.SalaryOffered != nil {
+			params.SalaryOffered = pgtype.Int4{Int32: *req.SalaryOffered, Valid: true}
 		}
 		if req.Interest != nil {
 			params.Interest = pgtype.Int4{Int32: *req.Interest, Valid: true}
@@ -192,6 +196,7 @@ type updateJobRequest struct {
 	SalaryMin         *int32  `json:"salary_min"`
 	SalaryMax         *int32  `json:"salary_max"`
 	SalaryMarket      *int32  `json:"salary_market"`
+	SalaryOffered     *int32  `json:"salary_offered"`
 	SalaryCurrency    *string `json:"salary_currency"`
 	SalaryInterval    *string `json:"salary_interval"`
 	Interest          *int32  `json:"interest"`
@@ -270,6 +275,9 @@ func UpdateJob() gin.HandlerFunc {
 		}
 		if req.SalaryMarket != nil {
 			params.SalaryMarket = pgtype.Int4{Int32: *req.SalaryMarket, Valid: true}
+		}
+		if req.SalaryOffered != nil {
+			params.SalaryOffered = pgtype.Int4{Int32: *req.SalaryOffered, Valid: true}
 		}
 		if req.SalaryCurrency != nil {
 			params.SalaryCurrency = pgtextValid(*req.SalaryCurrency)

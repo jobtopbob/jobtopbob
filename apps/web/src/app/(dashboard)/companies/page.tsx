@@ -34,6 +34,7 @@ import { AddCompanyDialog } from "@/components/companies/add-company-dialog";
 import { PaginationControls } from "@/components/kanban/pagination-controls";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
+import { ExportButton } from "@/components/export-button";
 
 const SORT_OPTIONS = [
   { value: "name", label: "Name" },
@@ -144,10 +145,13 @@ export default function CompaniesPage() {
               {isLoading ? "Loading..." : `${total} companies tracked`}
             </p>
           </div>
-          <Button onClick={() => setAddDialogOpen(true)}>
-            <Plus className="w-4 h-4" />
-            Add Company
-          </Button>
+          <div className="flex items-center gap-2">
+            <ExportButton endpoint="/api/v1/export/companies" />
+            <Button onClick={() => setAddDialogOpen(true)}>
+              <Plus className="w-4 h-4" />
+              Add Company
+            </Button>
+          </div>
         </div>
 
         {/* Toolbar: Search + Filters + Sort */}

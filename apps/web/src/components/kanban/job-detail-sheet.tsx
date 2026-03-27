@@ -178,7 +178,7 @@ export function JobDetailSheet({ job: jobProp, onClose, stages }: JobDetailSheet
 
   const handleUpdate = (field: string, value: string) => {
     const body: Record<string, unknown> = {};
-    if (field === "salary_min" || field === "salary_max") {
+    if (field === "salary_min" || field === "salary_max" || field === "salary_offered" || field === "salary_market") {
       body[field] = value ? parseInt(value) : null;
     } else if (field === "interest") {
       body[field] = value ? parseInt(value) : null;
@@ -607,18 +607,22 @@ function DetailsTab({
             placeholder="Annual"
             onSave={(v) => onUpdate("salary_interval", v)}
           />
-          {job.salary_market != null && (
-            <div className="flex sm:flex-row flex-col sm:items-center items-start gap-2 min-h-[36px] py-1">
-              <div className="flex items-center gap-2 sm:w-32 shrink-0">
-                <span className="text-[13px] text-text-muted">
-                  Market Rate
-                </span>
-              </div>
-              <span className="text-sm text-brand-green font-semibold px-2 truncate min-w-0">
-                ${job.salary_market.toLocaleString()}
-              </span>
-            </div>
-          )}
+          <InlineEditField
+            icon={DollarSign}
+            label="Offered"
+            value={job.salary_offered}
+            type="number"
+            placeholder="e.g. 180000"
+            onSave={(v) => onUpdate("salary_offered", v)}
+          />
+          <InlineEditField
+            icon={DollarSign}
+            label="Market Rate"
+            value={job.salary_market}
+            type="number"
+            placeholder="e.g. 170000"
+            onSave={(v) => onUpdate("salary_market", v)}
+          />
         </div>
 
         {/* Dates */}

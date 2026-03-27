@@ -61,6 +61,7 @@ const formSchema = z.object({
   salaryInterval: z.string(),
   salaryMin: z.string(),
   salaryMax: z.string(),
+  salaryOffered: z.string(),
   deadline: z.string(),
   appliedAt: z.string(),
   followUpAt: z.string(),
@@ -87,6 +88,7 @@ const defaultValues: FormValues = {
   salaryInterval: "annual",
   salaryMin: "",
   salaryMax: "",
+  salaryOffered: "",
   deadline: "",
   appliedAt: "",
   followUpAt: "",
@@ -200,6 +202,7 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
         salary_currency: data.salaryCurrency || undefined,
         salary_min: data.salaryMin ? parseInt(data.salaryMin) : undefined,
         salary_max: data.salaryMax ? parseInt(data.salaryMax) : undefined,
+        salary_offered: data.salaryOffered ? parseInt(data.salaryOffered) : undefined,
         salary_interval: data.salaryInterval || undefined,
         interest: data.interest ? parseInt(data.interest) : undefined,
         jd_raw: data.jdRaw || undefined,
@@ -592,6 +595,16 @@ function StepDetails({ form }: { form: UseFormReturn<FormValues> }) {
               )}
             />
           </div>
+          <Controller
+            name="salaryOffered"
+            control={control}
+            render={({ field }) => (
+              <Field>
+                <FieldLabel>Offered</FieldLabel>
+                <Input {...field} type="number" placeholder="180k" />
+              </Field>
+            )}
+          />
         </div>
 
         <div className="space-y-3">

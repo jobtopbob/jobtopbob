@@ -14,6 +14,7 @@ CREATE TABLE jobs (
     salary_max        int,
     salary_market     int,
     salary_currency   text,
+    salary_offered    int,
     interest          int,
     suitability       int,
     suitability_reason text,

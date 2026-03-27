@@ -13,6 +13,7 @@ import {
   Wrench,
   Mail,
   Users,
+  BookOpen,
   Settings,
   PanelLeftClose,
   Sun,
@@ -52,6 +53,7 @@ const navGroups: NavGroup[] = [
     icon: Wrench,
     items: [
       { label: "Resumes", icon: FileText, href: "/resumes" },
+      { label: "Resources", icon: BookOpen, href: "/resources" },
       { label: "Email Integration", icon: Mail, href: "/email-integration" },
     ],
   },

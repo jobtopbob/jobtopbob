@@ -86,6 +86,9 @@ components:
         salary_market:
           type: integer
           nullable: true
+        salary_offered:
+          type: integer
+          nullable: true
         salary_currency:
           type: string
           nullable: true
@@ -294,6 +297,8 @@ components:
           type: integer
         salary_max:
           type: integer
+        salary_offered:
+          type: integer
         salary_currency:
           type: string
         salary_interval:
@@ -358,6 +363,9 @@ components:
           type: integer
           nullable: true
         salary_market:
+          type: integer
+          nullable: true
+        salary_offered:
           type: integer
           nullable: true
         salary_currency:
@@ -684,6 +692,290 @@ components:
           nullable: true
         logo_url:
           type: string
+          nullable: true
+
+    Contact:
+      type: object
+      required: [id, user_id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        company_name:
+          type: string
+          nullable: true
+        name:
+          type: string
+        role:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        linkedin_url:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        last_contact:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Offer:
+      type: object
+      required: [id, user_id, job_id, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        job_id:
+          type: string
+          format: uuid
+        job_title:
+          type: string
+          nullable: true
+        company_name:
+          type: string
+          nullable: true
+        base_salary:
+          type: integer
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+        equity:
+          type: string
+          nullable: true
+        bonus:
+          type: string
+          nullable: true
+        benefits:
+          type: object
+          nullable: true
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+        accepted:
+          type: boolean
+          nullable: true
+        negotiation_log:
+          type: object
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Resource:
+      type: object
+      required: [id, user_id, title, type, pinned, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+          nullable: true
+        type:
+          type: string
+        category:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        pinned:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateResourceRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+        type:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        content:
+          type: string
+        pinned:
+          type: boolean
+
+    UpdateResourceRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        url:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        content:
+          type: string
+          nullable: true
+        pinned:
+          type: boolean
+          nullable: true
+
+    CreateOfferRequest:
+      type: object
+      required: [job_id]
+      properties:
+        job_id:
+          type: string
+        base_salary:
+          type: integer
+        currency:
+          type: string
+        equity:
+          type: string
+        bonus:
+          type: string
+        benefits:
+          type: object
+        deadline:
+          type: string
+          format: date-time
+        accepted:
+          type: boolean
+        negotiation_log:
+          type: object
+
+    UpdateOfferRequest:
+      type: object
+      properties:
+        base_salary:
+          type: integer
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+        equity:
+          type: string
+          nullable: true
+        bonus:
+          type: string
+          nullable: true
+        benefits:
+          type: object
+          nullable: true
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+        accepted:
+          type: boolean
+          nullable: true
+        negotiation_log:
+          type: object
+          nullable: true
+
+    CreateContactRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        company_id:
+          type: string
+        role:
+          type: string
+        email:
+          type: string
+        linkedin_url:
+          type: string
+        source:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+        last_contact:
+          type: string
+          format: date-time
+
+    UpdateContactRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        company_id:
+          type: string
+          nullable: true
+        role:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        linkedin_url:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        last_contact:
+          type: string
+          format: date-time
           nullable: true
 
     CreateTagRequest:
@@ -1687,6 +1979,346 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/resources:
+    get:
+      summary: List resources
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 12 }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: types
+          in: query
+          schema: { type: string }
+        - name: categories
+          in: query
+          schema: { type: string }
+        - name: sort_by
+          in: query
+          schema: { type: string, enum: [title, created_at, updated_at], default: created_at }
+        - name: sort_order
+          in: query
+          schema: { type: string, enum: [asc, desc], default: desc }
+      responses:
+        "200":
+          description: Paginated list of resources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Resource"
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+    post:
+      summary: Create a resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResourceRequest"
+      responses:
+        "201":
+          description: Resource created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+
+  /api/v1/resources/{id}:
+    get:
+      summary: Get a resource by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Resource details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        "404":
+          description: Resource not found
+    put:
+      summary: Update a resource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateResourceRequest"
+      responses:
+        "200":
+          description: Resource updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        "404":
+          description: Resource not found
+    delete:
+      summary: Delete a resource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Resource deleted
+        "404":
+          description: Resource not found
+
+  /api/v1/resources/{id}/pin:
+    post:
+      summary: Toggle resource pin status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Resource pin toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+
+  /api/v1/offers:
+    get:
+      summary: List offers
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 10 }
+        - name: sort_by
+          in: query
+          schema: { type: string, enum: [created_at, base_salary, deadline], default: created_at }
+        - name: sort_order
+          in: query
+          schema: { type: string, enum: [asc, desc], default: desc }
+      responses:
+        "200":
+          description: Paginated list of offers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Offer"
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+    post:
+      summary: Create an offer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOfferRequest"
+      responses:
+        "201":
+          description: Offer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+
+  /api/v1/offers/{id}:
+    get:
+      summary: Get an offer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Offer details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+        "404":
+          description: Offer not found
+    put:
+      summary: Update an offer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOfferRequest"
+      responses:
+        "200":
+          description: Offer updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+        "404":
+          description: Offer not found
+
+  /api/v1/contacts:
+    get:
+      summary: List contacts
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 10 }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: statuses
+          in: query
+          schema: { type: string }
+        - name: sources
+          in: query
+          schema: { type: string }
+        - name: company_id
+          in: query
+          schema: { type: string }
+        - name: sort_by
+          in: query
+          schema: { type: string, enum: [name, created_at, updated_at, last_contact], default: name }
+        - name: sort_order
+          in: query
+          schema: { type: string, enum: [asc, desc], default: asc }
+      responses:
+        "200":
+          description: Paginated list of contacts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Contact"
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+    post:
+      summary: Create a contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactRequest"
+      responses:
+        "201":
+          description: Contact created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+
+  /api/v1/contacts/search:
+    get:
+      summary: Search contacts by name or email
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Matching contacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contact"
+
+  /api/v1/contacts/{id}:
+    get:
+      summary: Get a contact by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Contact details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "404":
+          description: Contact not found
+    put:
+      summary: Update a contact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContactRequest"
+      responses:
+        "200":
+          description: Contact updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "404":
+          description: Contact not found
+    delete:
+      summary: Delete a contact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Contact deleted
+        "404":
+          description: Contact not found
 
   /api/v1/tags:
     get:

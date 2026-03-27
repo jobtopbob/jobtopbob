@@ -15,4 +15,12 @@ func Register(s *asynq.Scheduler) {
 	} else {
 		slog.Info("registered cron: email:watch-renew", "entry_id", entryID)
 	}
+
+	// Daily database backup at 3:00 AM UTC
+	entryID, err = s.Register("0 3 * * *", asynq.NewTask("db:backup", nil))
+	if err != nil {
+		slog.Error("failed to register db-backup cron", "error", err)
+	} else {
+		slog.Info("registered cron: db:backup", "entry_id", entryID)
+	}
 }

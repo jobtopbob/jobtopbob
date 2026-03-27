@@ -232,6 +232,10 @@ services:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-rustfsadmin}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
       S3_ENDPOINT: http://rustfs:9000
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - backups:/backups
     depends_on:
       api:
         condition: service_healthy
@@ -306,3 +310,4 @@ volumes:
   redis_data:
   rxresume_data:
   rustfs_data:
+  backups:

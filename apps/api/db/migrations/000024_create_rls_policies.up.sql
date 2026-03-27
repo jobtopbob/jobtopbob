@@ -125,3 +125,4 @@ CREATE POLICY select_own ON scrape_runs FOR SELECT USING (user_id = current_user
 CREATE POLICY insert_own ON scrape_runs FOR INSERT WITH CHECK (user_id = current_user_id());
 CREATE POLICY update_own ON scrape_runs FOR UPDATE USING (user_id = current_user_id()) WITH CHECK (user_id = current_user_id());
 CREATE POLICY delete_own ON scrape_runs FOR DELETE USING (user_id = current_user_id());
+

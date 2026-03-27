@@ -162,6 +162,12 @@ func main() {
 	}
 	mux.HandleFunc(tasks.TypeCompanyEnrich, tasks.HandleCompanyEnrich(enrichDeps))
 
+	// Database backup
+	backupDeps := &tasks.DBBackupDeps{
+		DatabaseURL: cfg.DatabaseURL,
+	}
+	mux.HandleFunc(tasks.TypeDBBackup, tasks.HandleDBBackup(backupDeps))
+
 	// AI tasks (independent of scrapers)
 	if aiProvider != nil {
 		resumeDeps := &tasks.ResumeAnalyzeDeps{

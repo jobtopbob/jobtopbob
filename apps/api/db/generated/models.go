@@ -141,6 +141,7 @@ type Job struct {
 	SalaryMax         pgtype.Int4        `json:"salary_max"`
 	SalaryMarket      pgtype.Int4        `json:"salary_market"`
 	SalaryCurrency    pgtype.Text        `json:"salary_currency"`
+	SalaryOffered     pgtype.Int4        `json:"salary_offered"`
 	Interest          pgtype.Int4        `json:"interest"`
 	Suitability       pgtype.Int4        `json:"suitability"`
 	SuitabilityReason pgtype.Text        `json:"suitability_reason"`
@@ -213,6 +214,20 @@ type Offer struct {
 	NegotiationLog []byte             `json:"negotiation_log"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Resource struct {
+	ID          pgtype.UUID        `json:"id"`
+	UserID      string             `json:"user_id"`
+	Title       string             `json:"title"`
+	Url         pgtype.Text        `json:"url"`
+	Type        string             `json:"type"`
+	Category    pgtype.Text        `json:"category"`
+	Description pgtype.Text        `json:"description"`
+	Content     pgtype.Text        `json:"content"`
+	Pinned      bool               `json:"pinned"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Resume struct {

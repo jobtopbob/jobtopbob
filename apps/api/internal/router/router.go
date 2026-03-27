@@ -94,6 +94,46 @@ func New(cfg Config) *gin.Engine {
 			companies.GET("/:id/enrichment-logs", handlers.ListEnrichmentLogs())
 		}
 
+		// Contacts
+		contacts := v1.Group("/contacts")
+		{
+			contacts.GET("/search", handlers.SearchContacts())
+			contacts.GET("", handlers.ListContacts())
+			contacts.POST("", handlers.CreateContact())
+			contacts.GET("/:id", handlers.GetContact())
+			contacts.PUT("/:id", handlers.UpdateContact())
+			contacts.DELETE("/:id", handlers.DeleteContact())
+		}
+
+		// Offers
+		offers := v1.Group("/offers")
+		{
+			offers.GET("", handlers.ListOffers())
+			offers.POST("", handlers.CreateOffer())
+			offers.GET("/:id", handlers.GetOffer())
+			offers.PUT("/:id", handlers.UpdateOffer())
+		}
+
+		// Resources
+		resources := v1.Group("/resources")
+		{
+			resources.GET("", handlers.ListResources())
+			resources.POST("", handlers.CreateResource())
+			resources.GET("/:id", handlers.GetResource())
+			resources.PUT("/:id", handlers.UpdateResource())
+			resources.DELETE("/:id", handlers.DeleteResource())
+			resources.POST("/:id/pin", handlers.ToggleResourcePin())
+		}
+
+		// Export
+		export := v1.Group("/export")
+		{
+			export.GET("/jobs", handlers.ExportJobs())
+			export.GET("/companies", handlers.ExportCompanies())
+			export.GET("/contacts", handlers.ExportContacts())
+			export.GET("/offers", handlers.ExportOffers())
+		}
+
 		// Tags
 		v1.GET("/tags", handlers.ListTags())
 		v1.POST("/tags", handlers.CreateTag())

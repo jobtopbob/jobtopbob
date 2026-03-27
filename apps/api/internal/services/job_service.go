@@ -362,6 +362,9 @@ func detectJobChanges(old db.GetJobRow, updated db.Job) map[string]any {
 	if old.SalaryMax != updated.SalaryMax {
 		changes["salary_max"] = map[string]pgtype.Int4{"old": old.SalaryMax, "new": updated.SalaryMax}
 	}
+	if old.SalaryOffered != updated.SalaryOffered {
+		changes["salary_offered"] = map[string]pgtype.Int4{"old": old.SalaryOffered, "new": updated.SalaryOffered}
+	}
 	if old.SalaryCurrency != updated.SalaryCurrency {
 		changes["salary_currency"] = map[string]pgtype.Text{"old": old.SalaryCurrency, "new": updated.SalaryCurrency}
 	}

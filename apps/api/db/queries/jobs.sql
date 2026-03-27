@@ -75,12 +75,12 @@ WHERE j.user_id = $1
 INSERT INTO jobs (
     user_id, company_id, stage_id, title, status, source, source_url,
     location, location_type, salary_min, salary_max, salary_currency,
-    interest, jd_raw, applied_at, follow_up_at,
+    salary_offered, interest, jd_raw, applied_at, follow_up_at,
     deadline, job_type, job_level, salary_interval, application_url,
     experience_range, skills
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-    $17, $18, $19, $20, $21, $22, $23
+    $17, $18, $19, $20, $21, $22, $23, $24
 ) RETURNING *;
 
 -- name: UpdateJob :one
@@ -98,6 +98,7 @@ UPDATE jobs SET
     salary_max = COALESCE(sqlc.narg('salary_max'), salary_max),
     salary_market = COALESCE(sqlc.narg('salary_market'), salary_market),
     salary_currency = COALESCE(sqlc.narg('salary_currency'), salary_currency),
+    salary_offered = COALESCE(sqlc.narg('salary_offered'), salary_offered),
     interest = COALESCE(sqlc.narg('interest'), interest),
     suitability = COALESCE(sqlc.narg('suitability'), suitability),
     suitability_reason = COALESCE(sqlc.narg('suitability_reason'), suitability_reason),
