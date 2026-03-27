@@ -10,17 +10,19 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useCreateOffer } from "@/hooks/use-offers";
+import { JobCombobox } from "./job-combobox";
+import type { Job } from "@/hooks/use-jobs";
 import { toast } from "sonner";
 
 interface AddOfferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Pre-select a job (e.g. when prompted from Kanban drag). */
+  preselectedJob?: Job | null;
 }
 
 const initialForm = {
-  jobId: "",
   baseSalary: "",
   currency: "USD",
   equity: "",
@@ -29,20 +31,27 @@ const initialForm = {
   deadline: "",
 };
 
-export function AddOfferDialog({ open, onOpenChange }: AddOfferDialogProps) {
+export function AddOfferDialog({
+  open,
+  onOpenChange,
+  preselectedJob,
+}: AddOfferDialogProps) {
+  const [selectedJob, setSelectedJob] = useState<Job | null>(
+    preselectedJob ?? null
+  );
   const [form, setForm] = useState(initialForm);
   const createOffer = useCreateOffer();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.jobId.trim()) {
-      toast.error("Job ID is required");
+    if (!selectedJob) {
+      toast.error("Please select a job");
       return;
     }
 
     createOffer.mutate(
       {
-        job_id: form.jobId.trim(),
+        job_id: selectedJob.id,
         base_salary: form.baseSalary ? parseInt(form.baseSalary) : undefined,
         currency: form.currency || undefined,
         equity: form.equity || undefined,
@@ -55,6 +64,7 @@ export function AddOfferDialog({ open, onOpenChange }: AddOfferDialogProps) {
         onSuccess: () => {
           toast.success("Offer added");
           setForm(initialForm);
+          setSelectedJob(null);
           onOpenChange(false);
         },
         onError: () => toast.error("Failed to add offer"),
@@ -63,7 +73,16 @@ export function AddOfferDialog({ open, onOpenChange }: AddOfferDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          setForm(initialForm);
+          setSelectedJob(preselectedJob ?? null);
+        }
+        onOpenChange(v);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Offer</DialogTitle>
@@ -72,13 +91,11 @@ export function AddOfferDialog({ open, onOpenChange }: AddOfferDialogProps) {
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-text-muted">
-              Job ID *
+              Job *
             </label>
-            <Input
-              value={form.jobId}
-              onChange={(e) => setForm({ ...form, jobId: e.target.value })}
-              placeholder="Paste job UUID"
-              autoFocus
+            <JobCombobox
+              value={selectedJob}
+              onChange={setSelectedJob}
             />
           </div>
 

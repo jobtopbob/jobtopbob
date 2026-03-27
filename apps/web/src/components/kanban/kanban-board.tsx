@@ -17,6 +17,7 @@ import { ApplicationsTable } from "./applications-table";
 import { ApplicationsCalendar } from "./applications-calendar";
 import { BulkActionBar } from "./bulk-action-bar";
 import { StageManagerDialog } from "./stage-manager-dialog";
+import { AddOfferDialog } from "@/components/offers/add-offer-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function KanbanBoardInner() {
@@ -29,31 +30,29 @@ function KanbanBoardInner() {
     resetFilters,
     activeFilterCount,
   } = useJobFilters();
-  const [addJobOpen, setAddJobOpen] = useState(false);
-  const [stageManagerOpen, setStageManagerOpen] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [activeView, setActiveView] = useState<"kanban" | "table" | "calendar">(
-    "kanban"
-  );
-
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Handle ?job= and ?action=add from command palette deep links
-  useEffect(() => {
-    const jobParam = searchParams.get("job");
-    const actionParam = searchParams.get("action");
+  // Derive initial state from URL params (command palette deep links)
+  const jobParam = searchParams.get("job");
+  const actionParam = searchParams.get("action");
 
-    if (jobParam) {
-      setSelectedJobId(jobParam);
-      router.replace(pathname, { scroll: false });
-    } else if (actionParam === "add") {
-      setAddJobOpen(true);
+  const [addJobOpen, setAddJobOpen] = useState(actionParam === "add");
+  const [stageManagerOpen, setStageManagerOpen] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(jobParam);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [activeView, setActiveView] = useState<"kanban" | "table" | "calendar">(
+    "kanban"
+  );
+  const [offerPromptJobId, setOfferPromptJobId] = useState<string | null>(null);
+
+  // Clean up URL params after consuming them
+  useEffect(() => {
+    if (jobParam || actionParam) {
       router.replace(pathname, { scroll: false });
     }
-  }, [searchParams, router, pathname]);
+  }, [jobParam, actionParam, router, pathname]);
 
   const handleViewChange = useCallback((view: "kanban" | "table" | "calendar") => {
     setActiveView(view);
@@ -224,7 +223,10 @@ function KanbanBoardInner() {
             ) : (
               <>
                 {/* Desktop: kanban columns with horizontal scroll */}
-                <BoardDndProvider>
+                <BoardDndProvider
+                  stages={stages}
+                  onOfferPrompt={setOfferPromptJobId}
+                >
                   <div className="hidden lg:flex gap-4 h-full overflow-x-auto pr-2">
                     {stages!.map((stage) => (
                       <KanbanColumn
@@ -265,6 +267,15 @@ function KanbanBoardInner() {
       <StageManagerDialog
         open={stageManagerOpen}
         onOpenChange={setStageManagerOpen}
+      />
+      <AddOfferDialog
+        open={!!offerPromptJobId}
+        onOpenChange={(v) => { if (!v) setOfferPromptJobId(null); }}
+        preselectedJob={
+          offerPromptJobId
+            ? jobsData?.data?.find((j) => j.id === offerPromptJobId) ?? null
+            : null
+        }
       />
     </div>
   );

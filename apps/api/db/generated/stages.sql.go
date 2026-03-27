@@ -90,6 +90,32 @@ func (q *Queries) GetStage(ctx context.Context, arg GetStageParams) (Stage, erro
 	return i, err
 }
 
+const getStageByMappedStatus = `-- name: GetStageByMappedStatus :one
+SELECT id, user_id, name, position, is_terminal, color, mapped_status, created_at, updated_at FROM stages WHERE user_id = $1 AND mapped_status = $2 LIMIT 1
+`
+
+type GetStageByMappedStatusParams struct {
+	UserID       string      `json:"user_id"`
+	MappedStatus pgtype.Text `json:"mapped_status"`
+}
+
+func (q *Queries) GetStageByMappedStatus(ctx context.Context, arg GetStageByMappedStatusParams) (Stage, error) {
+	row := q.db.QueryRow(ctx, getStageByMappedStatus, arg.UserID, arg.MappedStatus)
+	var i Stage
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Position,
+		&i.IsTerminal,
+		&i.Color,
+		&i.MappedStatus,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listStages = `-- name: ListStages :many
 SELECT id, user_id, name, position, is_terminal, color, mapped_status, created_at, updated_at FROM stages WHERE user_id = $1 ORDER BY position ASC
 `
@@ -130,7 +156,7 @@ INSERT INTO stages (user_id, name, position, is_terminal, color, mapped_status) 
     ($1, 'Applied',     1, false, '#3B82F6', 'open'),
     ($1, 'Screening',   2, false, '#8B5CF6', 'open'),
     ($1, 'Interviewing',3, false, '#F59E0B', 'open'),
-    ($1, 'Offer',       4, false, '#10B981', 'open'),
+    ($1, 'Offer',       4, false, '#10B981', 'offer'),
     ($1, 'Accepted',    5, true,  '#059669', 'accepted'),
     ($1, 'Rejected',    6, true,  '#EF4444', 'rejected'),
     ($1, 'Withdrawn',   7, true,  '#9CA3AF', 'closed')

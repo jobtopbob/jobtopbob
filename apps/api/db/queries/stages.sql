@@ -30,7 +30,10 @@ INSERT INTO stages (user_id, name, position, is_terminal, color, mapped_status) 
     ($1, 'Applied',     1, false, '#3B82F6', 'open'),
     ($1, 'Screening',   2, false, '#8B5CF6', 'open'),
     ($1, 'Interviewing',3, false, '#F59E0B', 'open'),
-    ($1, 'Offer',       4, false, '#10B981', 'open'),
+    ($1, 'Offer',       4, false, '#10B981', 'offer'),
     ($1, 'Accepted',    5, true,  '#059669', 'accepted'),
     ($1, 'Rejected',    6, true,  '#EF4444', 'rejected'),
     ($1, 'Withdrawn',   7, true,  '#9CA3AF', 'closed');
+
+-- name: GetStageByMappedStatus :one
+SELECT * FROM stages WHERE user_id = $1 AND mapped_status = $2 LIMIT 1;

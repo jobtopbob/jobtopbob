@@ -31,7 +31,7 @@ const STAGE_COLORS = [
   "#F59E0B", "#EF4444", "#EC4899", "#14B8A6",
 ];
 
-const MAPPED_STATUSES = ["open", "interviewing", "accepted", "rejected", "closed"] as const;
+const MAPPED_STATUSES = ["open", "interviewing", "offer", "accepted", "rejected", "closed"] as const;
 
 interface StageManagerDialogProps {
   open: boolean;

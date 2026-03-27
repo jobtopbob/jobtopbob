@@ -3,6 +3,7 @@
 import { useDroppable } from "@dnd-kit/react";
 import type { Job } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
+import { ShineBorder } from "@/components/ui/shine-border";
 import { JobCard } from "./job-card";
 import { StageIcon } from "./stage-icons";
 
@@ -35,17 +36,21 @@ export function KanbanColumn({ stage, jobs, onJobClick }: KanbanColumnProps) {
   });
 
   const dotColor = getDotColor(stage.name, stage.color);
+  const isOffer = stage.mapped_status === "offer";
   const isClosed = !!stage.is_terminal && stage.mapped_status === "closed";
 
   return (
     <div
       ref={ref}
-      className="flex flex-col rounded-xl bg-surface border border-border-subtle w-[280px] min-w-[280px] shrink-0 overflow-hidden"
+      className="relative flex flex-col rounded-xl bg-surface border border-border-subtle w-[280px] min-w-[280px] shrink-0 overflow-hidden"
       style={{
         outline: isDropTarget ? "2px solid var(--brand)" : undefined,
         outlineOffset: -2,
       }}
     >
+      {isOffer && (
+        <ShineBorder shineColor={["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"]} borderWidth={1} duration={15} />
+      )}
       {/* Header */}
       <div className="flex items-center gap-2 h-10 px-3 shrink-0">
         <StageIcon stageName={stage.name} className="w-5 h-5 shrink-0" color={dotColor} />

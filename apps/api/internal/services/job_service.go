@@ -166,6 +166,18 @@ func ListJobs(ctx context.Context, q *db.Queries, userID string, p ListJobsParam
 	}, nil
 }
 
+// ensureOfferForStage checks whether stageID maps to the "offer" status and,
+// if so, creates a skeleton offer for the job (best-effort, no error returned).
+func ensureOfferForStage(ctx context.Context, q *db.Queries, userID string, stageID, jobID pgtype.UUID) {
+	stage, err := q.GetStage(ctx, db.GetStageParams{ID: stageID, UserID: userID})
+	if err != nil {
+		return
+	}
+	if stage.MappedStatus.Valid && stage.MappedStatus.String == "offer" {
+		EnsureOfferExists(ctx, q, userID, jobID)
+	}
+}
+
 // CreateJob creates a new job and logs the activity.
 func CreateJob(ctx context.Context, q *db.Queries, userID string, params db.CreateJobParams) (db.Job, error) {
 	params.UserID = userID
@@ -184,6 +196,7 @@ func CreateJob(ctx context.Context, q *db.Queries, userID string, params db.Crea
 	}
 
 	_ = LogActivity(ctx, q, userID, "job", job.ID, "created", nil, map[string]string{"title": job.Title})
+	ensureOfferForStage(ctx, q, userID, job.StageID, job.ID)
 	return job, nil
 }
 
@@ -212,6 +225,11 @@ func UpdateJob(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID
 	}
 	if len(changes) > 0 {
 		_ = LogActivity(ctx, q, userID, "job", id, "updated", nil, changes)
+	}
+
+	// Auto-create a stub offer when a job is moved to an offer-mapped stage.
+	if updated.StageID != old.StageID {
+		ensureOfferForStage(ctx, q, userID, updated.StageID, updated.ID)
 	}
 
 	return updated, nil
@@ -264,6 +282,15 @@ func BulkUpdateStage(ctx context.Context, q *db.Queries, userID string, jobIDs [
 	if err != nil {
 		return 0, err
 	}
+
+	// Auto-create stub offers if the target stage is offer-mapped.
+	stage, sErr := q.GetStage(ctx, db.GetStageParams{ID: stageID, UserID: userID})
+	if sErr == nil && stage.MappedStatus.Valid && stage.MappedStatus.String == "offer" {
+		for _, jobID := range jobIDs {
+			EnsureOfferExists(ctx, q, userID, jobID)
+		}
+	}
+
 	return result.RowsAffected(), nil
 }
 

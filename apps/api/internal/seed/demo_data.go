@@ -61,6 +61,12 @@ type job struct {
 	ApplicationURL     string
 	ExperienceRange    string // "3-5 years", "5+ years", etc.
 	Tags               []string
+	// Offer fields (only for jobs in Offer stage)
+	OfferBaseSalary   int
+	OfferCurrency     string
+	OfferEquity       string
+	OfferBonus        string
+	OfferDeadlineDays int // positive = days from now
 }
 
 var demoStages = []stage{
@@ -68,7 +74,7 @@ var demoStages = []stage{
 	{"Applied", 1, false, "#3B82F6", "open"},
 	{"Screening", 2, false, "#8B5CF6", "open"},
 	{"Interviewing", 3, false, "#F59E0B", "open"},
-	{"Offer", 4, false, "#10B981", "open"},
+	{"Offer", 4, false, "#10B981", "offer"},
 	{"Accepted", 5, true, "#059669", "accepted"},
 	{"Rejected", 6, true, "#EF4444", "rejected"},
 	{"Withdrawn", 7, true, "#9CA3AF", "closed"},
@@ -130,7 +136,9 @@ var demoJobs = []job{
 		SalaryMin: 195000, SalaryMax: 265000, Interest: 5,
 		MonthOffset: -2, DayOfMonth: 3, AppliedMonthOffset: -2, AppliedDayOfMonth: 6,
 		JobType: "full_time", JobLevel: "senior", ExperienceRange: "5-8 years",
-		Tags: []string{"Senior", "TypeScript"},
+		Tags:            []string{"Senior", "TypeScript"},
+		OfferBaseSalary: 230000, OfferCurrency: "USD", OfferEquity: "0.05% over 4 years",
+		OfferBonus: "$25,000 signing", OfferDeadlineDays: 14,
 	},
 	{
 		Title: "Lead Frontend Engineer", CompanyName: "Slack", StageName: "Offer",
@@ -138,7 +146,9 @@ var demoJobs = []job{
 		SalaryMin: 185000, SalaryMax: 255000, Interest: 4,
 		MonthOffset: -2, DayOfMonth: 12, AppliedMonthOffset: -2, AppliedDayOfMonth: 15,
 		JobType: "full_time", JobLevel: "lead", ExperienceRange: "6-10 years",
-		Tags: []string{"Remote", "React"},
+		Tags:            []string{"Remote", "React"},
+		OfferBaseSalary: 220000, OfferCurrency: "USD", OfferEquity: "0.03% over 4 years",
+		OfferBonus: "$20,000 signing", OfferDeadlineDays: 10,
 	},
 	{
 		Title: "Staff Software Engineer", CompanyName: "Airbnb", StageName: "Interviewing",
@@ -465,6 +475,22 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 				demoUserID, tagID, jobID, createdAt)
 			if err != nil {
 				return fmt.Errorf("insert tagging %s for job %s: %w", tagName, j.Title, err)
+			}
+		}
+
+		// Insert offer record for jobs in the Offer stage
+		if j.OfferBaseSalary > 0 {
+			var offerDeadline *time.Time
+			if j.OfferDeadlineDays > 0 {
+				t := now.Add(time.Duration(j.OfferDeadlineDays) * 24 * time.Hour)
+				offerDeadline = &t
+			}
+			_, err = tx.Exec(ctx, `
+				INSERT INTO offers (user_id, job_id, base_salary, currency, equity, bonus, deadline, created_at, updated_at)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)`,
+				demoUserID, jobID, j.OfferBaseSalary, j.OfferCurrency, j.OfferEquity, j.OfferBonus, offerDeadline, createdAt)
+			if err != nil {
+				return fmt.Errorf("insert offer for job %s: %w", j.Title, err)
 			}
 		}
 	}

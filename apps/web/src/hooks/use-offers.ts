@@ -87,6 +87,7 @@ export function useCreateOffer() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["offers"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
   });
 }
