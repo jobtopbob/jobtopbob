@@ -1,9 +1,8 @@
 # JobTopBob — single Compose file for dev and production.
 #
 # Profiles are controlled by COMPOSE_PROFILES in .env (set once, use everywhere):
-#   (unset)       → infrastructure only (Postgres, Redis, etc.) for local dev
-#   prod          → infrastructure + app services (web, api, worker)
-#   prod,scrapers → everything including job discovery scrapers
+#   (unset) → infrastructure only (Postgres, Redis, etc.) for local dev
+#   prod    → everything (infrastructure + app services + scrapers)
 #
 # Usage (same for up, down, logs, etc.):
 #   docker compose up -d
@@ -250,7 +249,7 @@ services:
       context: .
       dockerfile: scrapers/linkedin/Dockerfile
     restart: unless-stopped
-    profiles: [scrapers]
+    profiles: [prod]
     environment:
       PORT: "3000"
       HYPERBROWSER_API_KEY: ${HYPERBROWSER_API_KEY:-}
@@ -265,7 +264,7 @@ services:
       context: .
       dockerfile: scrapers/indeed/Dockerfile
     restart: unless-stopped
-    profiles: [scrapers]
+    profiles: [prod]
     environment:
       PORT: "3000"
     healthcheck:
@@ -279,7 +278,7 @@ services:
       context: .
       dockerfile: scrapers/glassdoor/Dockerfile
     restart: unless-stopped
-    profiles: [scrapers]
+    profiles: [prod]
     environment:
       PORT: "3000"
       HYPERBROWSER_API_KEY: ${HYPERBROWSER_API_KEY:-}
@@ -294,7 +293,7 @@ services:
       context: .
       dockerfile: scrapers/adzuna/Dockerfile
     restart: unless-stopped
-    profiles: [scrapers]
+    profiles: [prod]
     environment:
       PORT: "3000"
       ADZUNA_APP_ID: ${ADZUNA_APP_ID:-}

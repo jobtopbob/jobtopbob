@@ -45,7 +45,7 @@ pnpm install
 docker compose up -d
 
 # Setup (prod / self-hosted — everything in containers)
-# Set COMPOSE_PROFILES=prod (or prod,scrapers) in .env, then:
+# Set COMPOSE_PROFILES=prod in .env, then:
 docker compose up -d
 
 # Code generation
