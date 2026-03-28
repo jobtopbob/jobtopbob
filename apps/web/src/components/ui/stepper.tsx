@@ -23,17 +23,17 @@ export function Stepper({
   }
 
   return (
-    <div className={cn("flex items-start", className)}>
-      {steps.map((step, index) => {
-        const isLast = index === steps.length - 1;
+    <div className={cn("flex flex-col gap-1.5", className)}>
+      {/* Row 1: Circles + connector lines */}
+      <div className="flex items-center">
+        {steps.map((step, index) => {
+          const isLast = index === steps.length - 1;
 
-        return (
-          <div
-            key={index}
-            className={cn("flex items-start", isLast ? "shrink-0" : "flex-1")}
-          >
-            {/* Step circle + label */}
-            <div className="flex flex-col items-center gap-1.5">
+          return (
+            <div
+              key={index}
+              className={cn("flex items-center", !isLast && "flex-1")}
+            >
               <button
                 type="button"
                 disabled={!isClickable(index) && index !== currentStep}
@@ -60,30 +60,39 @@ export function Stepper({
                   index + 1
                 )}
               </button>
-              <span
-                className={cn(
-                  "text-[11px] leading-tight text-center whitespace-nowrap",
-                  index === currentStep
-                    ? "text-text-primary font-medium"
-                    : "text-text-muted"
-                )}
-              >
-                {step.label}
-              </span>
-            </div>
 
-            {/* Connector line */}
-            {!isLast && (
-              <div
-                className={cn(
-                  "mt-3.5 mx-2 h-[2px] flex-1 rounded-full transition-colors",
-                  index < currentStep ? "bg-brand" : "bg-surface-hover"
-                )}
-              />
+              {/* Connector line */}
+              {!isLast && (
+                <div
+                  className={cn(
+                    "mx-2 h-[2px] flex-1 rounded-full transition-colors",
+                    index < currentStep ? "bg-brand" : "bg-surface-hover"
+                  )}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Row 2: Labels */}
+      <div className="flex justify-between">
+        {steps.map((step, index) => (
+          <span
+            key={index}
+            className={cn(
+              "text-[11px] leading-tight text-center whitespace-nowrap",
+              index === 0 && "text-left",
+              index === steps.length - 1 && "text-right",
+              index === currentStep
+                ? "text-text-primary font-medium"
+                : "text-text-muted"
             )}
-          </div>
-        );
-      })}
+          >
+            {step.label}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
