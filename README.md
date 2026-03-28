@@ -1,5 +1,8 @@
 # JobTopBob
 
+[![CI](https://github.com/jobtopbob/jobtopbob/actions/workflows/ci.yml/badge.svg)](https://github.com/jobtopbob/jobtopbob/actions/workflows/ci.yml)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%203.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
 > Open-source job application management. Every feature, free — forever.
 
 JobTopBob combines a job application tracker, integrated resume builder (powered by [Reactive Resume](https://rxresu.me)), and AI job assistant in a single open-source platform. Self-host it for free with your own AI key, or use the managed cloud version and let us handle the infrastructure.

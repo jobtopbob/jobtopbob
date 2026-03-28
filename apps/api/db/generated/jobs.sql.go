@@ -192,6 +192,60 @@ func (q *Queries) CountJobsByStatus(ctx context.Context, userID string) ([]Count
 	return items, nil
 }
 
+const countJobsByWeek = `-- name: CountJobsByWeek :many
+SELECT date_trunc('week', created_at)::date AS week_start, count(*) AS count
+FROM jobs
+WHERE user_id = $1
+  AND created_at >= $2
+  AND status != 'discovered'
+GROUP BY week_start
+ORDER BY week_start ASC
+`
+
+type CountJobsByWeekParams struct {
+	UserID    string             `json:"user_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type CountJobsByWeekRow struct {
+	WeekStart pgtype.Date `json:"week_start"`
+	Count     int64       `json:"count"`
+}
+
+func (q *Queries) CountJobsByWeek(ctx context.Context, arg CountJobsByWeekParams) ([]CountJobsByWeekRow, error) {
+	rows, err := q.db.Query(ctx, countJobsByWeek, arg.UserID, arg.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountJobsByWeekRow{}
+	for rows.Next() {
+		var i CountJobsByWeekRow
+		if err := rows.Scan(&i.WeekStart, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countJobsThisWeek = `-- name: CountJobsThisWeek :one
+SELECT count(*) FROM jobs
+WHERE user_id = $1
+  AND created_at >= date_trunc('week', now())
+  AND status != 'discovered'
+`
+
+func (q *Queries) CountJobsThisWeek(ctx context.Context, userID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countJobsThisWeek, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createJob = `-- name: CreateJob :one
 INSERT INTO jobs (
     user_id, company_id, stage_id, title, status, source, source_url,
@@ -535,6 +589,40 @@ func (q *Queries) GetJob(ctx context.Context, arg GetJobParams) (GetJobRow, erro
 	return i, err
 }
 
+const jobsBySource = `-- name: JobsBySource :many
+SELECT COALESCE(source, 'unknown') AS source, count(*) AS count
+FROM jobs
+WHERE user_id = $1
+  AND status != 'discovered'
+GROUP BY source
+ORDER BY count DESC
+`
+
+type JobsBySourceRow struct {
+	Source string `json:"source"`
+	Count  int64  `json:"count"`
+}
+
+func (q *Queries) JobsBySource(ctx context.Context, userID string) ([]JobsBySourceRow, error) {
+	rows, err := q.db.Query(ctx, jobsBySource, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []JobsBySourceRow{}
+	for rows.Next() {
+		var i JobsBySourceRow
+		if err := rows.Scan(&i.Source, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listDiscoveredJobs = `-- name: ListDiscoveredJobs :many
 SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.salary_offered, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at, j.dedup_hash, j.scrape_run_id,
        c.name AS company_name,
@@ -837,6 +925,91 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]ListJobsR
 			&i.CompanyName,
 			&i.CompanyLogoUrl,
 			&i.StageName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const responseRateByWeek = `-- name: ResponseRateByWeek :many
+SELECT date_trunc('week', j.created_at)::date AS week_start,
+       count(*) AS total,
+       count(*) FILTER (WHERE s.position > 1) AS responded
+FROM jobs j
+LEFT JOIN stages s ON s.id = j.stage_id
+WHERE j.user_id = $1
+  AND j.created_at >= $2
+  AND j.status != 'discovered'
+GROUP BY week_start
+ORDER BY week_start ASC
+`
+
+type ResponseRateByWeekParams struct {
+	UserID    string             `json:"user_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type ResponseRateByWeekRow struct {
+	WeekStart pgtype.Date `json:"week_start"`
+	Total     int64       `json:"total"`
+	Responded int64       `json:"responded"`
+}
+
+func (q *Queries) ResponseRateByWeek(ctx context.Context, arg ResponseRateByWeekParams) ([]ResponseRateByWeekRow, error) {
+	rows, err := q.db.Query(ctx, responseRateByWeek, arg.UserID, arg.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ResponseRateByWeekRow{}
+	for rows.Next() {
+		var i ResponseRateByWeekRow
+		if err := rows.Scan(&i.WeekStart, &i.Total, &i.Responded); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const stageFunnel = `-- name: StageFunnel :many
+SELECT s.name AS stage_name, s.position, s.color, count(j.id) AS count
+FROM stages s
+LEFT JOIN jobs j ON j.stage_id = s.id AND j.user_id = s.user_id AND j.status != 'discovered'
+WHERE s.user_id = $1
+GROUP BY s.id, s.name, s.position, s.color
+ORDER BY s.position ASC
+`
+
+type StageFunnelRow struct {
+	StageName string      `json:"stage_name"`
+	Position  int32       `json:"position"`
+	Color     pgtype.Text `json:"color"`
+	Count     int64       `json:"count"`
+}
+
+func (q *Queries) StageFunnel(ctx context.Context, userID string) ([]StageFunnelRow, error) {
+	rows, err := q.db.Query(ctx, stageFunnel, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []StageFunnelRow{}
+	for rows.Next() {
+		var i StageFunnelRow
+		if err := rows.Scan(
+			&i.StageName,
+			&i.Position,
+			&i.Color,
+			&i.Count,
 		); err != nil {
 			return nil, err
 		}

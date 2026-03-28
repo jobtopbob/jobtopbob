@@ -50,7 +50,7 @@ export function SignupForm({
       return
     }
 
-    router.push("/dashboard")
+    router.push("/onboarding")
     router.refresh()
   }
 

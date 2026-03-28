@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"time"
 
 	db "github.com/jobtopbob/jobtopbob/apps/api/db/generated"
 
@@ -321,9 +322,37 @@ func BulkDelete(ctx context.Context, q *db.Queries, userID string, jobIDs []pgty
 
 // StatsResult holds job statistics.
 type StatsResult struct {
-	TotalJobs    int64            `json:"total_jobs"`
-	ByStatus     map[string]int64 `json:"by_status"`
-	FollowUpsDue int64            `json:"follow_ups_due"`
+	TotalJobs       int64              `json:"total_jobs"`
+	ByStatus        map[string]int64   `json:"by_status"`
+	FollowUpsDue    int64              `json:"follow_ups_due"`
+	WeeklyProgress  int64              `json:"weekly_progress"`
+	WeeklyGoal      *int32             `json:"weekly_goal"`
+	WeeklyStreak    int64              `json:"weekly_streak"`
+	StageFunnel     []StageFunnelEntry `json:"stage_funnel"`
+	SourceBreakdown []SourceEntry      `json:"source_breakdown"`
+	ResponseTrend   []ResponseWeek     `json:"response_trend"`
+}
+
+// StageFunnelEntry represents a stage and its job count.
+type StageFunnelEntry struct {
+	Name     string `json:"name"`
+	Position int32  `json:"position"`
+	Color    string `json:"color"`
+	Count    int64  `json:"count"`
+}
+
+// SourceEntry represents a job source and its count.
+type SourceEntry struct {
+	Source string `json:"source"`
+	Count  int64  `json:"count"`
+}
+
+// ResponseWeek represents weekly response rate data.
+type ResponseWeek struct {
+	WeekStart string  `json:"week_start"`
+	Total     int64   `json:"total"`
+	Responded int64   `json:"responded"`
+	Rate      float64 `json:"rate"`
 }
 
 // GetStats returns job statistics for a user.
@@ -345,11 +374,130 @@ func GetStats(ctx context.Context, q *db.Queries, userID string) (StatsResult, e
 		total += sc.Count
 	}
 
-	return StatsResult{
+	result := StatsResult{
 		TotalJobs:    total,
 		ByStatus:     byStatus,
 		FollowUpsDue: followUps,
-	}, nil
+	}
+
+	// Weekly goal progress
+	weeklyCount, err := q.CountJobsThisWeek(ctx, userID)
+	if err == nil {
+		result.WeeklyProgress = weeklyCount
+	}
+
+	// Weekly goal value from settings
+	settings, err := q.GetUserSettings(ctx, userID)
+	if err == nil && settings.WeeklyGoal.Valid {
+		result.WeeklyGoal = &settings.WeeklyGoal.Int32
+	}
+
+	// Weekly streak: count consecutive weeks where goal was met
+	if result.WeeklyGoal != nil && *result.WeeklyGoal > 0 {
+		since := pgtype.Timestamptz{Time: time.Now().AddDate(-1, 0, 0), Valid: true}
+		weekCounts, err := q.CountJobsByWeek(ctx, db.CountJobsByWeekParams{
+			UserID:    userID,
+			CreatedAt: since,
+		})
+		if err == nil {
+			result.WeeklyStreak = calculateStreak(weekCounts, int64(*result.WeeklyGoal))
+		}
+	}
+
+	// Stage funnel
+	funnelRows, err := q.StageFunnel(ctx, userID)
+	if err == nil {
+		result.StageFunnel = make([]StageFunnelEntry, len(funnelRows))
+		for i, r := range funnelRows {
+			color := ""
+			if r.Color.Valid {
+				color = r.Color.String
+			}
+			result.StageFunnel[i] = StageFunnelEntry{
+				Name:     r.StageName,
+				Position: r.Position,
+				Color:    color,
+				Count:    r.Count,
+			}
+		}
+	}
+
+	// Source breakdown
+	sourceRows, err := q.JobsBySource(ctx, userID)
+	if err == nil {
+		result.SourceBreakdown = make([]SourceEntry, len(sourceRows))
+		for i, r := range sourceRows {
+			result.SourceBreakdown[i] = SourceEntry{
+				Source: r.Source,
+				Count:  r.Count,
+			}
+		}
+	}
+
+	// Response rate trend (last 8 weeks)
+	trendSince := pgtype.Timestamptz{Time: time.Now().AddDate(0, 0, -56), Valid: true}
+	trendRows, err := q.ResponseRateByWeek(ctx, db.ResponseRateByWeekParams{
+		UserID:    userID,
+		CreatedAt: trendSince,
+	})
+	if err == nil {
+		result.ResponseTrend = make([]ResponseWeek, len(trendRows))
+		for i, r := range trendRows {
+			rate := 0.0
+			if r.Total > 0 {
+				rate = float64(r.Responded) / float64(r.Total) * 100
+			}
+			weekStr := ""
+			if r.WeekStart.Valid {
+				weekStr = r.WeekStart.Time.Format("2006-01-02")
+			}
+			result.ResponseTrend[i] = ResponseWeek{
+				WeekStart: weekStr,
+				Total:     r.Total,
+				Responded: r.Responded,
+				Rate:      rate,
+			}
+		}
+	}
+
+	return result, nil
+}
+
+// calculateStreak counts consecutive past weeks where applications >= goal.
+func calculateStreak(weeks []db.CountJobsByWeekRow, goal int64) int64 {
+	if len(weeks) == 0 {
+		return 0
+	}
+
+	// Build a map of week_start -> count
+	weekMap := make(map[string]int64)
+	for _, w := range weeks {
+		if w.WeekStart.Valid {
+			weekMap[w.WeekStart.Time.Format("2006-01-02")] = w.Count
+		}
+	}
+
+	// Walk backwards from the last completed week
+	now := time.Now()
+	// Find the start of last week (completed)
+	weekStart := now.Truncate(24 * time.Hour)
+	for weekStart.Weekday() != time.Monday {
+		weekStart = weekStart.AddDate(0, 0, -1)
+	}
+	weekStart = weekStart.AddDate(0, 0, -7) // last completed week
+
+	var streak int64
+	for i := 0; i < 52; i++ {
+		key := weekStart.Format("2006-01-02")
+		if count, ok := weekMap[key]; ok && count >= goal {
+			streak++
+		} else {
+			break
+		}
+		weekStart = weekStart.AddDate(0, 0, -7)
+	}
+
+	return streak
 }
 
 // detectJobChanges compares old and new job states and returns changed fields.

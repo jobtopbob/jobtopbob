@@ -22,6 +22,18 @@ func (q *Queries) ClearRxResumeAPIKey(ctx context.Context, userID string) error 
 	return err
 }
 
+const completeOnboarding = `-- name: CompleteOnboarding :exec
+INSERT INTO user_settings (user_id, onboarding_completed)
+VALUES ($1, true)
+ON CONFLICT (user_id)
+DO UPDATE SET onboarding_completed = true
+`
+
+func (q *Queries) CompleteOnboarding(ctx context.Context, userID string) error {
+	_, err := q.db.Exec(ctx, completeOnboarding, userID)
+	return err
+}
+
 const getRxResumeAPIKey = `-- name: GetRxResumeAPIKey :one
 SELECT rxresume_api_key FROM user_settings
 WHERE user_id = $1
@@ -47,20 +59,21 @@ func (q *Queries) GetUserImage(ctx context.Context, id string) (pgtype.Text, err
 }
 
 const getUserSettings = `-- name: GetUserSettings :one
-SELECT user_id, ai_provider, ai_model, writing_style, weekly_goal, task_models, created_at, updated_at
+SELECT user_id, ai_provider, ai_model, writing_style, weekly_goal, task_models, onboarding_completed, created_at, updated_at
 FROM user_settings
 WHERE user_id = $1
 `
 
 type GetUserSettingsRow struct {
-	UserID       string             `json:"user_id"`
-	AiProvider   pgtype.Text        `json:"ai_provider"`
-	AiModel      pgtype.Text        `json:"ai_model"`
-	WritingStyle pgtype.Text        `json:"writing_style"`
-	WeeklyGoal   pgtype.Int4        `json:"weekly_goal"`
-	TaskModels   []byte             `json:"task_models"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	UserID              string             `json:"user_id"`
+	AiProvider          pgtype.Text        `json:"ai_provider"`
+	AiModel             pgtype.Text        `json:"ai_model"`
+	WritingStyle        pgtype.Text        `json:"writing_style"`
+	WeeklyGoal          pgtype.Int4        `json:"weekly_goal"`
+	TaskModels          []byte             `json:"task_models"`
+	OnboardingCompleted bool               `json:"onboarding_completed"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) GetUserSettings(ctx context.Context, userID string) (GetUserSettingsRow, error) {
@@ -73,10 +86,22 @@ func (q *Queries) GetUserSettings(ctx context.Context, userID string) (GetUserSe
 		&i.WritingStyle,
 		&i.WeeklyGoal,
 		&i.TaskModels,
+		&i.OnboardingCompleted,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const isOnboardingCompleted = `-- name: IsOnboardingCompleted :one
+SELECT onboarding_completed FROM user_settings WHERE user_id = $1
+`
+
+func (q *Queries) IsOnboardingCompleted(ctx context.Context, userID string) (bool, error) {
+	row := q.db.QueryRow(ctx, isOnboardingCompleted, userID)
+	var onboarding_completed bool
+	err := row.Scan(&onboarding_completed)
+	return onboarding_completed, err
 }
 
 const setRxResumeAPIKey = `-- name: SetRxResumeAPIKey :exec
@@ -121,7 +146,7 @@ DO UPDATE SET
   ai_model = COALESCE($3, user_settings.ai_model),
   writing_style = COALESCE($4, user_settings.writing_style),
   weekly_goal = COALESCE($5, user_settings.weekly_goal)
-RETURNING user_id, ai_provider, ai_model, writing_style, weekly_goal, task_models, created_at, updated_at
+RETURNING user_id, ai_provider, ai_model, writing_style, weekly_goal, task_models, onboarding_completed, created_at, updated_at
 `
 
 type UpsertUserSettingsParams struct {
@@ -133,14 +158,15 @@ type UpsertUserSettingsParams struct {
 }
 
 type UpsertUserSettingsRow struct {
-	UserID       string             `json:"user_id"`
-	AiProvider   pgtype.Text        `json:"ai_provider"`
-	AiModel      pgtype.Text        `json:"ai_model"`
-	WritingStyle pgtype.Text        `json:"writing_style"`
-	WeeklyGoal   pgtype.Int4        `json:"weekly_goal"`
-	TaskModels   []byte             `json:"task_models"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	UserID              string             `json:"user_id"`
+	AiProvider          pgtype.Text        `json:"ai_provider"`
+	AiModel             pgtype.Text        `json:"ai_model"`
+	WritingStyle        pgtype.Text        `json:"writing_style"`
+	WeeklyGoal          pgtype.Int4        `json:"weekly_goal"`
+	TaskModels          []byte             `json:"task_models"`
+	OnboardingCompleted bool               `json:"onboarding_completed"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) UpsertUserSettings(ctx context.Context, arg UpsertUserSettingsParams) (UpsertUserSettingsRow, error) {
@@ -159,6 +185,7 @@ func (q *Queries) UpsertUserSettings(ctx context.Context, arg UpsertUserSettings
 		&i.WritingStyle,
 		&i.WeeklyGoal,
 		&i.TaskModels,
+		&i.OnboardingCompleted,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

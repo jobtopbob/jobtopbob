@@ -18,10 +18,10 @@ function StatCard({
   changeColor?: string;
 }) {
   return (
-    <div className="flex-1 flex flex-col gap-2 rounded-xl bg-card border border-border-subtle p-5">
-      <span className="text-[13px] font-medium text-text-muted">{label}</span>
+    <div className="flex flex-col gap-2 rounded-xl bg-card border border-border-subtle p-4 sm:p-5">
+      <span className="text-xs sm:text-[13px] font-medium text-text-muted">{label}</span>
       <div className="flex items-end gap-2">
-        <span className="text-[28px] font-bold leading-none text-text-primary">
+        <span className="text-xl sm:text-[28px] font-bold leading-none text-text-primary">
           {value}
         </span>
         {change && (
@@ -67,16 +67,16 @@ export function StatsRow() {
 
   if (statsLoading || jobsLoading) {
     return (
-      <div className="flex gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="flex-1 h-[88px] rounded-xl" />
+          <Skeleton key={i} className="h-[88px] rounded-xl" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="flex gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
       <StatCard
         label="Total Applications"
         value={String(stats?.total_jobs ?? 0)}

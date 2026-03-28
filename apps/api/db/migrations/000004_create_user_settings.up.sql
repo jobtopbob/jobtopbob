@@ -6,6 +6,7 @@ CREATE TABLE user_settings (
     weekly_goal        int,
     task_models        jsonb,
     rxresume_api_key   text,
+    onboarding_completed boolean NOT NULL DEFAULT false,
     created_at         timestamptz NOT NULL DEFAULT now(),
     updated_at         timestamptz NOT NULL DEFAULT now()
 );

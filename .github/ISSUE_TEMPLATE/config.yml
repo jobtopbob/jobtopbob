@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://docs.jobtopbob.com
+    about: Check the documentation before opening an issue.
+  - name: Discussions
+    url: https://github.com/jobtopbob/jobtopbob/discussions
+    about: Ask questions and share ideas in GitHub Discussions.

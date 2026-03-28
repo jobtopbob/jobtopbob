@@ -1221,6 +1221,8 @@ components:
         weekly_goal:
           type: integer
           nullable: true
+        onboarding_completed:
+          type: boolean
 
     UpdateUserSettingsRequest:
       type: object
@@ -1259,6 +1261,64 @@ components:
         follow_ups_due:
           type: integer
           format: int64
+        weekly_progress:
+          type: integer
+          format: int64
+        weekly_goal:
+          type: integer
+          nullable: true
+        weekly_streak:
+          type: integer
+          format: int64
+        stage_funnel:
+          type: array
+          items:
+            $ref: "#/components/schemas/StageFunnelEntry"
+        source_breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/SourceEntry"
+        response_trend:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseWeek"
+
+    StageFunnelEntry:
+      type: object
+      properties:
+        name:
+          type: string
+        position:
+          type: integer
+        color:
+          type: string
+        count:
+          type: integer
+          format: int64
+
+    SourceEntry:
+      type: object
+      properties:
+        source:
+          type: string
+        count:
+          type: integer
+          format: int64
+
+    ResponseWeek:
+      type: object
+      properties:
+        week_start:
+          type: string
+        total:
+          type: integer
+          format: int64
+        responded:
+          type: integer
+          format: int64
+        rate:
+          type: number
+          format: double
 
     JobAsset:
       type: object
@@ -2793,6 +2853,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/settings/onboarding/complete:
+    post:
+      summary: Complete onboarding
+      description: Marks the user's onboarding as completed.
+      responses:
+        "200":
+          description: Onboarding completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
 
   /api/v1/settings/avatar:
     post:

@@ -128,15 +128,15 @@ export function ApplicationPipeline() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
+      <div className="flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
         <Skeleton className="h-5 w-40" />
-        <Skeleton className="flex-1 min-h-[180px] rounded-lg" />
+        <Skeleton className="min-h-[180px] rounded-lg" />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
+    <div className="flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
       {/* Header */}
       <div className="flex items-center">
         <span className="flex-1 text-sm font-semibold text-text-primary">

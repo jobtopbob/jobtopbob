@@ -18,14 +18,17 @@ var (
 )
 
 type userSettingsResponse struct {
-	AIProvider   *string `json:"ai_provider"`
-	AIModel      *string `json:"ai_model"`
-	WritingStyle *string `json:"writing_style"`
-	WeeklyGoal   *int32  `json:"weekly_goal"`
+	AIProvider          *string `json:"ai_provider"`
+	AIModel             *string `json:"ai_model"`
+	WritingStyle        *string `json:"writing_style"`
+	WeeklyGoal          *int32  `json:"weekly_goal"`
+	OnboardingCompleted bool    `json:"onboarding_completed"`
 }
 
 func settingsRowToResponse(row db.GetUserSettingsRow) userSettingsResponse {
-	resp := userSettingsResponse{}
+	resp := userSettingsResponse{
+		OnboardingCompleted: row.OnboardingCompleted,
+	}
 	if row.AiProvider.Valid {
 		resp.AIProvider = &row.AiProvider.String
 	}
@@ -42,7 +45,9 @@ func settingsRowToResponse(row db.GetUserSettingsRow) userSettingsResponse {
 }
 
 func upsertRowToResponse(row db.UpsertUserSettingsRow) userSettingsResponse {
-	resp := userSettingsResponse{}
+	resp := userSettingsResponse{
+		OnboardingCompleted: row.OnboardingCompleted,
+	}
 	if row.AiProvider.Valid {
 		resp.AIProvider = &row.AiProvider.String
 	}
@@ -56,6 +61,21 @@ func upsertRowToResponse(row db.UpsertUserSettingsRow) userSettingsResponse {
 		resp.WeeklyGoal = &row.WeeklyGoal.Int32
 	}
 	return resp
+}
+
+// CompleteOnboarding handles POST /api/v1/settings/onboarding/complete
+func CompleteOnboarding() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		q := db.New(getTx(c))
+		userID := getUserID(c)
+
+		if err := q.CompleteOnboarding(c.Request.Context(), userID); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to complete onboarding"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"success": true})
+	}
 }
 
 // GetUserSettings handles GET /api/v1/settings

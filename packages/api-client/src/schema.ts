@@ -2493,6 +2493,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/onboarding/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete onboarding
+         * @description Marks the user's onboarding as completed.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Onboarding completed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success?: boolean;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/settings/avatar": {
         parameters: {
             query?: never;
@@ -3631,6 +3672,7 @@ export interface components {
             /** @enum {string|null} */
             writing_style?: "professional" | "conversational" | "formal" | null;
             weekly_goal?: number | null;
+            onboarding_completed?: boolean;
         };
         UpdateUserSettingsRequest: {
             ai_provider?: string | null;
@@ -3649,6 +3691,35 @@ export interface components {
             };
             /** Format: int64 */
             follow_ups_due?: number;
+            /** Format: int64 */
+            weekly_progress?: number;
+            weekly_goal?: number | null;
+            /** Format: int64 */
+            weekly_streak?: number;
+            stage_funnel?: components["schemas"]["StageFunnelEntry"][];
+            source_breakdown?: components["schemas"]["SourceEntry"][];
+            response_trend?: components["schemas"]["ResponseWeek"][];
+        };
+        StageFunnelEntry: {
+            name?: string;
+            position?: number;
+            color?: string;
+            /** Format: int64 */
+            count?: number;
+        };
+        SourceEntry: {
+            source?: string;
+            /** Format: int64 */
+            count?: number;
+        };
+        ResponseWeek: {
+            week_start?: string;
+            /** Format: int64 */
+            total?: number;
+            /** Format: int64 */
+            responded?: number;
+            /** Format: double */
+            rate?: number;
         };
         JobAsset: {
             /** Format: uuid */

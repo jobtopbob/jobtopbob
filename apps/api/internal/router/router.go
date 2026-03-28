@@ -155,6 +155,7 @@ func New(cfg Config) *gin.Engine {
 			settings.PUT("/rxresume-key", handlers.SetRxResumeKey(cfg.RxClient))
 			settings.DELETE("/rxresume-key", handlers.DeleteRxResumeKey())
 			settings.GET("/rxresume-key/status", handlers.GetRxResumeKeyStatus())
+			settings.POST("/onboarding/complete", handlers.CompleteOnboarding())
 		}
 
 		// Resumes — sync must be registered before :id wildcard routes

@@ -62,7 +62,7 @@ export function RecentApplications() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
+      <div className="flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
         <Skeleton className="h-5 w-40" />
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-12 w-full rounded-lg" />
@@ -72,7 +72,7 @@ export function RecentApplications() {
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
+    <div className="flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
       <span className="text-sm font-semibold text-text-primary">
         Recent Applications
       </span>

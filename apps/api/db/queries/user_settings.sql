@@ -23,7 +23,7 @@ SELECT image FROM "user"
 WHERE id = $1;
 
 -- name: GetUserSettings :one
-SELECT user_id, ai_provider, ai_model, writing_style, weekly_goal, task_models, created_at, updated_at
+SELECT user_id, ai_provider, ai_model, writing_style, weekly_goal, task_models, onboarding_completed, created_at, updated_at
 FROM user_settings
 WHERE user_id = $1;
 
@@ -36,4 +36,13 @@ DO UPDATE SET
   ai_model = COALESCE($3, user_settings.ai_model),
   writing_style = COALESCE($4, user_settings.writing_style),
   weekly_goal = COALESCE($5, user_settings.weekly_goal)
-RETURNING user_id, ai_provider, ai_model, writing_style, weekly_goal, task_models, created_at, updated_at;
+RETURNING user_id, ai_provider, ai_model, writing_style, weekly_goal, task_models, onboarding_completed, created_at, updated_at;
+
+-- name: CompleteOnboarding :exec
+INSERT INTO user_settings (user_id, onboarding_completed)
+VALUES ($1, true)
+ON CONFLICT (user_id)
+DO UPDATE SET onboarding_completed = true;
+
+-- name: IsOnboardingCompleted :one
+SELECT onboarding_completed FROM user_settings WHERE user_id = $1;
