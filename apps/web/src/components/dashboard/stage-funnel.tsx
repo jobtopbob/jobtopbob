@@ -7,45 +7,57 @@ export function StageFunnel() {
   const { data: stats, isLoading } = useStats();
 
   if (isLoading) {
-    return <Skeleton className="h-full min-h-[200px] rounded-xl" />;
+    return <Skeleton className="h-[220px] rounded-xl" />;
   }
 
   const funnel = stats?.stage_funnel;
 
   if (!funnel || funnel.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-xl bg-card border border-border-subtle p-5 h-full">
-        <p className="text-sm text-text-muted">No stage data yet</p>
+      <div className="flex items-center justify-center rounded-xl bg-card border border-border-subtle p-5 h-[220px]">
+        <p className="text-sm text-text-muted">No pipeline data yet</p>
       </div>
     );
   }
 
   const maxCount = Math.max(...funnel.map((s) => s.count ?? 0), 1);
+  const totalCount = funnel.reduce((sum, s) => sum + (s.count ?? 0), 0);
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
-      <span className="text-sm font-semibold text-text-primary">
-        Pipeline Funnel
-      </span>
+    <div className="flex flex-col gap-5 rounded-xl bg-card border border-border-subtle p-5">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-text-primary">
+          Your Pipeline
+        </span>
+        <span className="text-xs text-text-muted tabular-nums">
+          {totalCount} total
+        </span>
+      </div>
 
-      <div className="flex flex-col gap-2.5">
-        {funnel.map((stage) => {
+      <div className="flex flex-col gap-3">
+        {funnel.map((stage, i) => {
           const count = stage.count ?? 0;
-          const width = Math.max((count / maxCount) * 100, 4);
+          const width = Math.max((count / maxCount) * 100, 6);
           const color = stage.color || "#6B7280";
 
           return (
-            <div key={stage.name} className="flex items-center gap-3">
+            <div
+              key={stage.name}
+              className="flex items-center gap-3"
+              style={{
+                animationDelay: `${i * 80}ms`,
+              }}
+            >
               <span className="text-xs text-text-muted w-24 truncate text-right">
                 {stage.name}
               </span>
-              <div className="flex-1 h-6 bg-surface-hover rounded-md overflow-hidden">
+              <div className="flex-1 h-8 bg-surface-hover rounded-lg overflow-hidden">
                 <div
-                  className="h-full rounded-md transition-all duration-500 ease-out flex items-center px-2"
+                  className="h-full rounded-lg transition-all duration-700 ease-out flex items-center px-3"
                   style={{ width: `${width}%`, backgroundColor: color }}
                 >
                   {count > 0 && (
-                    <span className="text-[11px] font-semibold text-white drop-shadow-sm">
+                    <span className="text-xs font-semibold text-white drop-shadow-sm">
                       {count}
                     </span>
                   )}

@@ -236,6 +236,65 @@ var demoResources = []resource{
 	},
 }
 
+type emailEvent struct {
+	CompanyName  string  // matches company in demoCompanies
+	JobTitle     string  // matches job Title to link to the correct job
+	DetectedType string  // interview_invite, rejection, offer, assessment, follow_up, other
+	Confidence   float64 // 0.0–1.0
+	FromEmail    string
+	RawSnippet   string
+	Confirmed    *bool // nil = unconfirmed (pending), true = confirmed, false = dismissed
+	DaysAgo      int   // created_at = now - DaysAgo
+}
+
+var demoEmailEvents = []emailEvent{
+	// Unconfirmed (pending review) — these show on the dashboard
+	{
+		CompanyName: "Stripe", JobTitle: "Senior Software Engineer",
+		DetectedType: "interview_invite", Confidence: 0.92,
+		FromEmail: "recruiting@stripe.com",
+		RawSnippet: "Hi, we'd love to schedule a technical phone screen for the Senior Software Engineer role. Are you available next week?",
+		DaysAgo: 1,
+	},
+	{
+		CompanyName: "Datadog", JobTitle: "Software Engineer II",
+		DetectedType: "assessment", Confidence: 0.85,
+		FromEmail: "talent@datadoghq.com",
+		RawSnippet: "Thank you for applying. Please complete the attached coding assessment within 5 business days.",
+		DaysAgo: 2,
+	},
+	{
+		CompanyName: "Cloudflare", JobTitle: "Full Stack Engineer",
+		DetectedType: "follow_up", Confidence: 0.78,
+		FromEmail: "careers@cloudflare.com",
+		RawSnippet: "Just following up on your application for the Full Stack Engineer position. We're still reviewing candidates.",
+		DaysAgo: 3,
+	},
+	// Confirmed (already processed)
+	{
+		CompanyName: "Airbnb", JobTitle: "Staff Software Engineer",
+		DetectedType: "interview_invite", Confidence: 0.95,
+		FromEmail: "recruiting@airbnb.com",
+		RawSnippet: "We're excited to move forward! Please find the invite for your onsite interview loop below.",
+		Confirmed: boolPtr(true), DaysAgo: 10,
+	},
+	{
+		CompanyName: "Meta", JobTitle: "Software Engineer",
+		DetectedType: "rejection", Confidence: 0.97,
+		FromEmail: "careers@meta.com",
+		RawSnippet: "After careful consideration, we've decided to move forward with other candidates for this position.",
+		Confirmed: boolPtr(true), DaysAgo: 45,
+	},
+	// Dismissed
+	{
+		CompanyName: "Coinbase", JobTitle: "Senior Engineer",
+		DetectedType: "other", Confidence: 0.42,
+		FromEmail: "noreply@coinbase.com",
+		RawSnippet: "Check out new openings at Coinbase! We thought you might be interested based on your profile.",
+		Confirmed: boolPtr(false), DaysAgo: 30,
+	},
+}
+
 var demoJobs = []job{
 	// --- 3 months ago: closed applications ---
 	{
@@ -534,6 +593,7 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 	}
 
 	// 4. Insert jobs and their taggings
+	jobIDs := make(map[string]string) // "Title|CompanyName" -> id
 	for _, j := range demoJobs {
 		stageID := stageIDs[j.StageName]
 		companyID := companyIDs[j.CompanyName]
@@ -601,6 +661,7 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		if err != nil {
 			return fmt.Errorf("insert job %s at %s: %w", j.Title, j.CompanyName, err)
 		}
+		jobIDs[j.Title+"|"+j.CompanyName] = jobID
 
 		// Insert taggings for this job
 		for _, tagName := range j.Tags {
@@ -643,7 +704,27 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		}
 	}
 
-	// 5. Insert contacts
+	// 5. Insert email events
+	for _, e := range demoEmailEvents {
+		var jobID *string
+		if e.JobTitle != "" && e.CompanyName != "" {
+			if id, ok := jobIDs[e.JobTitle+"|"+e.CompanyName]; ok {
+				jobID = &id
+			}
+		}
+		createdAt := now.Add(-time.Duration(e.DaysAgo) * 24 * time.Hour)
+		_, err = tx.Exec(ctx, `
+			INSERT INTO email_events (user_id, job_id, detected_type, confidence, confirmed, raw_snippet, company_name, from_email, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)`,
+			demoUserID, jobID, nilIfEmpty(e.DetectedType), e.Confidence, e.Confirmed,
+			nilIfEmpty(e.RawSnippet), nilIfEmpty(e.CompanyName), nilIfEmpty(e.FromEmail), createdAt)
+		if err != nil {
+			return fmt.Errorf("insert email event for %s: %w", e.CompanyName, err)
+		}
+	}
+
+	// 6. Insert contacts
+
 	for _, c := range demoContacts {
 		var companyID *string
 		if c.CompanyName != "" {
@@ -669,7 +750,7 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		}
 	}
 
-	// 6. Insert resources
+	// 7. Insert resources
 	for _, r := range demoResources {
 		_, err = tx.Exec(ctx, `
 			INSERT INTO resources (user_id, title, url, type, category, description, content, pinned, created_at, updated_at)
@@ -691,10 +772,15 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		"companies", len(demoCompanies),
 		"jobs", len(demoJobs),
 		"tags", len(demoTags),
+		"email_events", len(demoEmailEvents),
 		"contacts", len(demoContacts),
 		"resources", len(demoResources),
 	)
 	return nil
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }
 
 func nilIfEmpty(s string) *string {

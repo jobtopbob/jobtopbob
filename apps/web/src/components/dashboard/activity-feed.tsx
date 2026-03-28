@@ -52,8 +52,29 @@ function getLogoColor(name: string): string {
   return logoColors[Math.abs(hash) % logoColors.length];
 }
 
-export function RecentApplications() {
-  const { data: jobsData, isLoading } = useJobs({ perPage: 3 });
+function formatRelativeTime(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24)
+    return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 30) return `${diffDays} days ago`;
+  return date.toLocaleDateString();
+}
+
+export function ActivityFeed() {
+  const { data: jobsData, isLoading } = useJobs({
+    perPage: 5,
+    sortBy: "updated_at",
+    sortOrder: "desc",
+  });
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const statusStyles = isDark ? statusStylesDark : statusStylesLight;
@@ -63,8 +84,8 @@ export function RecentApplications() {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
-        <Skeleton className="h-5 w-40" />
-        {Array.from({ length: 3 }).map((_, i) => (
+        <Skeleton className="h-5 w-36" />
+        {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-12 w-full rounded-lg" />
         ))}
       </div>
@@ -74,11 +95,12 @@ export function RecentApplications() {
   return (
     <div className="flex flex-col gap-4 rounded-xl bg-card border border-border-subtle p-5">
       <span className="text-sm font-semibold text-text-primary">
-        Recent Applications
+        Recent Activity
       </span>
-      <div className="flex-1 flex flex-col">
+
+      <div className="flex flex-col">
         {recentJobs.length === 0 ? (
-          <p className="text-sm text-text-muted py-4">No applications yet.</p>
+          <p className="text-sm text-text-muted py-4">No activity yet.</p>
         ) : (
           recentJobs.map((job) => {
             const stageName = job.stage_name?.toLowerCase() ?? "applied";
@@ -90,29 +112,32 @@ export function RecentApplications() {
             return (
               <div
                 key={job.id}
-                className="flex items-center gap-3 py-2.5 border-b border-border-subtle last:border-b-0"
+                className="flex items-center gap-3 py-3 border-b border-border-subtle last:border-b-0"
               >
+                {/* Company logo */}
                 {job.company_logo_url ? (
-                  <div className="w-7 h-7 rounded-md bg-white p-px shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-white p-px shrink-0">
                     <Image
                       src={job.company_logo_url}
                       alt={companyName}
-                      width={28}
-                      height={28}
+                      width={32}
+                      height={32}
                       unoptimized
-                      className="w-full h-full rounded-[5px] object-contain"
+                      className="w-full h-full rounded-[7px] object-contain"
                     />
                   </div>
                 ) : (
                   <div
-                    className="flex items-center justify-center w-7 h-7 rounded-md shrink-0"
+                    className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0"
                     style={{ backgroundColor: color }}
                   >
-                    <span className="text-[13px] font-bold text-white">
+                    <span className="text-sm font-bold text-white">
                       {initial}
                     </span>
                   </div>
                 )}
+
+                {/* Job info */}
                 <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                   <span className="text-[13px] font-medium text-text-primary truncate">
                     {job.title}
@@ -121,6 +146,8 @@ export function RecentApplications() {
                     {companyName}
                   </span>
                 </div>
+
+                {/* Stage badge */}
                 <div
                   className="flex items-center gap-1 rounded-md px-2 py-0.5 shrink-0"
                   style={{ backgroundColor: style.bg }}
@@ -137,11 +164,17 @@ export function RecentApplications() {
                     {job.stage_name ?? "Applied"}
                   </span>
                 </div>
+
+                {/* Time */}
+                <span className="text-[11px] text-text-muted shrink-0 hidden sm:block">
+                  {formatRelativeTime(job.updated_at)}
+                </span>
               </div>
             );
           })
         )}
       </div>
+
       <Link
         href="/applications"
         className="text-xs font-medium text-brand hover:underline self-start"
