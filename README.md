@@ -138,7 +138,7 @@ Connect your Gmail and JobTopBob automatically detects recruiter replies, interv
 - **Ghostwriter** — persistent AI chat per application for anything the above buttons don't cover
 - **Manual JD import** — paste any job description; AI extracts fields and scores fit instantly
 
-### Job discovery (optional)
+### Job discovery
 - Automated pipeline scraping LinkedIn, Indeed, Glassdoor, Adzuna, and more
 - Configurable minimum suitability score threshold
 - Discovered jobs flow into the tracker pre-scored and pre-tailored
