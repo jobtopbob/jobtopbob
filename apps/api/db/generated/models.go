@@ -201,19 +201,29 @@ type OauthToken struct {
 }
 
 type Offer struct {
-	ID             pgtype.UUID        `json:"id"`
-	UserID         string             `json:"user_id"`
-	JobID          pgtype.UUID        `json:"job_id"`
-	BaseSalary     pgtype.Int4        `json:"base_salary"`
-	Currency       pgtype.Text        `json:"currency"`
-	Equity         pgtype.Text        `json:"equity"`
-	Bonus          pgtype.Text        `json:"bonus"`
-	Benefits       []byte             `json:"benefits"`
-	Deadline       pgtype.Timestamptz `json:"deadline"`
-	Accepted       pgtype.Bool        `json:"accepted"`
-	NegotiationLog []byte             `json:"negotiation_log"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	ID              pgtype.UUID        `json:"id"`
+	UserID          string             `json:"user_id"`
+	JobID           pgtype.UUID        `json:"job_id"`
+	BaseSalary      pgtype.Int4        `json:"base_salary"`
+	Currency        pgtype.Text        `json:"currency"`
+	SalaryInterval  pgtype.Text        `json:"salary_interval"`
+	SignOnBonus     pgtype.Int4        `json:"sign_on_bonus"`
+	AnnualBonus     pgtype.Text        `json:"annual_bonus"`
+	Equity          pgtype.Text        `json:"equity"`
+	EquityValue     pgtype.Int4        `json:"equity_value"`
+	EquitySchedule  pgtype.Text        `json:"equity_schedule"`
+	Bonus           pgtype.Text        `json:"bonus"`
+	Benefits        []byte             `json:"benefits"`
+	PtoDays         pgtype.Int4        `json:"pto_days"`
+	RemotePolicy    pgtype.Text        `json:"remote_policy"`
+	RetirementMatch pgtype.Text        `json:"retirement_match"`
+	Relocation      pgtype.Text        `json:"relocation"`
+	WorkLocation    pgtype.Text        `json:"work_location"`
+	Deadline        pgtype.Timestamptz `json:"deadline"`
+	Accepted        pgtype.Bool        `json:"accepted"`
+	NegotiationLog  []byte             `json:"negotiation_log"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Resource struct {

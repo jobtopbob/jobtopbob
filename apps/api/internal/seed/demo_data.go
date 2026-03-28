@@ -62,11 +62,21 @@ type job struct {
 	ExperienceRange    string // "3-5 years", "5+ years", etc.
 	Tags               []string
 	// Offer fields (only for jobs in Offer stage)
-	OfferBaseSalary   int
-	OfferCurrency     string
-	OfferEquity       string
-	OfferBonus        string
-	OfferDeadlineDays int // positive = days from now
+	OfferBaseSalary    int
+	OfferCurrency      string
+	OfferSalaryInterval string
+	OfferSignOnBonus   int
+	OfferAnnualBonus   string
+	OfferEquity        string
+	OfferEquityValue   int
+	OfferEquitySchedule string
+	OfferBonus         string
+	OfferPtoDays       int
+	OfferRemotePolicy  string
+	OfferRetirementMatch string
+	OfferRelocation    string
+	OfferWorkLocation  string
+	OfferDeadlineDays  int // positive = days from now
 }
 
 var demoStages = []stage{
@@ -137,8 +147,13 @@ var demoJobs = []job{
 		MonthOffset: -2, DayOfMonth: 3, AppliedMonthOffset: -2, AppliedDayOfMonth: 6,
 		JobType: "full_time", JobLevel: "senior", ExperienceRange: "5-8 years",
 		Tags:            []string{"Senior", "TypeScript"},
-		OfferBaseSalary: 230000, OfferCurrency: "USD", OfferEquity: "0.05% over 4 years",
-		OfferBonus: "$25,000 signing", OfferDeadlineDays: 14,
+		OfferBaseSalary: 230000, OfferCurrency: "USD", OfferSalaryInterval: "annual",
+		OfferSignOnBonus: 25000, OfferAnnualBonus: "15%",
+		OfferEquity: "0.05% over 4 years", OfferEquityValue: 200000, OfferEquitySchedule: "4 years, 1 year cliff",
+		OfferBonus: "$25,000 signing", OfferPtoDays: 25,
+		OfferRemotePolicy: "hybrid", OfferRetirementMatch: "100% up to 6%",
+		OfferRelocation: "$10,000 relocation stipend", OfferWorkLocation: "San Francisco, CA",
+		OfferDeadlineDays: 14,
 	},
 	{
 		Title: "Lead Frontend Engineer", CompanyName: "Slack", StageName: "Offer",
@@ -147,8 +162,13 @@ var demoJobs = []job{
 		MonthOffset: -2, DayOfMonth: 12, AppliedMonthOffset: -2, AppliedDayOfMonth: 15,
 		JobType: "full_time", JobLevel: "lead", ExperienceRange: "6-10 years",
 		Tags:            []string{"Remote", "React"},
-		OfferBaseSalary: 220000, OfferCurrency: "USD", OfferEquity: "0.03% over 4 years",
-		OfferBonus: "$20,000 signing", OfferDeadlineDays: 10,
+		OfferBaseSalary: 220000, OfferCurrency: "USD", OfferSalaryInterval: "annual",
+		OfferSignOnBonus: 20000, OfferAnnualBonus: "10%",
+		OfferEquity: "0.03% over 4 years", OfferEquityValue: 150000, OfferEquitySchedule: "4 years, 1 year cliff",
+		OfferBonus: "$20,000 signing", OfferPtoDays: 20,
+		OfferRemotePolicy: "remote", OfferRetirementMatch: "50% up to 6%",
+		OfferWorkLocation: "Remote",
+		OfferDeadlineDays: 10,
 	},
 	{
 		Title: "Staff Software Engineer", CompanyName: "Airbnb", StageName: "Interviewing",
@@ -486,9 +506,21 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 				offerDeadline = &t
 			}
 			_, err = tx.Exec(ctx, `
-				INSERT INTO offers (user_id, job_id, base_salary, currency, equity, bonus, deadline, created_at, updated_at)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)`,
-				demoUserID, jobID, j.OfferBaseSalary, j.OfferCurrency, j.OfferEquity, j.OfferBonus, offerDeadline, createdAt)
+				INSERT INTO offers (
+					user_id, job_id, base_salary, currency, salary_interval,
+					sign_on_bonus, annual_bonus, equity, equity_value, equity_schedule,
+					bonus, pto_days, remote_policy, retirement_match, relocation,
+					work_location, deadline, created_at, updated_at
+				) VALUES (
+					$1, $2, $3, $4, $5,
+					$6, $7, $8, $9, $10,
+					$11, $12, $13, $14, $15,
+					$16, $17, $18, $18
+				)`,
+				demoUserID, jobID, j.OfferBaseSalary, j.OfferCurrency, nilIfEmpty(j.OfferSalaryInterval),
+				nilIfZero(j.OfferSignOnBonus), nilIfEmpty(j.OfferAnnualBonus), nilIfEmpty(j.OfferEquity), nilIfZero(j.OfferEquityValue), nilIfEmpty(j.OfferEquitySchedule),
+				nilIfEmpty(j.OfferBonus), nilIfZero(j.OfferPtoDays), nilIfEmpty(j.OfferRemotePolicy), nilIfEmpty(j.OfferRetirementMatch), nilIfEmpty(j.OfferRelocation),
+				nilIfEmpty(j.OfferWorkLocation), offerDeadline, createdAt)
 			if err != nil {
 				return fmt.Errorf("insert offer for job %s: %w", j.Title, err)
 			}
@@ -507,6 +539,20 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		"tags", len(demoTags),
 	)
 	return nil
+}
+
+func nilIfEmpty(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func nilIfZero(n int) *int {
+	if n == 0 {
+		return nil
+	}
+	return &n
 }
 
 // extractDomainFromURL normalizes a URL to its bare domain (e.g. "https://www.stripe.com/" → "stripe.com").

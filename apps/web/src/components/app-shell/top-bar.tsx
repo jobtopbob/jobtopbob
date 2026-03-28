@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Search, Bell, ChevronDown, LogOut, PanelLeftOpen } from "lucide-react";
 import {
   DropdownMenu,
@@ -79,9 +80,12 @@ export function TopBar({ userName: initialUserName }: TopBarProps) {
             <button>
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-medium overflow-hidden">
                 {userImage ? (
-                  <img
+                  <Image
                     src={userImage}
                     alt={userName}
+                    width={32}
+                    height={32}
+                    unoptimized
                     className="w-full h-full object-cover"
                   />
                 ) : (

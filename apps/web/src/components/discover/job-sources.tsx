@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Globe, Briefcase, Linkedin, Building2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -27,9 +28,11 @@ function SourceIcon({ source }: { source: JobSource }) {
   }
 
   return (
-    <img
+    <Image
       src={`/sources/${source.id}.svg`}
       alt={source.name}
+      width={14}
+      height={14}
       className="h-3.5 w-3.5 object-contain"
       onError={() => setImgError(true)}
     />

@@ -12,11 +12,38 @@ import (
 )
 
 const countOffers = `-- name: CountOffers :one
-SELECT count(*) FROM offers WHERE user_id = $1
+SELECT count(*)
+FROM offers o
+LEFT JOIN jobs j ON j.id = o.job_id
+LEFT JOIN companies c ON c.id = j.company_id
+WHERE o.user_id = $1
+  AND ($2::text IS NULL OR (
+      j.title ILIKE '%' || $2 || '%'
+      OR c.name ILIKE '%' || $2 || '%'
+      OR o.work_location ILIKE '%' || $2 || '%'
+  ))
+  AND ($3::text IS NULL
+      OR ($3::text = 'accepted' AND o.accepted = true)
+      OR ($3::text = 'declined' AND o.accepted = false)
+      OR ($3::text = 'pending' AND o.accepted IS NULL)
+  )
+  AND ($4::text IS NULL OR o.remote_policy = $4)
 `
 
-func (q *Queries) CountOffers(ctx context.Context, userID string) (int64, error) {
-	row := q.db.QueryRow(ctx, countOffers, userID)
+type CountOffersParams struct {
+	UserID       string      `json:"user_id"`
+	Search       pgtype.Text `json:"search"`
+	Status       pgtype.Text `json:"status"`
+	RemotePolicy pgtype.Text `json:"remote_policy"`
+}
+
+func (q *Queries) CountOffers(ctx context.Context, arg CountOffersParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countOffers,
+		arg.UserID,
+		arg.Search,
+		arg.Status,
+		arg.RemotePolicy,
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -24,24 +51,37 @@ func (q *Queries) CountOffers(ctx context.Context, userID string) (int64, error)
 
 const createOffer = `-- name: CreateOffer :one
 INSERT INTO offers (
-    user_id, job_id, base_salary, currency, equity,
-    bonus, benefits, deadline, accepted, negotiation_log
+    user_id, job_id, base_salary, currency, salary_interval,
+    sign_on_bonus, annual_bonus, equity, equity_value, equity_schedule,
+    bonus, benefits, pto_days, remote_policy, retirement_match,
+    relocation, work_location, deadline, accepted, negotiation_log
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-) RETURNING id, user_id, job_id, base_salary, currency, equity, bonus, benefits, deadline, accepted, negotiation_log, created_at, updated_at
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+    $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+) RETURNING id, user_id, job_id, base_salary, currency, salary_interval, sign_on_bonus, annual_bonus, equity, equity_value, equity_schedule, bonus, benefits, pto_days, remote_policy, retirement_match, relocation, work_location, deadline, accepted, negotiation_log, created_at, updated_at
 `
 
 type CreateOfferParams struct {
-	UserID         string             `json:"user_id"`
-	JobID          pgtype.UUID        `json:"job_id"`
-	BaseSalary     pgtype.Int4        `json:"base_salary"`
-	Currency       pgtype.Text        `json:"currency"`
-	Equity         pgtype.Text        `json:"equity"`
-	Bonus          pgtype.Text        `json:"bonus"`
-	Benefits       []byte             `json:"benefits"`
-	Deadline       pgtype.Timestamptz `json:"deadline"`
-	Accepted       pgtype.Bool        `json:"accepted"`
-	NegotiationLog []byte             `json:"negotiation_log"`
+	UserID          string             `json:"user_id"`
+	JobID           pgtype.UUID        `json:"job_id"`
+	BaseSalary      pgtype.Int4        `json:"base_salary"`
+	Currency        pgtype.Text        `json:"currency"`
+	SalaryInterval  pgtype.Text        `json:"salary_interval"`
+	SignOnBonus     pgtype.Int4        `json:"sign_on_bonus"`
+	AnnualBonus     pgtype.Text        `json:"annual_bonus"`
+	Equity          pgtype.Text        `json:"equity"`
+	EquityValue     pgtype.Int4        `json:"equity_value"`
+	EquitySchedule  pgtype.Text        `json:"equity_schedule"`
+	Bonus           pgtype.Text        `json:"bonus"`
+	Benefits        []byte             `json:"benefits"`
+	PtoDays         pgtype.Int4        `json:"pto_days"`
+	RemotePolicy    pgtype.Text        `json:"remote_policy"`
+	RetirementMatch pgtype.Text        `json:"retirement_match"`
+	Relocation      pgtype.Text        `json:"relocation"`
+	WorkLocation    pgtype.Text        `json:"work_location"`
+	Deadline        pgtype.Timestamptz `json:"deadline"`
+	Accepted        pgtype.Bool        `json:"accepted"`
+	NegotiationLog  []byte             `json:"negotiation_log"`
 }
 
 func (q *Queries) CreateOffer(ctx context.Context, arg CreateOfferParams) (Offer, error) {
@@ -50,9 +90,19 @@ func (q *Queries) CreateOffer(ctx context.Context, arg CreateOfferParams) (Offer
 		arg.JobID,
 		arg.BaseSalary,
 		arg.Currency,
+		arg.SalaryInterval,
+		arg.SignOnBonus,
+		arg.AnnualBonus,
 		arg.Equity,
+		arg.EquityValue,
+		arg.EquitySchedule,
 		arg.Bonus,
 		arg.Benefits,
+		arg.PtoDays,
+		arg.RemotePolicy,
+		arg.RetirementMatch,
+		arg.Relocation,
+		arg.WorkLocation,
 		arg.Deadline,
 		arg.Accepted,
 		arg.NegotiationLog,
@@ -64,9 +114,19 @@ func (q *Queries) CreateOffer(ctx context.Context, arg CreateOfferParams) (Offer
 		&i.JobID,
 		&i.BaseSalary,
 		&i.Currency,
+		&i.SalaryInterval,
+		&i.SignOnBonus,
+		&i.AnnualBonus,
 		&i.Equity,
+		&i.EquityValue,
+		&i.EquitySchedule,
 		&i.Bonus,
 		&i.Benefits,
+		&i.PtoDays,
+		&i.RemotePolicy,
+		&i.RetirementMatch,
+		&i.Relocation,
+		&i.WorkLocation,
 		&i.Deadline,
 		&i.Accepted,
 		&i.NegotiationLog,
@@ -77,9 +137,10 @@ func (q *Queries) CreateOffer(ctx context.Context, arg CreateOfferParams) (Offer
 }
 
 const getOffer = `-- name: GetOffer :one
-SELECT o.id, o.user_id, o.job_id, o.base_salary, o.currency, o.equity, o.bonus, o.benefits, o.deadline, o.accepted, o.negotiation_log, o.created_at, o.updated_at,
+SELECT o.id, o.user_id, o.job_id, o.base_salary, o.currency, o.salary_interval, o.sign_on_bonus, o.annual_bonus, o.equity, o.equity_value, o.equity_schedule, o.bonus, o.benefits, o.pto_days, o.remote_policy, o.retirement_match, o.relocation, o.work_location, o.deadline, o.accepted, o.negotiation_log, o.created_at, o.updated_at,
        j.title AS job_title,
-       c.name AS company_name
+       c.name AS company_name,
+       c.logo_url AS company_logo_url
 FROM offers o
 LEFT JOIN jobs j ON j.id = o.job_id
 LEFT JOIN companies c ON c.id = j.company_id
@@ -92,21 +153,32 @@ type GetOfferParams struct {
 }
 
 type GetOfferRow struct {
-	ID             pgtype.UUID        `json:"id"`
-	UserID         string             `json:"user_id"`
-	JobID          pgtype.UUID        `json:"job_id"`
-	BaseSalary     pgtype.Int4        `json:"base_salary"`
-	Currency       pgtype.Text        `json:"currency"`
-	Equity         pgtype.Text        `json:"equity"`
-	Bonus          pgtype.Text        `json:"bonus"`
-	Benefits       []byte             `json:"benefits"`
-	Deadline       pgtype.Timestamptz `json:"deadline"`
-	Accepted       pgtype.Bool        `json:"accepted"`
-	NegotiationLog []byte             `json:"negotiation_log"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	JobTitle       pgtype.Text        `json:"job_title"`
-	CompanyName    pgtype.Text        `json:"company_name"`
+	ID              pgtype.UUID        `json:"id"`
+	UserID          string             `json:"user_id"`
+	JobID           pgtype.UUID        `json:"job_id"`
+	BaseSalary      pgtype.Int4        `json:"base_salary"`
+	Currency        pgtype.Text        `json:"currency"`
+	SalaryInterval  pgtype.Text        `json:"salary_interval"`
+	SignOnBonus     pgtype.Int4        `json:"sign_on_bonus"`
+	AnnualBonus     pgtype.Text        `json:"annual_bonus"`
+	Equity          pgtype.Text        `json:"equity"`
+	EquityValue     pgtype.Int4        `json:"equity_value"`
+	EquitySchedule  pgtype.Text        `json:"equity_schedule"`
+	Bonus           pgtype.Text        `json:"bonus"`
+	Benefits        []byte             `json:"benefits"`
+	PtoDays         pgtype.Int4        `json:"pto_days"`
+	RemotePolicy    pgtype.Text        `json:"remote_policy"`
+	RetirementMatch pgtype.Text        `json:"retirement_match"`
+	Relocation      pgtype.Text        `json:"relocation"`
+	WorkLocation    pgtype.Text        `json:"work_location"`
+	Deadline        pgtype.Timestamptz `json:"deadline"`
+	Accepted        pgtype.Bool        `json:"accepted"`
+	NegotiationLog  []byte             `json:"negotiation_log"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	JobTitle        pgtype.Text        `json:"job_title"`
+	CompanyName     pgtype.Text        `json:"company_name"`
+	CompanyLogoUrl  pgtype.Text        `json:"company_logo_url"`
 }
 
 func (q *Queries) GetOffer(ctx context.Context, arg GetOfferParams) (GetOfferRow, error) {
@@ -118,9 +190,19 @@ func (q *Queries) GetOffer(ctx context.Context, arg GetOfferParams) (GetOfferRow
 		&i.JobID,
 		&i.BaseSalary,
 		&i.Currency,
+		&i.SalaryInterval,
+		&i.SignOnBonus,
+		&i.AnnualBonus,
 		&i.Equity,
+		&i.EquityValue,
+		&i.EquitySchedule,
 		&i.Bonus,
 		&i.Benefits,
+		&i.PtoDays,
+		&i.RemotePolicy,
+		&i.RetirementMatch,
+		&i.Relocation,
+		&i.WorkLocation,
 		&i.Deadline,
 		&i.Accepted,
 		&i.NegotiationLog,
@@ -128,14 +210,16 @@ func (q *Queries) GetOffer(ctx context.Context, arg GetOfferParams) (GetOfferRow
 		&i.UpdatedAt,
 		&i.JobTitle,
 		&i.CompanyName,
+		&i.CompanyLogoUrl,
 	)
 	return i, err
 }
 
 const getOfferByJobID = `-- name: GetOfferByJobID :one
-SELECT o.id, o.user_id, o.job_id, o.base_salary, o.currency, o.equity, o.bonus, o.benefits, o.deadline, o.accepted, o.negotiation_log, o.created_at, o.updated_at,
+SELECT o.id, o.user_id, o.job_id, o.base_salary, o.currency, o.salary_interval, o.sign_on_bonus, o.annual_bonus, o.equity, o.equity_value, o.equity_schedule, o.bonus, o.benefits, o.pto_days, o.remote_policy, o.retirement_match, o.relocation, o.work_location, o.deadline, o.accepted, o.negotiation_log, o.created_at, o.updated_at,
        j.title AS job_title,
-       c.name AS company_name
+       c.name AS company_name,
+       c.logo_url AS company_logo_url
 FROM offers o
 LEFT JOIN jobs j ON j.id = o.job_id
 LEFT JOIN companies c ON c.id = j.company_id
@@ -148,21 +232,32 @@ type GetOfferByJobIDParams struct {
 }
 
 type GetOfferByJobIDRow struct {
-	ID             pgtype.UUID        `json:"id"`
-	UserID         string             `json:"user_id"`
-	JobID          pgtype.UUID        `json:"job_id"`
-	BaseSalary     pgtype.Int4        `json:"base_salary"`
-	Currency       pgtype.Text        `json:"currency"`
-	Equity         pgtype.Text        `json:"equity"`
-	Bonus          pgtype.Text        `json:"bonus"`
-	Benefits       []byte             `json:"benefits"`
-	Deadline       pgtype.Timestamptz `json:"deadline"`
-	Accepted       pgtype.Bool        `json:"accepted"`
-	NegotiationLog []byte             `json:"negotiation_log"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	JobTitle       pgtype.Text        `json:"job_title"`
-	CompanyName    pgtype.Text        `json:"company_name"`
+	ID              pgtype.UUID        `json:"id"`
+	UserID          string             `json:"user_id"`
+	JobID           pgtype.UUID        `json:"job_id"`
+	BaseSalary      pgtype.Int4        `json:"base_salary"`
+	Currency        pgtype.Text        `json:"currency"`
+	SalaryInterval  pgtype.Text        `json:"salary_interval"`
+	SignOnBonus     pgtype.Int4        `json:"sign_on_bonus"`
+	AnnualBonus     pgtype.Text        `json:"annual_bonus"`
+	Equity          pgtype.Text        `json:"equity"`
+	EquityValue     pgtype.Int4        `json:"equity_value"`
+	EquitySchedule  pgtype.Text        `json:"equity_schedule"`
+	Bonus           pgtype.Text        `json:"bonus"`
+	Benefits        []byte             `json:"benefits"`
+	PtoDays         pgtype.Int4        `json:"pto_days"`
+	RemotePolicy    pgtype.Text        `json:"remote_policy"`
+	RetirementMatch pgtype.Text        `json:"retirement_match"`
+	Relocation      pgtype.Text        `json:"relocation"`
+	WorkLocation    pgtype.Text        `json:"work_location"`
+	Deadline        pgtype.Timestamptz `json:"deadline"`
+	Accepted        pgtype.Bool        `json:"accepted"`
+	NegotiationLog  []byte             `json:"negotiation_log"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	JobTitle        pgtype.Text        `json:"job_title"`
+	CompanyName     pgtype.Text        `json:"company_name"`
+	CompanyLogoUrl  pgtype.Text        `json:"company_logo_url"`
 }
 
 func (q *Queries) GetOfferByJobID(ctx context.Context, arg GetOfferByJobIDParams) (GetOfferByJobIDRow, error) {
@@ -174,9 +269,19 @@ func (q *Queries) GetOfferByJobID(ctx context.Context, arg GetOfferByJobIDParams
 		&i.JobID,
 		&i.BaseSalary,
 		&i.Currency,
+		&i.SalaryInterval,
+		&i.SignOnBonus,
+		&i.AnnualBonus,
 		&i.Equity,
+		&i.EquityValue,
+		&i.EquitySchedule,
 		&i.Bonus,
 		&i.Benefits,
+		&i.PtoDays,
+		&i.RemotePolicy,
+		&i.RetirementMatch,
+		&i.Relocation,
+		&i.WorkLocation,
 		&i.Deadline,
 		&i.Accepted,
 		&i.NegotiationLog,
@@ -184,52 +289,79 @@ func (q *Queries) GetOfferByJobID(ctx context.Context, arg GetOfferByJobIDParams
 		&i.UpdatedAt,
 		&i.JobTitle,
 		&i.CompanyName,
+		&i.CompanyLogoUrl,
 	)
 	return i, err
 }
 
 const listOffers = `-- name: ListOffers :many
-SELECT o.id, o.user_id, o.job_id, o.base_salary, o.currency, o.equity, o.bonus, o.benefits, o.deadline, o.accepted, o.negotiation_log, o.created_at, o.updated_at,
+SELECT o.id, o.user_id, o.job_id, o.base_salary, o.currency, o.salary_interval, o.sign_on_bonus, o.annual_bonus, o.equity, o.equity_value, o.equity_schedule, o.bonus, o.benefits, o.pto_days, o.remote_policy, o.retirement_match, o.relocation, o.work_location, o.deadline, o.accepted, o.negotiation_log, o.created_at, o.updated_at,
        j.title AS job_title,
-       c.name AS company_name
+       c.name AS company_name,
+       c.logo_url AS company_logo_url
 FROM offers o
 LEFT JOIN jobs j ON j.id = o.job_id
 LEFT JOIN companies c ON c.id = j.company_id
 WHERE o.user_id = $1
+  AND ($4::text IS NULL OR (
+      j.title ILIKE '%' || $4 || '%'
+      OR c.name ILIKE '%' || $4 || '%'
+      OR o.work_location ILIKE '%' || $4 || '%'
+  ))
+  AND ($5::text IS NULL
+      OR ($5::text = 'accepted' AND o.accepted = true)
+      OR ($5::text = 'declined' AND o.accepted = false)
+      OR ($5::text = 'pending' AND o.accepted IS NULL)
+  )
+  AND ($6::text IS NULL OR o.remote_policy = $6)
 ORDER BY
-  CASE WHEN $4::text = 'base_salary' AND $5::text = 'asc' THEN o.base_salary END ASC NULLS LAST,
-  CASE WHEN $4::text = 'base_salary' AND $5::text = 'desc' THEN o.base_salary END DESC NULLS LAST,
-  CASE WHEN $4::text = 'deadline' AND $5::text = 'asc' THEN o.deadline END ASC NULLS LAST,
-  CASE WHEN $4::text = 'deadline' AND $5::text = 'desc' THEN o.deadline END DESC NULLS LAST,
-  CASE WHEN $4::text = 'created_at' AND $5::text = 'asc' THEN o.created_at END ASC,
+  CASE WHEN $7::text = 'base_salary' AND $8::text = 'asc' THEN o.base_salary END ASC NULLS LAST,
+  CASE WHEN $7::text = 'base_salary' AND $8::text = 'desc' THEN o.base_salary END DESC NULLS LAST,
+  CASE WHEN $7::text = 'deadline' AND $8::text = 'asc' THEN o.deadline END ASC NULLS LAST,
+  CASE WHEN $7::text = 'deadline' AND $8::text = 'desc' THEN o.deadline END DESC NULLS LAST,
+  CASE WHEN $7::text = 'created_at' AND $8::text = 'asc' THEN o.created_at END ASC,
   o.created_at DESC
 LIMIT $2 OFFSET $3
 `
 
 type ListOffersParams struct {
-	UserID    string `json:"user_id"`
-	Limit     int32  `json:"limit"`
-	Offset    int32  `json:"offset"`
-	SortBy    string `json:"sort_by"`
-	SortOrder string `json:"sort_order"`
+	UserID       string      `json:"user_id"`
+	Limit        int32       `json:"limit"`
+	Offset       int32       `json:"offset"`
+	Search       pgtype.Text `json:"search"`
+	Status       pgtype.Text `json:"status"`
+	RemotePolicy pgtype.Text `json:"remote_policy"`
+	SortBy       string      `json:"sort_by"`
+	SortOrder    string      `json:"sort_order"`
 }
 
 type ListOffersRow struct {
-	ID             pgtype.UUID        `json:"id"`
-	UserID         string             `json:"user_id"`
-	JobID          pgtype.UUID        `json:"job_id"`
-	BaseSalary     pgtype.Int4        `json:"base_salary"`
-	Currency       pgtype.Text        `json:"currency"`
-	Equity         pgtype.Text        `json:"equity"`
-	Bonus          pgtype.Text        `json:"bonus"`
-	Benefits       []byte             `json:"benefits"`
-	Deadline       pgtype.Timestamptz `json:"deadline"`
-	Accepted       pgtype.Bool        `json:"accepted"`
-	NegotiationLog []byte             `json:"negotiation_log"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-	JobTitle       pgtype.Text        `json:"job_title"`
-	CompanyName    pgtype.Text        `json:"company_name"`
+	ID              pgtype.UUID        `json:"id"`
+	UserID          string             `json:"user_id"`
+	JobID           pgtype.UUID        `json:"job_id"`
+	BaseSalary      pgtype.Int4        `json:"base_salary"`
+	Currency        pgtype.Text        `json:"currency"`
+	SalaryInterval  pgtype.Text        `json:"salary_interval"`
+	SignOnBonus     pgtype.Int4        `json:"sign_on_bonus"`
+	AnnualBonus     pgtype.Text        `json:"annual_bonus"`
+	Equity          pgtype.Text        `json:"equity"`
+	EquityValue     pgtype.Int4        `json:"equity_value"`
+	EquitySchedule  pgtype.Text        `json:"equity_schedule"`
+	Bonus           pgtype.Text        `json:"bonus"`
+	Benefits        []byte             `json:"benefits"`
+	PtoDays         pgtype.Int4        `json:"pto_days"`
+	RemotePolicy    pgtype.Text        `json:"remote_policy"`
+	RetirementMatch pgtype.Text        `json:"retirement_match"`
+	Relocation      pgtype.Text        `json:"relocation"`
+	WorkLocation    pgtype.Text        `json:"work_location"`
+	Deadline        pgtype.Timestamptz `json:"deadline"`
+	Accepted        pgtype.Bool        `json:"accepted"`
+	NegotiationLog  []byte             `json:"negotiation_log"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	JobTitle        pgtype.Text        `json:"job_title"`
+	CompanyName     pgtype.Text        `json:"company_name"`
+	CompanyLogoUrl  pgtype.Text        `json:"company_logo_url"`
 }
 
 func (q *Queries) ListOffers(ctx context.Context, arg ListOffersParams) ([]ListOffersRow, error) {
@@ -237,6 +369,9 @@ func (q *Queries) ListOffers(ctx context.Context, arg ListOffersParams) ([]ListO
 		arg.UserID,
 		arg.Limit,
 		arg.Offset,
+		arg.Search,
+		arg.Status,
+		arg.RemotePolicy,
 		arg.SortBy,
 		arg.SortOrder,
 	)
@@ -253,9 +388,19 @@ func (q *Queries) ListOffers(ctx context.Context, arg ListOffersParams) ([]ListO
 			&i.JobID,
 			&i.BaseSalary,
 			&i.Currency,
+			&i.SalaryInterval,
+			&i.SignOnBonus,
+			&i.AnnualBonus,
 			&i.Equity,
+			&i.EquityValue,
+			&i.EquitySchedule,
 			&i.Bonus,
 			&i.Benefits,
+			&i.PtoDays,
+			&i.RemotePolicy,
+			&i.RetirementMatch,
+			&i.Relocation,
+			&i.WorkLocation,
 			&i.Deadline,
 			&i.Accepted,
 			&i.NegotiationLog,
@@ -263,6 +408,7 @@ func (q *Queries) ListOffers(ctx context.Context, arg ListOffersParams) ([]ListO
 			&i.UpdatedAt,
 			&i.JobTitle,
 			&i.CompanyName,
+			&i.CompanyLogoUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -278,27 +424,47 @@ const updateOffer = `-- name: UpdateOffer :one
 UPDATE offers SET
     base_salary = COALESCE($3, base_salary),
     currency = COALESCE($4, currency),
-    equity = COALESCE($5, equity),
-    bonus = COALESCE($6, bonus),
-    benefits = COALESCE($7, benefits),
-    deadline = COALESCE($8, deadline),
-    accepted = COALESCE($9, accepted),
-    negotiation_log = COALESCE($10, negotiation_log)
+    salary_interval = COALESCE($5, salary_interval),
+    sign_on_bonus = COALESCE($6, sign_on_bonus),
+    annual_bonus = COALESCE($7, annual_bonus),
+    equity = COALESCE($8, equity),
+    equity_value = COALESCE($9, equity_value),
+    equity_schedule = COALESCE($10, equity_schedule),
+    bonus = COALESCE($11, bonus),
+    benefits = COALESCE($12, benefits),
+    pto_days = COALESCE($13, pto_days),
+    remote_policy = COALESCE($14, remote_policy),
+    retirement_match = COALESCE($15, retirement_match),
+    relocation = COALESCE($16, relocation),
+    work_location = COALESCE($17, work_location),
+    deadline = COALESCE($18, deadline),
+    accepted = COALESCE($19, accepted),
+    negotiation_log = COALESCE($20, negotiation_log)
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, job_id, base_salary, currency, equity, bonus, benefits, deadline, accepted, negotiation_log, created_at, updated_at
+RETURNING id, user_id, job_id, base_salary, currency, salary_interval, sign_on_bonus, annual_bonus, equity, equity_value, equity_schedule, bonus, benefits, pto_days, remote_policy, retirement_match, relocation, work_location, deadline, accepted, negotiation_log, created_at, updated_at
 `
 
 type UpdateOfferParams struct {
-	ID             pgtype.UUID        `json:"id"`
-	UserID         string             `json:"user_id"`
-	BaseSalary     pgtype.Int4        `json:"base_salary"`
-	Currency       pgtype.Text        `json:"currency"`
-	Equity         pgtype.Text        `json:"equity"`
-	Bonus          pgtype.Text        `json:"bonus"`
-	Benefits       []byte             `json:"benefits"`
-	Deadline       pgtype.Timestamptz `json:"deadline"`
-	Accepted       pgtype.Bool        `json:"accepted"`
-	NegotiationLog []byte             `json:"negotiation_log"`
+	ID              pgtype.UUID        `json:"id"`
+	UserID          string             `json:"user_id"`
+	BaseSalary      pgtype.Int4        `json:"base_salary"`
+	Currency        pgtype.Text        `json:"currency"`
+	SalaryInterval  pgtype.Text        `json:"salary_interval"`
+	SignOnBonus     pgtype.Int4        `json:"sign_on_bonus"`
+	AnnualBonus     pgtype.Text        `json:"annual_bonus"`
+	Equity          pgtype.Text        `json:"equity"`
+	EquityValue     pgtype.Int4        `json:"equity_value"`
+	EquitySchedule  pgtype.Text        `json:"equity_schedule"`
+	Bonus           pgtype.Text        `json:"bonus"`
+	Benefits        []byte             `json:"benefits"`
+	PtoDays         pgtype.Int4        `json:"pto_days"`
+	RemotePolicy    pgtype.Text        `json:"remote_policy"`
+	RetirementMatch pgtype.Text        `json:"retirement_match"`
+	Relocation      pgtype.Text        `json:"relocation"`
+	WorkLocation    pgtype.Text        `json:"work_location"`
+	Deadline        pgtype.Timestamptz `json:"deadline"`
+	Accepted        pgtype.Bool        `json:"accepted"`
+	NegotiationLog  []byte             `json:"negotiation_log"`
 }
 
 func (q *Queries) UpdateOffer(ctx context.Context, arg UpdateOfferParams) (Offer, error) {
@@ -307,9 +473,19 @@ func (q *Queries) UpdateOffer(ctx context.Context, arg UpdateOfferParams) (Offer
 		arg.UserID,
 		arg.BaseSalary,
 		arg.Currency,
+		arg.SalaryInterval,
+		arg.SignOnBonus,
+		arg.AnnualBonus,
 		arg.Equity,
+		arg.EquityValue,
+		arg.EquitySchedule,
 		arg.Bonus,
 		arg.Benefits,
+		arg.PtoDays,
+		arg.RemotePolicy,
+		arg.RetirementMatch,
+		arg.Relocation,
+		arg.WorkLocation,
 		arg.Deadline,
 		arg.Accepted,
 		arg.NegotiationLog,
@@ -321,9 +497,19 @@ func (q *Queries) UpdateOffer(ctx context.Context, arg UpdateOfferParams) (Offer
 		&i.JobID,
 		&i.BaseSalary,
 		&i.Currency,
+		&i.SalaryInterval,
+		&i.SignOnBonus,
+		&i.AnnualBonus,
 		&i.Equity,
+		&i.EquityValue,
+		&i.EquitySchedule,
 		&i.Bonus,
 		&i.Benefits,
+		&i.PtoDays,
+		&i.RemotePolicy,
+		&i.RetirementMatch,
+		&i.Relocation,
+		&i.WorkLocation,
 		&i.Deadline,
 		&i.Accepted,
 		&i.NegotiationLog,

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Command } from "cmdk";
 import { useJobs, type Job } from "@/hooks/use-jobs";
-import { useStages } from "@/hooks/use-stages";
-import { Briefcase, ChevronsUpDown, Check, X } from "lucide-react";
+import { Briefcase, ChevronsUpDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface JobComboboxProps {
@@ -18,24 +17,12 @@ export function JobCombobox({
 }: JobComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [showAll, setShowAll] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Get stages to find offer-stage IDs
-  const { data: stages } = useStages();
-  const offerStageIds = useMemo(
-    () =>
-      (stages ?? [])
-        .filter((s) => s.mapped_status === "offer")
-        .map((s) => s.id),
-    [stages]
-  );
-
-  // Fetch jobs — default to offer-stage jobs, or all non-terminal if toggled
-  const stageFilter = showAll ? [] : offerStageIds;
+  // Fetch all non-terminal jobs — any job can have an offer created for it.
+  // The backend auto-moves the job to the offer stage on creation.
   const { data: jobsData } = useJobs({
     search: search || undefined,
-    stageIds: stageFilter,
     perPage: 15,
     page: 1,
   });
@@ -103,9 +90,7 @@ export function JobCombobox({
             />
             <Command.List className="max-h-[200px] overflow-y-auto p-1">
               <Command.Empty className="py-4 text-center text-xs text-text-muted">
-                {offerStageIds.length === 0 && !showAll
-                  ? "No offer stage found. Toggle 'Show all jobs' below."
-                  : "No matching jobs found."}
+                No matching jobs found.
               </Command.Empty>
               {jobs.map((job) => (
                   <Command.Item
@@ -135,17 +120,6 @@ export function JobCombobox({
                   </Command.Item>
               ))}
             </Command.List>
-            <div className="border-t border-border-subtle px-3 py-2">
-              <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showAll}
-                  onChange={(e) => setShowAll(e.target.checked)}
-                  className="rounded"
-                />
-                Show all jobs
-              </label>
-            </div>
           </Command>
         </div>
       )}

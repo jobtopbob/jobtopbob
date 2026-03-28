@@ -153,14 +153,13 @@ export function JobDetailSheet({ job: jobProp, onClose, stages }: JobDetailSheet
     isLoading: activityLoading,
   } = useActivityLog(activeTab === "activity" ? jobProp?.id : undefined);
 
-  // Keep a ref to the last non-null job so content stays visible during close animation
-  const lastJobRef = useRef<Job | null>(jobProp);
-  if (jobProp) {
-    lastJobRef.current = jobProp;
-  }
-  const job = jobProp ?? lastJobRef.current;
-
+  // Keep the last non-null job so content stays visible during the sheet close animation
+  const [lastJob, setLastJob] = useState<Job | null>(jobProp);
   const [prevJobId, setPrevJobId] = useState(jobProp?.id);
+
+  if (jobProp && jobProp !== lastJob) {
+    setLastJob(jobProp);
+  }
   if (jobProp?.id !== prevJobId) {
     setPrevJobId(jobProp?.id);
     setActiveTab("details");
@@ -168,6 +167,7 @@ export function JobDetailSheet({ job: jobProp, onClose, stages }: JobDetailSheet
     setDescriptionDraft("");
   }
 
+  const job = jobProp ?? lastJob;
   if (!job) return null;
 
   const tags = (job.tags ?? []) as Tag[];
@@ -755,7 +755,7 @@ function DetailsTab({
                 render={
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-border-dashed text-text-muted hover:border-text-tertiary hover:text-text-tertiary transition-colors"
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-border-subtle text-text-muted hover:border-text-tertiary hover:text-text-tertiary transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -864,7 +864,7 @@ function DescriptionTab({
               </p>
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-border-dashed p-8 text-center">
+            <div className="rounded-xl bg-surface border border-border-subtle p-8 text-center">
               <SectionIcon
                 name="resume"
                 className="w-12 h-12 text-text-muted/30 mx-auto mb-3"

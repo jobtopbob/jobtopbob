@@ -15,6 +15,9 @@ export interface OfferFilters {
   sortOrder: string;
   page: number;
   perPage: number;
+  search: string;
+  status: string; // "accepted" | "declined" | "pending" | ""
+  remotePolicy: string; // "remote" | "hybrid" | "onsite" | ""
 }
 
 export const defaultOfferFilters: OfferFilters = {
@@ -22,6 +25,9 @@ export const defaultOfferFilters: OfferFilters = {
   sortOrder: "desc",
   page: 1,
   perPage: 20,
+  search: "",
+  status: "",
+  remotePolicy: "",
 };
 
 export interface OffersResponse {
@@ -43,6 +49,9 @@ export function useOffers(filters?: Partial<OfferFilters>) {
         page: resolved.page,
         per_page: resolved.perPage,
       };
+      if (resolved.search) params.search = resolved.search;
+      if (resolved.status) params.status = resolved.status;
+      if (resolved.remotePolicy) params.remote_policy = resolved.remotePolicy;
 
       const { data, error } = await api.GET("/api/v1/offers", {
         params: { query: params as Record<string, unknown> },

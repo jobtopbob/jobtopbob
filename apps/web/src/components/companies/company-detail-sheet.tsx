@@ -32,7 +32,6 @@ import {
   useDeleteCompany,
   useEnrichCompany,
   useUploadCompanyLogo,
-  useDeleteCompanyLogo,
   useEnrichmentLogs,
   type EnrichmentLog,
 } from "@/hooks/use-companies";
@@ -70,7 +69,6 @@ export function CompanyDetailSheet({
   const deleteCompany = useDeleteCompany();
   const enrichCompany = useEnrichCompany();
   const uploadLogo = useUploadCompanyLogo();
-  const deleteLogo = useDeleteCompanyLogo();
   const [editing, setEditing] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
 

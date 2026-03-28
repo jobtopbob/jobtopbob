@@ -3297,11 +3297,24 @@ export interface components {
             job_id: string;
             job_title?: string | null;
             company_name?: string | null;
+            company_logo_url?: string | null;
             base_salary?: number | null;
             currency?: string | null;
+            /** @enum {string|null} */
+            salary_interval?: "annual" | "monthly" | "hourly" | null;
+            sign_on_bonus?: number | null;
+            annual_bonus?: string | null;
             equity?: string | null;
+            equity_value?: number | null;
+            equity_schedule?: string | null;
             bonus?: string | null;
             benefits?: Record<string, never> | null;
+            pto_days?: number | null;
+            /** @enum {string|null} */
+            remote_policy?: "remote" | "hybrid" | "onsite" | null;
+            retirement_match?: string | null;
+            relocation?: string | null;
+            work_location?: string | null;
             /** Format: date-time */
             deadline?: string | null;
             accepted?: boolean | null;
@@ -3349,9 +3362,21 @@ export interface components {
             job_id: string;
             base_salary?: number;
             currency?: string;
+            /** @enum {string} */
+            salary_interval?: "annual" | "monthly" | "hourly";
+            sign_on_bonus?: number;
+            annual_bonus?: string;
             equity?: string;
+            equity_value?: number;
+            equity_schedule?: string;
             bonus?: string;
             benefits?: Record<string, never>;
+            pto_days?: number;
+            /** @enum {string} */
+            remote_policy?: "remote" | "hybrid" | "onsite";
+            retirement_match?: string;
+            relocation?: string;
+            work_location?: string;
             /** Format: date-time */
             deadline?: string;
             accepted?: boolean;
@@ -3360,9 +3385,21 @@ export interface components {
         UpdateOfferRequest: {
             base_salary?: number | null;
             currency?: string | null;
+            /** @enum {string|null} */
+            salary_interval?: "annual" | "monthly" | "hourly" | null;
+            sign_on_bonus?: number | null;
+            annual_bonus?: string | null;
             equity?: string | null;
+            equity_value?: number | null;
+            equity_schedule?: string | null;
             bonus?: string | null;
             benefits?: Record<string, never> | null;
+            pto_days?: number | null;
+            /** @enum {string|null} */
+            remote_policy?: "remote" | "hybrid" | "onsite" | null;
+            retirement_match?: string | null;
+            relocation?: string | null;
+            work_location?: string | null;
             /** Format: date-time */
             deadline?: string | null;
             accepted?: boolean | null;

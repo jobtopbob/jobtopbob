@@ -759,13 +759,32 @@ components:
         company_name:
           type: string
           nullable: true
+        company_logo_url:
+          type: string
+          nullable: true
         base_salary:
           type: integer
           nullable: true
         currency:
           type: string
           nullable: true
+        salary_interval:
+          type: string
+          nullable: true
+          enum: [annual, monthly, hourly]
+        sign_on_bonus:
+          type: integer
+          nullable: true
+        annual_bonus:
+          type: string
+          nullable: true
         equity:
+          type: string
+          nullable: true
+        equity_value:
+          type: integer
+          nullable: true
+        equity_schedule:
           type: string
           nullable: true
         bonus:
@@ -773,6 +792,22 @@ components:
           nullable: true
         benefits:
           type: object
+          nullable: true
+        pto_days:
+          type: integer
+          nullable: true
+        remote_policy:
+          type: string
+          nullable: true
+          enum: [remote, hybrid, onsite]
+        retirement_match:
+          type: string
+          nullable: true
+        relocation:
+          type: string
+          nullable: true
+        work_location:
+          type: string
           nullable: true
         deadline:
           type: string
@@ -879,12 +914,34 @@ components:
           type: integer
         currency:
           type: string
+        salary_interval:
+          type: string
+          enum: [annual, monthly, hourly]
+        sign_on_bonus:
+          type: integer
+        annual_bonus:
+          type: string
         equity:
+          type: string
+        equity_value:
+          type: integer
+        equity_schedule:
           type: string
         bonus:
           type: string
         benefits:
           type: object
+        pto_days:
+          type: integer
+        remote_policy:
+          type: string
+          enum: [remote, hybrid, onsite]
+        retirement_match:
+          type: string
+        relocation:
+          type: string
+        work_location:
+          type: string
         deadline:
           type: string
           format: date-time
@@ -902,7 +959,23 @@ components:
         currency:
           type: string
           nullable: true
+        salary_interval:
+          type: string
+          nullable: true
+          enum: [annual, monthly, hourly]
+        sign_on_bonus:
+          type: integer
+          nullable: true
+        annual_bonus:
+          type: string
+          nullable: true
         equity:
+          type: string
+          nullable: true
+        equity_value:
+          type: integer
+          nullable: true
+        equity_schedule:
           type: string
           nullable: true
         bonus:
@@ -910,6 +983,22 @@ components:
           nullable: true
         benefits:
           type: object
+          nullable: true
+        pto_days:
+          type: integer
+          nullable: true
+        remote_policy:
+          type: string
+          nullable: true
+          enum: [remote, hybrid, onsite]
+        retirement_match:
+          type: string
+          nullable: true
+        relocation:
+          type: string
+          nullable: true
+        work_location:
+          type: string
           nullable: true
         deadline:
           type: string

@@ -16,8 +16,9 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
-    setCollapsed(mql.matches);
     const handler = (e: MediaQueryListEvent) => setCollapsed(e.matches);
+    // Fire handler immediately to sync initial state
+    handler({ matches: mql.matches } as MediaQueryListEvent);
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);
   }, []);

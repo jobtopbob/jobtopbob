@@ -109,7 +109,7 @@ export function ResumeGrid({
           </div>
         </button>
       ) : (
-        <div className="rounded-2xl bg-card shadow-sm border border-dashed border-border-subtle min-h-[340px] flex flex-col items-center justify-center gap-5 p-6">
+        <div className="rounded-2xl bg-card shadow-sm border border-border-subtle min-h-85 flex flex-col items-center justify-center gap-5 p-6">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
             <AlertTriangle className="w-8 h-8 text-amber-500" />
           </div>

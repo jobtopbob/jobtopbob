@@ -77,7 +77,7 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
     <div
       ref={ref}
       onClick={onClick}
-      className="flex flex-col gap-2 p-3 rounded-[10px] bg-card border border-border-subtle shadow-[0_1px_3px_rgba(0,0,0,0.04)] cursor-pointer hover:border-border-dashed transition-colors"
+      className="flex flex-col gap-2 p-3 rounded-[10px] bg-card border border-border-subtle shadow-[0_1px_3px_rgba(0,0,0,0.04)] cursor-pointer hover:border-border-subtle transition-colors"
       style={{ opacity: isDragging ? 0.5 : isClosedColumn ? 0.6 : 1 }}
     >
       {/* Company */}

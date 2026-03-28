@@ -74,21 +74,6 @@ function formatDate(dateStr: string | null | undefined): {
   return { text, isToday };
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  linkedin: "LinkedIn",
-  indeed: "Indeed",
-  glassdoor: "Glassdoor",
-  adzuna: "Adzuna",
-  company_website: "Company Site",
-  manual: "Manual",
-  other: "Other",
-};
-
-function formatSource(source: string | null | undefined): string {
-  if (!source) return "Manual";
-  return SOURCE_LABELS[source] ?? source.charAt(0).toUpperCase() + source.slice(1);
-}
-
 function formatJobType(value: string | null | undefined): string | null {
   if (!value) return null;
   return JOB_TYPES.find((t) => t.value === value)?.label ?? value;

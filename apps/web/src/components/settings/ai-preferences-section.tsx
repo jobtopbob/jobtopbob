@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useUserSettings, useUpdateUserSettings } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,15 +39,16 @@ export function AIPreferencesSection() {
   const [model, setModel] = useState("");
   const [writingStyle, setWritingStyle] = useState("");
   const [weeklyGoal, setWeeklyGoal] = useState<number>(0);
+  const [initialized, setInitialized] = useState(false);
 
-  useEffect(() => {
-    if (settings) {
-      setProvider(settings.ai_provider ?? "");
-      setModel(settings.ai_model ?? "");
-      setWritingStyle(settings.writing_style ?? "");
-      setWeeklyGoal(settings.weekly_goal ?? 0);
-    }
-  }, [settings]);
+  // Sync local form state when settings load for the first time
+  if (settings && !initialized) {
+    setProvider(settings.ai_provider ?? "");
+    setModel(settings.ai_model ?? "");
+    setWritingStyle(settings.writing_style ?? "");
+    setWeeklyGoal(settings.weekly_goal ?? 0);
+    setInitialized(true);
+  }
 
   const handleSave = () => {
     updateSettings.mutate(

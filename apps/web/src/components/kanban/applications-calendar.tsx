@@ -78,7 +78,7 @@ function getStagePillStyle(stage: Stage | undefined): {
   text: string;
   border: string;
 } {
-  if (!stage?.color) return { bg: "var(--surface)", text: "var(--text-muted)", border: "var(--border-dashed)" };
+  if (!stage?.color) return { bg: "var(--surface)", text: "var(--text-muted)", border: "var(--border-subtle)" };
   const hex = stage.color.replace("#", "");
   const r = parseInt(hex.slice(0, 2), 16);
   const g = parseInt(hex.slice(2, 4), 16);
@@ -373,7 +373,7 @@ export function ApplicationsCalendar({
                   <button
                     key={job.id}
                     onClick={() => onJobClick(job)}
-                    className="flex items-center gap-3 p-3 rounded-[10px] bg-card border border-border-subtle text-left hover:border-border-dashed transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-[10px] bg-card border border-border-subtle text-left hover:border-border-subtle transition-colors"
                   >
                     <StageIcon
                       stageName={stage?.name ?? "default"}

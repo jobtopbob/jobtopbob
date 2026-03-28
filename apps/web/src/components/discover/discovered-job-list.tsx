@@ -4,12 +4,10 @@ import { useState } from "react";
 import {
   ExternalLink,
   MapPin,
-  DollarSign,
   Briefcase,
   Search,
   Compass,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";

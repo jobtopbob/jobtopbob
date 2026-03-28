@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Plus, HandCoins, LayoutGrid, Columns } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +13,7 @@ import { OfferCard } from "@/components/offers/offer-card";
 import { OfferDetailSheet } from "@/components/offers/offer-detail-sheet";
 import { AddOfferDialog } from "@/components/offers/add-offer-dialog";
 import { OfferComparisonTable } from "@/components/offers/offer-comparison-table";
+import { OffersToolbar } from "@/components/offers/offers-toolbar";
 import { PaginationControls } from "@/components/kanban/pagination-controls";
 import { cn } from "@/lib/utils";
 import { ExportButton } from "@/components/export-button";
@@ -30,6 +31,12 @@ export default function OffersPage() {
 
   const offers = result?.data ?? [];
   const total = result?.total ?? 0;
+
+  const handleFilterChange = useCallback(
+    (update: Partial<OfferFilters>) =>
+      setFilters((prev) => ({ ...prev, ...update })),
+    []
+  );
 
   if (error) {
     return (
@@ -59,7 +66,7 @@ export default function OffersPage() {
               Offers
             </h1>
             <p className="text-sm text-text-muted mt-1.5">
-              {isLoading ? "Loading..." : `${total} offers received`}
+              {isLoading ? "Loading..." : `${total} offer${total !== 1 ? "s" : ""} received`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -98,6 +105,9 @@ export default function OffersPage() {
           </div>
         </div>
 
+        {/* Toolbar: Search, Sort, Filter */}
+        <OffersToolbar filters={filters} onChange={handleFilterChange} />
+
         {/* Content */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -111,16 +121,20 @@ export default function OffersPage() {
               <HandCoins className="w-6 h-6 text-text-muted" />
             </div>
             <p className="text-sm text-text-muted">
-              No offers yet. Add one when you receive an offer.
+              {filters.search || filters.status || filters.remotePolicy
+                ? "No offers match your filters."
+                : "No offers yet. Add one when you receive an offer."}
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAddDialogOpen(true)}
-            >
-              <Plus className="w-4 h-4" />
-              Add Offer
-            </Button>
+            {!filters.search && !filters.status && !filters.remotePolicy && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAddDialogOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+                Add Offer
+              </Button>
+            )}
           </div>
         ) : viewMode === "compare" ? (
           <OfferComparisonTable offers={offers} />

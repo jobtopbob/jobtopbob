@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import { useUploadAvatar, useDeleteAvatar } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
@@ -104,9 +105,12 @@ export function ProfileSection() {
                 </div>
               )}
               {imageUrl ? (
-                <img
+                <Image
                   src={imageUrl}
                   alt="Avatar"
+                  width={80}
+                  height={80}
+                  unoptimized
                   className="w-full h-full object-cover"
                 />
               ) : (

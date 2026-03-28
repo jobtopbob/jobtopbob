@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Loader2, AlertTriangle } from "lucide-react";
 
 export function AccountSection() {
-  const { data: session } = authClient.useSession();
+  authClient.useSession();
 
   // Password change
   const [currentPassword, setCurrentPassword] = useState("");

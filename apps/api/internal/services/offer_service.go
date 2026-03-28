@@ -10,6 +10,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+func pgtextOptional(s string) pgtype.Text {
+	if s == "" {
+		return pgtype.Text{}
+	}
+	return pgtype.Text{String: s, Valid: true}
+}
+
 // GetOffer returns a single offer with job title and company name joined.
 func GetOffer(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID) (db.GetOfferRow, error) {
 	row, err := q.GetOffer(ctx, db.GetOfferParams{ID: id, UserID: userID})
@@ -19,12 +26,15 @@ func GetOffer(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID)
 	return row, err
 }
 
-// ListOffersParams holds pagination parameters for listing offers.
+// ListOffersParams holds pagination and filter parameters for listing offers.
 type ListOffersParams struct {
-	SortBy    string
-	SortOrder string
-	Page      int32
-	PerPage   int32
+	SortBy       string
+	SortOrder    string
+	Page         int32
+	PerPage      int32
+	Search       string
+	Status       string // "accepted", "declined", "pending"
+	RemotePolicy string // "remote", "hybrid", "onsite"
 }
 
 // ListOffersResult holds the paginated result.
@@ -54,17 +64,27 @@ func ListOffers(ctx context.Context, q *db.Queries, userID string, p ListOffersP
 
 	offset := (p.Page - 1) * p.PerPage
 
-	total, err := q.CountOffers(ctx, userID)
+	filterParams := db.CountOffersParams{
+		UserID:       userID,
+		Search:       pgtextOptional(p.Search),
+		Status:       pgtextOptional(p.Status),
+		RemotePolicy: pgtextOptional(p.RemotePolicy),
+	}
+
+	total, err := q.CountOffers(ctx, filterParams)
 	if err != nil {
 		return ListOffersResult{}, err
 	}
 
 	offers, err := q.ListOffers(ctx, db.ListOffersParams{
-		UserID:    userID,
-		Limit:     p.PerPage,
-		Offset:    offset,
-		SortBy:    p.SortBy,
-		SortOrder: p.SortOrder,
+		UserID:       userID,
+		Limit:        p.PerPage,
+		Offset:       offset,
+		Search:       filterParams.Search,
+		Status:       filterParams.Status,
+		RemotePolicy: filterParams.RemotePolicy,
+		SortBy:       p.SortBy,
+		SortOrder:    p.SortOrder,
 	})
 	if err != nil {
 		return ListOffersResult{}, err
@@ -82,29 +102,44 @@ func ListOffers(ctx context.Context, q *db.Queries, userID string, p ListOffersP
 // If the job already has an offer (e.g. an auto-created stub), the existing offer is updated instead.
 func CreateOffer(ctx context.Context, q *db.Queries, userID string, params db.CreateOfferParams) (db.Offer, error) {
 	params.UserID = userID
-	offer, err := q.CreateOffer(ctx, params)
-	if err != nil {
-		// If an offer already exists for this job (unique constraint), update it instead.
-		existing, getErr := q.GetOfferByJobID(ctx, db.GetOfferByJobIDParams{JobID: params.JobID, UserID: userID})
-		if getErr != nil {
-			return db.Offer{}, err // return original create error
-		}
+
+	// Check if an offer already exists for this job (unique constraint on job_id).
+	// We check first because a failed INSERT aborts the PostgreSQL transaction,
+	// making subsequent queries in the same tx fail.
+	existing, getErr := q.GetOfferByJobID(ctx, db.GetOfferByJobIDParams{JobID: params.JobID, UserID: userID})
+	if getErr == nil {
+		// Offer exists — update it instead.
 		updated, updateErr := q.UpdateOffer(ctx, db.UpdateOfferParams{
-			ID:             existing.ID,
-			UserID:         userID,
-			BaseSalary:     params.BaseSalary,
-			Currency:       params.Currency,
-			Equity:         params.Equity,
-			Bonus:          params.Bonus,
-			Benefits:       params.Benefits,
-			Deadline:       params.Deadline,
-			Accepted:       params.Accepted,
-			NegotiationLog: params.NegotiationLog,
+			ID:              existing.ID,
+			UserID:          userID,
+			BaseSalary:      params.BaseSalary,
+			Currency:        params.Currency,
+			SalaryInterval:  params.SalaryInterval,
+			SignOnBonus:     params.SignOnBonus,
+			AnnualBonus:     params.AnnualBonus,
+			Equity:          params.Equity,
+			EquityValue:     params.EquityValue,
+			EquitySchedule:  params.EquitySchedule,
+			Bonus:           params.Bonus,
+			Benefits:        params.Benefits,
+			PtoDays:         params.PtoDays,
+			RemotePolicy:    params.RemotePolicy,
+			RetirementMatch: params.RetirementMatch,
+			Relocation:      params.Relocation,
+			WorkLocation:    params.WorkLocation,
+			Deadline:        params.Deadline,
+			Accepted:        params.Accepted,
+			NegotiationLog:  params.NegotiationLog,
 		})
 		if updateErr != nil {
 			return db.Offer{}, updateErr
 		}
 		return updated, nil
+	}
+
+	offer, err := q.CreateOffer(ctx, params)
+	if err != nil {
+		return db.Offer{}, err
 	}
 
 	// Auto-move the job to the offer stage so Kanban stays in sync.

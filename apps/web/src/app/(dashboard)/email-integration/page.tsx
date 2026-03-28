@@ -159,7 +159,7 @@ function NotConnectedView() {
       {/* Hero Card */}
       <div className="flex-1 flex items-start justify-center pt-4">
         <div className="w-full max-w-lg">
-          <Card className="border-dashed">
+          <Card className="border border-border-subtle">
             <CardContent className="pt-10 pb-10 px-8 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
                 <Mail className="w-8 h-8 text-primary" />

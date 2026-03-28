@@ -171,7 +171,12 @@ func ExportOffers() gin.HandlerFunc {
 			c.Header("Content-Type", "text/csv")
 			c.Header("Content-Disposition", "attachment; filename=\"offers.csv\"")
 			w := csv.NewWriter(c.Writer)
-			_ = w.Write([]string{"id", "job_title", "company", "base_salary", "currency", "equity", "bonus", "deadline", "accepted", "created_at"})
+			_ = w.Write([]string{
+				"id", "job_title", "company", "base_salary", "currency", "salary_interval",
+				"sign_on_bonus", "annual_bonus", "equity", "equity_value", "equity_schedule",
+				"bonus", "pto_days", "remote_policy", "retirement_match", "relocation",
+				"work_location", "deadline", "accepted", "created_at",
+			})
 			for _, o := range result.Data {
 				accepted := ""
 				if o.Accepted.Valid {
@@ -187,8 +192,18 @@ func ExportOffers() gin.HandlerFunc {
 					pgStr(o.CompanyName),
 					pgIntStr(o.BaseSalary),
 					pgStr(o.Currency),
+					pgStr(o.SalaryInterval),
+					pgIntStr(o.SignOnBonus),
+					pgStr(o.AnnualBonus),
 					pgStr(o.Equity),
+					pgIntStr(o.EquityValue),
+					pgStr(o.EquitySchedule),
 					pgStr(o.Bonus),
+					pgIntStr(o.PtoDays),
+					pgStr(o.RemotePolicy),
+					pgStr(o.RetirementMatch),
+					pgStr(o.Relocation),
+					pgStr(o.WorkLocation),
 					pgTimeStr(o.Deadline),
 					accepted,
 					o.CreatedAt.Time.Format("2006-01-02"),
