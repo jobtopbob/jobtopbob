@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import Image from "next/image"
 import Link from "next/link"
 import { LoginForm } from "@/components/login-form"
 import { AppLogo } from "@/components/app-logo"
+
+export const metadata: Metadata = {
+  title: "Login",
+};
 
 export default function LoginPage() {
   return (

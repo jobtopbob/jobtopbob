@@ -23,7 +23,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JobTopBob",
+  title: {
+    default: "JobTopBob",
+    template: "%s - JobTopBob",
+  },
   description: "AI-powered job application tracker",
   icons: {
     icon: [
