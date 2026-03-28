@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCompleteOnboarding } from "@/hooks/use-onboarding";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { SpinnerIcon, CheckCircleIcon } from "@phosphor-icons/react";
 
 export function DoneStep() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export function DoneStep() {
       <CardContent className="space-y-6 pt-2">
         <div className="flex flex-col items-center text-center space-y-4 py-6">
           <div className="flex size-16 items-center justify-center rounded-full bg-green-500/10">
-            <CheckCircle2 className="size-8 text-green-500" />
+            <CheckCircleIcon className="size-8 text-green-500" />
           </div>
 
           <div className="space-y-2">
@@ -45,7 +45,7 @@ export function DoneStep() {
             disabled={completeOnboarding.isPending}
           >
             {completeOnboarding.isPending && (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />
             )}
             Go to Dashboard
           </Button>

@@ -3,33 +3,33 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Briefcase,
-  FileText,
-  Sparkles,
-  Mail,
-} from "lucide-react";
+  BriefcaseIcon,
+  FileTextIcon,
+  EnvelopeIcon,
+  SparkleIcon,
+} from "@phosphor-icons/react";
 
 const features = [
   {
-    icon: Briefcase,
+    icon: BriefcaseIcon,
     title: "Track Applications",
     description:
       "Kanban board, calendar, and table views to manage every application.",
   },
   {
-    icon: FileText,
+    icon: FileTextIcon,
     title: "Resume Builder",
     description:
       "Integrated resume builder with version snapshots per application.",
   },
   {
-    icon: Sparkles,
+    icon: SparkleIcon,
     title: "AI Assistant",
     description:
       "Suitability scoring, cover letters, interview prep — bring your own key.",
   },
   {
-    icon: Mail,
+    icon: EnvelopeIcon,
     title: "Email Integration",
     description:
       "Auto-detect interview invites, rejections, and offers from Gmail.",

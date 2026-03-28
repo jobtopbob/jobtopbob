@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Trash2, ArrowRight } from "lucide-react";
+import { XIcon, TrashIcon, ArrowRightIcon } from "@phosphor-icons/react";
 import { useBulkUpdateJobs } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
 import { toast } from "sonner";
@@ -57,7 +57,7 @@ export function BulkActionBar({ selectedIds, onClear, stages }: BulkActionBarPro
           onClick={() => setStageMenuOpen(!stageMenuOpen)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-card border border-border-subtle hover:bg-surface-hover transition-colors"
         >
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRightIcon className="w-3.5 h-3.5" />
           Move to stage
         </button>
         {stageMenuOpen && (
@@ -87,7 +87,7 @@ export function BulkActionBar({ selectedIds, onClear, stages }: BulkActionBarPro
         onClick={handleDelete}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-red bg-card border border-border-subtle hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
       >
-        <Trash2 className="w-3.5 h-3.5" />
+        <TrashIcon className="w-3.5 h-3.5" />
         Delete
       </button>
 
@@ -98,7 +98,7 @@ export function BulkActionBar({ selectedIds, onClear, stages }: BulkActionBarPro
         onClick={onClear}
         className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary transition-colors"
       >
-        <X className="w-3.5 h-3.5" />
+        <XIcon className="w-3.5 h-3.5" />
         Clear
       </button>
     </div>

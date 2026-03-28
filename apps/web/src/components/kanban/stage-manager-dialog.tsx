@@ -10,12 +10,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Plus,
-  Trash2,
-  ChevronUp,
-  ChevronDown,
-  GripVertical,
-} from "lucide-react";
+  PlusIcon,
+  TrashIcon,
+  CaretUpIcon,
+  CaretDownIcon,
+  DotsSixVerticalIcon,
+} from "@phosphor-icons/react";
 import {
   useStages,
   useCreateStage,
@@ -144,7 +144,7 @@ export function StageManagerDialog({ open, onOpenChange }: StageManagerDialogPro
               key={stage.id}
               className="flex items-center gap-2 p-2 rounded-lg bg-surface group"
             >
-              <GripVertical className="w-4 h-4 text-text-muted shrink-0" />
+              <DotsSixVerticalIcon className="w-4 h-4 text-text-muted shrink-0" />
 
               {/* Color picker */}
               <div className="relative shrink-0">
@@ -202,14 +202,14 @@ export function StageManagerDialog({ open, onOpenChange }: StageManagerDialogPro
                   disabled={index === 0}
                   className="p-0.5 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  <ChevronUp className="w-3 h-3" />
+                  <CaretUpIcon className="w-3 h-3" />
                 </button>
                 <button
                   onClick={() => handleMove(index, 1)}
                   disabled={index === stages.length - 1}
                   className="p-0.5 text-text-muted hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  <ChevronDown className="w-3 h-3" />
+                  <CaretDownIcon className="w-3 h-3" />
                 </button>
               </div>
 
@@ -218,7 +218,7 @@ export function StageManagerDialog({ open, onOpenChange }: StageManagerDialogPro
                 onClick={() => handleDelete(stage)}
                 className="p-1 shrink-0 text-text-muted hover:text-brand-red opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <TrashIcon className="w-3.5 h-3.5" />
               </button>
             </div>
           ))}
@@ -230,7 +230,7 @@ export function StageManagerDialog({ open, onOpenChange }: StageManagerDialogPro
           onClick={handleAdd}
           className="w-full"
         >
-          <Plus className="w-4 h-4 mr-1.5" />
+          <PlusIcon className="w-4 h-4 mr-1.5" />
           Add Stage
         </Button>
       </DialogContent>

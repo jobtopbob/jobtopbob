@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Loader2, Upload, Trash2 } from "lucide-react";
+import { SpinnerIcon, UploadSimpleIcon, TrashIcon } from "@phosphor-icons/react";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -101,7 +101,7 @@ export function ProfileSection() {
             <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center overflow-hidden shrink-0 relative">
               {isUploading && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full z-10">
-                  <Loader2 className="w-5 h-5 animate-spin text-white" />
+                  <SpinnerIcon className="w-5 h-5 animate-spin text-white" />
                 </div>
               )}
               {imageUrl ? (
@@ -134,7 +134,7 @@ export function ProfileSection() {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
                 >
-                  <Upload className="w-4 h-4 mr-1.5" />
+                  <UploadSimpleIcon className="w-4 h-4 mr-1.5" />
                   {imageUrl ? "Change picture" : "Upload picture"}
                 </Button>
                 {imageUrl && (
@@ -145,9 +145,9 @@ export function ProfileSection() {
                     disabled={isDeleting}
                   >
                     {isDeleting ? (
-                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                      <SpinnerIcon className="w-4 h-4 mr-1.5 animate-spin" />
                     ) : (
-                      <Trash2 className="w-4 h-4 mr-1.5" />
+                      <TrashIcon className="w-4 h-4 mr-1.5" />
                     )}
                     Remove
                   </Button>
@@ -189,7 +189,7 @@ export function ProfileSection() {
           {/* Save */}
           <div className="flex justify-end pt-2">
             <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {saving && <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />}
               Save changes
             </Button>
           </div>

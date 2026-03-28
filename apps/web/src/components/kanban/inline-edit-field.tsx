@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { Icon } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,11 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil } from "lucide-react";
+import { PencilIcon } from "@phosphor-icons/react";
 
 interface BaseProps {
   label: string;
-  icon?: LucideIcon;
+  icon?: Icon;
   disabled?: boolean;
   placeholder?: string;
   onSave: (value: string) => void;
@@ -156,7 +156,7 @@ export function InlineEditField({
               )}
             </span>
             {!disabled && (
-              <Pencil className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              <PencilIcon className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             )}
           </button>
         )}

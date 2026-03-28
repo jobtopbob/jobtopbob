@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { SpinnerIcon } from "@phosphor-icons/react";
 
 const AI_PROVIDERS = [
   { value: "openai", label: "OpenAI" },
@@ -74,7 +74,7 @@ export function AIPreferencesSection() {
         </div>
         <Card>
           <CardContent className="py-12 flex items-center justify-center">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            <SpinnerIcon className="w-5 h-5 animate-spin text-muted-foreground" />
           </CardContent>
         </Card>
       </section>
@@ -196,7 +196,7 @@ export function AIPreferencesSection() {
           <div className="flex justify-end pt-2">
             <Button onClick={handleSave} disabled={updateSettings.isPending}>
               {updateSettings.isPending && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />
               )}
               Save changes
             </Button>

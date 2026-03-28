@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowsDownUpIcon } from "@phosphor-icons/react";
 
 const SORT_OPTIONS = [
   { value: "created_at", label: "Date Added" },
@@ -56,7 +56,7 @@ export function SortPopover({
       <DropdownMenuTrigger
         className="flex items-center gap-1.5 h-9 lg:h-10 px-3 lg:px-4 rounded-full border border-border-subtle text-xs lg:text-sm font-medium text-text-primary hover:bg-surface-hover transition-colors outline-none"
       >
-        <ArrowUpDown className="w-3.5 h-3.5 text-text-muted" />
+        <ArrowsDownUpIcon className="w-3.5 h-3.5 text-text-muted" />
         <span className="hidden sm:inline">
           {isNonDefault ? getSortLabel(sortBy) : "Sort"}
         </span>

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Building2, MapPin, Users, Briefcase } from "lucide-react";
+import { BuildingsIcon, MapPinIcon, UsersIcon, BriefcaseIcon } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import type { CompanyWithJobCount } from "@/hooks/use-companies";
 
@@ -87,19 +87,19 @@ export function CompanyCard({ company, onClick }: CompanyCardProps) {
       <div className="flex flex-wrap gap-1.5">
         {company.industry && (
           <Badge variant="secondary" className="text-[10px]">
-            <Building2 className="w-3 h-3" />
+            <BuildingsIcon className="w-3 h-3" />
             {company.industry}
           </Badge>
         )}
         {company.size && (
           <Badge variant="secondary" className="text-[10px]">
-            <Users className="w-3 h-3" />
+            <UsersIcon className="w-3 h-3" />
             {company.size}
           </Badge>
         )}
         {company.location && (
           <Badge variant="secondary" className="text-[10px]">
-            <MapPin className="w-3 h-3" />
+            <MapPinIcon className="w-3 h-3" />
             {company.location}
           </Badge>
         )}
@@ -107,7 +107,7 @@ export function CompanyCard({ company, onClick }: CompanyCardProps) {
 
       {/* Footer: Job count */}
       <div className="flex items-center gap-1.5 text-xs text-text-muted mt-auto pt-1">
-        <Briefcase className="w-3.5 h-3.5" />
+        <BriefcaseIcon className="w-3.5 h-3.5" />
         <span>
           {jobCount} {jobCount === 1 ? "application" : "applications"}
         </span>

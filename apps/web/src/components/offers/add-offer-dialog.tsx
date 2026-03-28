@@ -31,7 +31,7 @@ import type { Job } from "@/hooks/use-jobs";
 import { toast } from "sonner";
 import { intervalLabel, remotePolicyLabel } from "@/lib/offer-utils";
 import { CurrencyCombobox } from "@/components/ui/currency-combobox";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 
 // --- Schema ---
 
@@ -265,7 +265,7 @@ export function AddOfferDialog({
           <div>
             {currentStep > 0 && (
               <Button type="button" variant="ghost" onClick={handleBack}>
-                <ChevronLeft className="size-4" />
+                <CaretLeftIcon className="size-4" />
                 Back
               </Button>
             )}
@@ -279,7 +279,7 @@ export function AddOfferDialog({
                 disabled={!canAdvance}
               >
                 Next
-                <ChevronRight className="size-4" />
+                <CaretRightIcon className="size-4" />
               </Button>
             ) : (
               <Button

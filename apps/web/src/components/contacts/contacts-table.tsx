@@ -10,12 +10,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Linkedin,
-  Mail,
-  Users,
-  CalendarDays,
-  UserPlus,
-} from "lucide-react";
+  LinkedinLogoIcon,
+  EnvelopeIcon,
+  UsersIcon,
+  CalendarDotsIcon,
+  UserPlusIcon,
+} from "@phosphor-icons/react";
 import type { Contact } from "@/hooks/use-contacts";
 import { PaginationControls } from "@/components/kanban/pagination-controls";
 
@@ -26,11 +26,11 @@ const statusColors: Record<string, string> = {
 };
 
 const sourceIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  manual: UserPlus,
-  linkedin: Linkedin,
-  email: Mail,
-  referral: Users,
-  event: CalendarDays,
+  manual: UserPlusIcon,
+  linkedin: LinkedinLogoIcon,
+  email: EnvelopeIcon,
+  referral: UsersIcon,
+  event: CalendarDotsIcon,
 };
 
 const avatarColors = [

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Plus, HandCoins, LayoutGrid, Columns } from "lucide-react";
+import { PlusIcon, HandCoinsIcon, GridFourIcon, ColumnsIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -81,7 +81,7 @@ export default function OffersPage() {
                     : "text-text-muted hover:text-text-primary"
                 )}
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
+                <GridFourIcon className="w-3.5 h-3.5" />
                 Cards
               </button>
               <button
@@ -93,13 +93,13 @@ export default function OffersPage() {
                     : "text-text-muted hover:text-text-primary"
                 )}
               >
-                <Columns className="w-3.5 h-3.5" />
+                <ColumnsIcon className="w-3.5 h-3.5" />
                 Compare
               </button>
             </div>
             <ExportButton endpoint="/api/v1/export/offers" />
             <Button onClick={() => setAddDialogOpen(true)}>
-              <Plus className="w-4 h-4" />
+              <PlusIcon className="w-4 h-4" />
               Add Offer
             </Button>
           </div>
@@ -118,7 +118,7 @@ export default function OffersPage() {
         ) : offers.length === 0 ? (
           <div className="flex flex-col items-center justify-center flex-1 gap-3 py-20">
             <div className="w-12 h-12 rounded-2xl bg-surface-hover flex items-center justify-center">
-              <HandCoins className="w-6 h-6 text-text-muted" />
+              <HandCoinsIcon className="w-6 h-6 text-text-muted" />
             </div>
             <p className="text-sm text-text-muted">
               {filters.search || filters.status || filters.remotePolicy
@@ -131,7 +131,7 @@ export default function OffersPage() {
                 size="sm"
                 onClick={() => setAddDialogOpen(true)}
               >
-                <Plus className="w-4 h-4" />
+                <PlusIcon className="w-4 h-4" />
                 Add Offer
               </Button>
             )}

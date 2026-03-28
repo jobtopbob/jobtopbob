@@ -7,27 +7,27 @@ import { useJobs, type Job } from "@/hooks/use-jobs";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import {
-  Search,
-  Briefcase,
-  FileText,
-  Mail,
-  Users,
-  Building2,
-  Compass,
-  Settings,
-  LayoutDashboard,
-  Plus,
-} from "lucide-react";
+  MagnifyingGlassIcon,
+  BriefcaseIcon,
+  FileTextIcon,
+  EnvelopeIcon,
+  UsersIcon,
+  BuildingsIcon,
+  CompassIcon,
+  GearIcon,
+  SquaresFourIcon,
+  PlusIcon,
+} from "@phosphor-icons/react";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Applications", href: "/applications", icon: Briefcase },
-  { label: "Resumes", href: "/resumes", icon: FileText },
-  { label: "Email Integration", href: "/email-integration", icon: Mail },
-  { label: "Contacts", href: "/contacts", icon: Users },
-  { label: "Companies", href: "/companies", icon: Building2 },
-  { label: "Discover Jobs", href: "/discover", icon: Compass },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Dashboard", href: "/dashboard", icon: SquaresFourIcon },
+  { label: "Applications", href: "/applications", icon: BriefcaseIcon },
+  { label: "Resumes", href: "/resumes", icon: FileTextIcon },
+  { label: "Email Integration", href: "/email-integration", icon: EnvelopeIcon },
+  { label: "Contacts", href: "/contacts", icon: UsersIcon },
+  { label: "Companies", href: "/companies", icon: BuildingsIcon },
+  { label: "Discover Jobs", href: "/discover", icon: CompassIcon },
+  { label: "Settings", href: "/settings", icon: GearIcon },
 ];
 
 export function CommandPalette() {
@@ -88,7 +88,7 @@ export function CommandPalette() {
         <DialogTitle>Command palette</DialogTitle>
       </VisuallyHidden>
       <div className="flex items-center gap-2 px-4 border-b border-border-subtle">
-        <Search className="w-4 h-4 text-text-muted shrink-0" />
+        <MagnifyingGlassIcon className="w-4 h-4 text-text-muted shrink-0" />
         <Command.Input
           value={search}
           onValueChange={setSearch}
@@ -118,7 +118,7 @@ export function CommandPalette() {
                 onSelect={() => handleJobSelect(job)}
                 className="flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-text-primary cursor-pointer data-[selected=true]:bg-surface-hover"
               >
-                <Briefcase className="w-4 h-4 text-text-muted shrink-0" />
+                <BriefcaseIcon className="w-4 h-4 text-text-muted shrink-0" />
                 <div className="flex flex-col min-w-0">
                   <span className="truncate font-medium">{job.title}</span>
                   {job.company_name && (
@@ -160,7 +160,7 @@ export function CommandPalette() {
             onSelect={() => handleSelect(() => router.push("/applications?action=add"))}
             className="flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-text-primary cursor-pointer data-[selected=true]:bg-surface-hover"
           >
-            <Plus className="w-4 h-4 text-text-muted shrink-0" />
+            <PlusIcon className="w-4 h-4 text-text-muted shrink-0" />
             Add new job
           </Command.Item>
         </Command.Group>

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Command } from "cmdk";
 import { useJobs, type Job } from "@/hooks/use-jobs";
-import { Briefcase, ChevronsUpDown, X } from "lucide-react";
+import { BriefcaseIcon, CaretUpDownIcon, XIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
 interface JobComboboxProps {
@@ -46,7 +46,7 @@ export function JobCombobox({
   if (value) {
     return (
       <div className="flex items-center gap-2 rounded-md border border-border-subtle bg-surface px-3 py-2">
-        <Briefcase className="h-4 w-4 text-text-muted shrink-0" />
+        <BriefcaseIcon className="h-4 w-4 text-text-muted shrink-0" />
         <div className="flex flex-col min-w-0 flex-1">
           <span className="text-sm font-medium truncate">{value.title}</span>
           {value.company_name && (
@@ -60,7 +60,7 @@ export function JobCombobox({
           onClick={() => onChange(null)}
           className="text-text-muted hover:text-text-primary"
         >
-          <X className="h-4 w-4" />
+          <XIcon className="h-4 w-4" />
         </button>
       </div>
     );
@@ -75,7 +75,7 @@ export function JobCombobox({
         className="w-full justify-between font-normal text-text-muted"
       >
         Select a job...
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        <CaretUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
 
       {open && (
@@ -103,7 +103,7 @@ export function JobCombobox({
                     }}
                     className="flex items-center gap-2 rounded-md px-2 py-2 text-sm cursor-pointer data-[selected=true]:bg-surface-hover"
                   >
-                    <Briefcase className="h-3.5 w-3.5 text-text-muted shrink-0" />
+                    <BriefcaseIcon className="h-3.5 w-3.5 text-text-muted shrink-0" />
                     <div className="flex flex-col min-w-0 flex-1">
                       <span className="truncate font-medium">{job.title}</span>
                       {job.company_name && (

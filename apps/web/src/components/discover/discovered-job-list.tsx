@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import {
-  ExternalLink,
-  MapPin,
-  Briefcase,
-  Search,
-  Compass,
-} from "lucide-react";
+  ArrowSquareOutIcon,
+  MapPinIcon,
+  BriefcaseIcon,
+  MagnifyingGlassIcon,
+  CompassIcon,
+} from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -78,13 +78,13 @@ function JobCard({ job }: { job: DiscoveredJob }) {
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
         {job.location && (
           <span className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
+            <MapPinIcon className="h-3 w-3" />
             {job.location}
           </span>
         )}
         {job.job_type && (
           <span className="flex items-center gap-1">
-            <Briefcase className="h-3 w-3" />
+            <BriefcaseIcon className="h-3 w-3" />
             {job.job_type}
           </span>
         )}
@@ -105,7 +105,7 @@ function JobCard({ job }: { job: DiscoveredJob }) {
             className="inline-flex items-center gap-1 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary"
           >
             View listing
-            <ExternalLink className="h-3 w-3" />
+            <ArrowSquareOutIcon className="h-3 w-3" />
           </a>
         </div>
       )}
@@ -130,7 +130,7 @@ export function DiscoveredJobList() {
       {/* Filter bar */}
       <div className="flex items-center justify-between gap-3">
         <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
           <Input
             placeholder="Filter discovered jobs..."
             value={search}
@@ -155,7 +155,7 @@ export function DiscoveredJobList() {
       ) : jobs.length === 0 ? (
         <div className="flex items-center justify-center rounded-xl bg-muted/50 py-16">
           <div className="text-center">
-            <Compass className="mx-auto h-10 w-10 text-text-muted" />
+            <CompassIcon className="mx-auto h-10 w-10 text-text-muted" />
             <p className="mt-3 text-sm font-medium text-text-secondary">
               Start discovering
             </p>

@@ -22,12 +22,12 @@ import { CompanySelector } from "@/components/companies/company-selector";
 import { useCreateContact } from "@/hooks/use-contacts";
 import { toast } from "sonner";
 import {
-  Linkedin,
-  Mail,
-  Users,
-  CalendarDays,
-  UserPlus,
-} from "lucide-react";
+  LinkedinLogoIcon,
+  EnvelopeIcon,
+  UsersIcon,
+  CalendarDotsIcon,
+  UserPlusIcon,
+} from "@phosphor-icons/react";
 
 interface AddContactDialogProps {
   open: boolean;
@@ -60,11 +60,11 @@ const STATUS_DOT_COLORS: Record<string, string> = {
 };
 
 const SOURCE_OPTIONS = [
-  { value: "manual", label: "Manual", icon: UserPlus },
-  { value: "linkedin", label: "LinkedIn", icon: Linkedin },
-  { value: "email", label: "Email", icon: Mail },
-  { value: "referral", label: "Referral", icon: Users },
-  { value: "event", label: "Event", icon: CalendarDays },
+  { value: "manual", label: "Manual", icon: UserPlusIcon },
+  { value: "linkedin", label: "LinkedIn", icon: LinkedinLogoIcon },
+  { value: "email", label: "Email", icon: EnvelopeIcon },
+  { value: "referral", label: "Referral", icon: UsersIcon },
+  { value: "event", label: "Event", icon: CalendarDotsIcon },
 ];
 
 export function AddContactDialog({

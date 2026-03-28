@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 import type { Job } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
 import { StageIcon } from "./stage-icons";
@@ -173,14 +173,14 @@ export function ApplicationsCalendar({
             className="flex items-center justify-center w-8 h-8 rounded-full border border-border-subtle hover:bg-surface-hover transition-colors"
             aria-label="Previous month"
           >
-            <ChevronLeft className="w-4 h-4 text-text-primary" />
+            <CaretLeftIcon className="w-4 h-4 text-text-primary" />
           </button>
           <button
             onClick={nextMonth}
             className="flex items-center justify-center w-8 h-8 rounded-full border border-border-subtle hover:bg-surface-hover transition-colors"
             aria-label="Next month"
           >
-            <ChevronRight className="w-4 h-4 text-text-primary" />
+            <CaretRightIcon className="w-4 h-4 text-text-primary" />
           </button>
         </div>
       </div>

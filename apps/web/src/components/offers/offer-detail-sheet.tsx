@@ -18,27 +18,26 @@ import {
 } from "@/components/ui/select";
 import Image from "next/image";
 import {
-  DollarSign,
-  Banknote,
-  Calendar,
-  Pencil,
-  Trash2,
-  Check,
-  X,
-  TrendingUp,
-  Gift,
-  Briefcase,
-  MapPin,
-  Wifi,
-  Monitor,
-  Home,
-  Clock,
-  PiggyBank,
-  Plane,
-  Coins,
-  CalendarClock,
-  Building2,
-} from "lucide-react";
+  CurrencyDollarIcon,
+  CalendarIcon,
+  PencilIcon,
+  CheckIcon,
+  XIcon,
+  BriefcaseIcon,
+  MapPinIcon,
+  ClockIcon,
+  BuildingsIcon,
+  MoneyIcon,
+  TrashIcon,
+  TrendUpIcon,
+  GiftIcon,
+  WifiHighIcon,
+  MonitorIcon,
+  HouseIcon,
+  PiggyBankIcon,
+  AirplaneTiltIcon,
+  CoinsIcon,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useOffer, useUpdateOffer, useDeleteOffer } from "@/hooks/use-offers";
 import {
@@ -96,7 +95,7 @@ export function OfferDetailSheet({ offerId, onClose }: OfferDetailSheetProps) {
                   />
                 </div>
               ) : (
-                <Building2 className="w-8 h-8 text-text-muted shrink-0 mt-0.5" />
+                <BuildingsIcon className="w-8 h-8 text-text-muted shrink-0 mt-0.5" />
               )}
               <div className="min-w-0">
                 <SheetTitle className="text-lg font-semibold text-text-primary truncate">
@@ -115,7 +114,7 @@ export function OfferDetailSheet({ offerId, onClose }: OfferDetailSheetProps) {
           {offer.base_salary != null && (
             <div>
               <div className="flex items-center gap-2">
-                <Banknote className="w-5 h-5 text-brand-green" />
+                <MoneyIcon className="w-5 h-5 text-brand-green" />
                 <span className="text-2xl font-bold text-text-primary">
                   {formatSalaryWithInterval(offer.base_salary, {
                     currency,
@@ -141,9 +140,9 @@ export function OfferDetailSheet({ offerId, onClose }: OfferDetailSheetProps) {
               }`}
             >
               {offer.accepted ? (
-                <Check className="w-3 h-3" />
+                <CheckIcon className="w-3 h-3" />
               ) : (
-                <X className="w-3 h-3" />
+                <XIcon className="w-3 h-3" />
               )}
               {offer.accepted ? "Accepted" : "Declined"}
             </span>
@@ -183,7 +182,7 @@ export function OfferDetailSheet({ offerId, onClose }: OfferDetailSheetProps) {
             size="sm"
             onClick={() => setEditing(!editing)}
           >
-            <Pencil className="w-3.5 h-3.5" />
+            <PencilIcon className="w-3.5 h-3.5" />
             {editing ? "Cancel" : "Edit"}
           </Button>
           <Button
@@ -193,7 +192,7 @@ export function OfferDetailSheet({ offerId, onClose }: OfferDetailSheetProps) {
             disabled={deleteOffer.isPending}
             className="text-destructive hover:text-destructive"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <TrashIcon className="w-3.5 h-3.5" />
             {deleteOffer.isPending ? "Deleting..." : "Delete"}
           </Button>
         </div>
@@ -211,15 +210,15 @@ function DetailView({
 }) {
   const currency = offer.currency ?? "USD";
 
-  const remotePolicyIcons: Record<string, typeof Wifi> = {
-    remote: Wifi,
-    hybrid: Home,
-    onsite: Monitor,
+  const remotePolicyIcons: Record<string, typeof WifiHighIcon | typeof BriefcaseIcon> = {
+    remote: WifiHighIcon,
+    hybrid: HouseIcon,
+    onsite: MonitorIcon,
   };
 
   const compensationDetails = [
     {
-      icon: DollarSign,
+      icon: CurrencyDollarIcon,
       label: "Base Salary",
       value:
         offer.base_salary != null
@@ -227,7 +226,7 @@ function DetailView({
           : null,
     },
     {
-      icon: Gift,
+      icon: GiftIcon,
       label: "Sign-on Bonus",
       value:
         offer.sign_on_bonus != null
@@ -235,17 +234,17 @@ function DetailView({
           : null,
     },
     {
-      icon: TrendingUp,
+      icon: TrendUpIcon,
       label: "Annual Bonus",
       value: offer.annual_bonus,
     },
     {
-      icon: Coins,
+      icon: CoinsIcon,
       label: "Equity",
       value: offer.equity,
     },
     {
-      icon: DollarSign,
+      icon: CurrencyDollarIcon,
       label: "Equity Value",
       value:
         offer.equity_value != null
@@ -253,17 +252,17 @@ function DetailView({
           : null,
     },
     {
-      icon: CalendarClock,
+      icon: CalendarIcon,
       label: "Vesting Schedule",
       value: offer.equity_schedule,
     },
     {
-      icon: Gift,
+      icon: GiftIcon,
       label: "Bonus",
       value: offer.bonus,
     },
     {
-      icon: DollarSign,
+      icon: CurrencyDollarIcon,
       label: "Currency",
       value: currencyLabel(offer.currency),
     },
@@ -272,11 +271,11 @@ function DetailView({
   const RemotePolicyIcon =
     offer.remote_policy && remotePolicyIcons[offer.remote_policy]
       ? remotePolicyIcons[offer.remote_policy]
-      : Briefcase;
+      : BriefcaseIcon;
 
   const benefitsDetails = [
     {
-      icon: Clock,
+      icon: ClockIcon,
       label: "PTO Days",
       value: offer.pto_days != null ? `${offer.pto_days} days/year` : null,
     },
@@ -286,17 +285,17 @@ function DetailView({
       value: remotePolicyLabel(offer.remote_policy),
     },
     {
-      icon: PiggyBank,
+      icon: PiggyBankIcon,
       label: "Retirement Match",
       value: offer.retirement_match,
     },
     {
-      icon: Plane,
+      icon: AirplaneTiltIcon,
       label: "Relocation",
       value: offer.relocation,
     },
     {
-      icon: MapPin,
+      icon: MapPinIcon,
       label: "Work Location",
       value: offer.work_location,
     },
@@ -304,14 +303,14 @@ function DetailView({
 
   const otherDetails = [
     {
-      icon: Calendar,
+      icon: CalendarIcon,
       label: "Deadline",
       value: offer.deadline
         ? new Date(offer.deadline).toLocaleDateString()
         : null,
     },
     {
-      icon: Briefcase,
+      icon: BriefcaseIcon,
       label: "Created",
       value: new Date(offer.created_at).toLocaleDateString(),
     },
@@ -367,7 +366,7 @@ function DetailSection({
   items,
 }: {
   title: string;
-  items: { icon: typeof DollarSign; label: string; value: string | null | undefined }[];
+  items: { icon: typeof CurrencyDollarIcon; label: string; value: string | null | undefined }[];
 }) {
   const visibleItems = items.filter((i) => i.value);
   if (visibleItems.length === 0) return null;
@@ -712,7 +711,7 @@ function EditForm({ offer, onSave, onCancel, isPending }: EditFormProps) {
             size="sm"
             onClick={() => setForm({ ...form, accepted: true })}
           >
-            <Check className="w-3 h-3" />
+            <CheckIcon className="w-3 h-3" />
             Accepted
           </Button>
           <Button
@@ -721,7 +720,7 @@ function EditForm({ offer, onSave, onCancel, isPending }: EditFormProps) {
             size="sm"
             onClick={() => setForm({ ...form, accepted: false })}
           >
-            <X className="w-3 h-3" />
+            <XIcon className="w-3 h-3" />
             Declined
           </Button>
           <Button

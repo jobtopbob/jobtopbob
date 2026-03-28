@@ -39,7 +39,7 @@ import {
 } from "@/lib/constants";
 import { CurrencyCombobox } from "@/components/ui/currency-combobox";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { CompanySelector } from "@/components/companies/company-selector";
 
 // --- Schema ---
@@ -272,7 +272,7 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
           <div>
             {currentStep > 0 && (
               <Button type="button" variant="ghost" onClick={handleBack}>
-                <ChevronLeft className="size-4" />
+                <CaretLeftIcon className="size-4" />
                 Back
               </Button>
             )}
@@ -286,7 +286,7 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
                 disabled={!canAdvance}
               >
                 Next
-                <ChevronRight className="size-4" />
+                <CaretRightIcon className="size-4" />
               </Button>
             ) : (
               <Button

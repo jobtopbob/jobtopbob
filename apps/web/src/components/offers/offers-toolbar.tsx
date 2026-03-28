@@ -13,17 +13,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-  ArrowUpDown,
-  Search,
-  Filter,
-  X,
-  Check,
-  Clock,
-  XCircle,
-  Wifi,
-  Home,
-  Monitor,
-} from "lucide-react";
+  ArrowsDownUpIcon,
+  MagnifyingGlassIcon,
+  XIcon,
+  CheckIcon,
+  ClockIcon,
+  FunnelIcon,
+  XCircleIcon,
+  WifiHighIcon,
+  HouseIcon,
+  MonitorIcon,
+} from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { OfferFilters } from "@/hooks/use-offers";
@@ -50,15 +50,15 @@ function getSortLabel(sortBy: string): string {
 /* ---------- Filter Options ---------- */
 
 const STATUS_OPTIONS = [
-  { value: "pending", label: "Pending", icon: Clock },
-  { value: "accepted", label: "Accepted", icon: Check },
-  { value: "declined", label: "Declined", icon: XCircle },
+  { value: "pending", label: "Pending", icon: ClockIcon },
+  { value: "accepted", label: "Accepted", icon: CheckIcon },
+  { value: "declined", label: "Declined", icon: XCircleIcon },
 ];
 
 const REMOTE_OPTIONS = [
-  { value: "remote", label: "Remote", icon: Wifi },
-  { value: "hybrid", label: "Hybrid", icon: Home },
-  { value: "onsite", label: "On-site", icon: Monitor },
+  { value: "remote", label: "Remote", icon: WifiHighIcon },
+  { value: "hybrid", label: "Hybrid", icon: HouseIcon },
+  { value: "onsite", label: "On-site", icon: MonitorIcon },
 ];
 
 /* ---------- Toolbar ---------- */
@@ -92,7 +92,7 @@ export function OffersToolbar({ filters, onChange }: OffersToolbarProps) {
       <div className="flex items-center gap-2">
         {/* Search */}
         <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
           <Input
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
@@ -107,7 +107,7 @@ export function OffersToolbar({ filters, onChange }: OffersToolbarProps) {
               }}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
             >
-              <X className="w-3.5 h-3.5" />
+              <XIcon className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -115,7 +115,7 @@ export function OffersToolbar({ filters, onChange }: OffersToolbarProps) {
         {/* Sort */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1.5 h-9 px-3 rounded-full border border-border-subtle text-xs font-medium text-text-primary hover:bg-surface-hover transition-colors outline-none">
-            <ArrowUpDown className="w-3.5 h-3.5 text-text-muted" />
+            <ArrowsDownUpIcon className="w-3.5 h-3.5 text-text-muted" />
             <span className="hidden sm:inline">
               {isNonDefaultSort ? getSortLabel(filters.sortBy) : "Sort"}
             </span>
@@ -155,7 +155,7 @@ export function OffersToolbar({ filters, onChange }: OffersToolbarProps) {
         {/* Filter */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1.5 h-9 px-3 rounded-full border border-border-subtle text-xs font-medium text-text-primary hover:bg-surface-hover transition-colors outline-none">
-            <Filter className="w-3.5 h-3.5 text-text-muted" />
+            <FunnelIcon className="w-3.5 h-3.5 text-text-muted" />
             <span className="hidden sm:inline">Filter</span>
             {activeFilterCount > 0 && (
               <span className="flex items-center justify-center w-4 h-4 rounded-full bg-brand-green text-white text-[10px] font-bold">
@@ -236,7 +236,7 @@ export function OffersToolbar({ filters, onChange }: OffersToolbarProps) {
               onClick={() => onChange({ status: "", page: 1 })}
             >
               {STATUS_OPTIONS.find((o) => o.value === filters.status)?.label}
-              <X className="w-3 h-3" />
+              <XIcon className="w-3 h-3" />
             </Badge>
           )}
           {filters.remotePolicy && (
@@ -247,7 +247,7 @@ export function OffersToolbar({ filters, onChange }: OffersToolbarProps) {
             >
               {REMOTE_OPTIONS.find((o) => o.value === filters.remotePolicy)
                 ?.label}
-              <X className="w-3 h-3" />
+              <XIcon className="w-3 h-3" />
             </Badge>
           )}
         </div>

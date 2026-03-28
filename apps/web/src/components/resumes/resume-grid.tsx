@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Plus, AlertTriangle } from "lucide-react";
+import { FileTextIcon, PlusIcon, WarningIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { ResumeCard } from "./resume-card";
 import { ResumeCardSkeleton } from "./resume-card-skeleton";
@@ -45,7 +45,7 @@ export function ResumeGrid({
           <div className="absolute w-16 h-20 rounded-xl bg-surface border border-border-subtle left-1/2 top-1/2 -translate-x-[55%] -translate-y-[55%] rotate-[-6deg]" />
           <div className="absolute w-16 h-20 rounded-xl bg-card border border-border-subtle shadow-sm left-1/2 top-1/2 -translate-x-[50%] -translate-y-[50%] rotate-[3deg]" />
           <div className="absolute w-16 h-20 rounded-xl bg-card border border-border-subtle shadow-md left-1/2 top-1/2 -translate-x-[45%] -translate-y-[45%] flex items-center justify-center">
-            <FileText className="w-7 h-7 text-text-muted" />
+            <FileTextIcon className="w-7 h-7 text-text-muted" />
           </div>
         </div>
 
@@ -96,7 +96,7 @@ export function ResumeGrid({
         >
           <div className="rounded-2xl h-full flex flex-col items-center justify-center gap-5 transition-colors duration-300">
             <div className="w-16 h-16 rounded-2xl bg-surface flex items-center justify-center transition-transform duration-300 group-hover/create:scale-110">
-              <Plus className="w-8 h-8 text-text-muted group-hover/create:text-primary transition-colors duration-300" />
+              <PlusIcon className="w-8 h-8 text-text-muted group-hover/create:text-primary transition-colors duration-300" />
             </div>
             <div className="text-center">
               <span className="text-[15px] font-semibold text-text-primary block">
@@ -111,7 +111,7 @@ export function ResumeGrid({
       ) : (
         <div className="rounded-2xl bg-card shadow-sm border border-border-subtle min-h-85 flex flex-col items-center justify-center gap-5 p-6">
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-amber-500" />
+            <WarningIcon className="w-8 h-8 text-amber-500" />
           </div>
           <div className="text-center">
             <span className="text-[15px] font-semibold text-text-primary block">

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Check, X, Building2 } from "lucide-react";
+import { CheckIcon, XIcon, BuildingsIcon } from "@phosphor-icons/react";
 import type { Offer } from "@/hooks/use-offers";
 import { calculateTotalComp, remotePolicyLabel } from "@/lib/offer-utils";
 import { formatSalaryWithInterval, formatCurrency } from "@/lib/currency";
@@ -158,7 +158,7 @@ export function OfferComparisonTable({ offers, onOfferClick }: OfferComparisonTa
                       </div>
                     ) : (
                       <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center">
-                        <Building2 className="w-5 h-5 text-text-muted" />
+                        <BuildingsIcon className="w-5 h-5 text-text-muted" />
                       </div>
                     )}
 
@@ -295,7 +295,7 @@ function StatusPill({ accepted }: { accepted: boolean }) {
           : "bg-red-400/15 text-red-600"
       }`}
     >
-      {accepted ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+      {accepted ? <CheckIcon className="w-3 h-3" /> : <XIcon className="w-3 h-3" />}
       {accepted ? "Accepted" : "Declined"}
     </span>
   );
@@ -305,14 +305,14 @@ function StatusPillInline({ value }: { value: string | null }) {
   if (value === "Accepted") {
     return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
-        <Check className="w-3 h-3" /> Accepted
+        <CheckIcon className="w-3 h-3" /> Accepted
       </span>
     );
   }
   if (value === "Declined") {
     return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-red-500">
-        <X className="w-3 h-3" /> Declined
+        <XIcon className="w-3 h-3" /> Declined
       </span>
     );
   }

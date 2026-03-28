@@ -93,3 +93,6 @@ pnpm playwright test
 - User content in AI prompts wrapped in `<user_content>` XML tags for prompt injection defense
 - Feature flags: `SCRAPERS_ENABLED`
 - Self-hosting constraint: everything must work with Docker Compose on a $10/month VPS
+- Icon library: `@phosphor-icons/react`
+  Import: `import { HeartIcon } from "@phosphor-icons/react"`. Type: `Icon` from same package.
+  `components.json` uses `"iconLibrary": "phosphor"` — shadcn CLI scaffolds Phosphor imports natively.

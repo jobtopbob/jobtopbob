@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Search, X, Calendar } from "lucide-react";
+import { MagnifyingGlassIcon, XIcon, CalendarIcon } from "@phosphor-icons/react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sheet,
@@ -247,7 +247,7 @@ function FilterContent({
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5 max-h-[70vh]">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
           <input
             type="text"
             value={draft.search}
@@ -260,7 +260,7 @@ function FilterContent({
               onClick={() => handleSearchChange("")}
               className="absolute right-3 top-1/2 -translate-y-1/2"
             >
-              <X className="w-3.5 h-3.5 text-text-muted hover:text-text-primary" />
+              <XIcon className="w-3.5 h-3.5 text-text-muted hover:text-text-primary" />
             </button>
           )}
         </div>
@@ -346,7 +346,7 @@ function FilterContent({
         <FilterSection title="Date Range">
           <div className="grid grid-cols-2 gap-3">
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
+              <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
               <input
                 type="date"
                 value={draft.createdAfter}
@@ -357,7 +357,7 @@ function FilterContent({
               />
             </div>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
+              <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" />
               <input
                 type="date"
                 value={draft.createdBefore}

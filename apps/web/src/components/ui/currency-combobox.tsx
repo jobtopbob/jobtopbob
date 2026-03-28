@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Command } from "cmdk";
-import { ChevronsUpDown } from "lucide-react";
+import { CaretUpDownIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { CURRENCIES, findCurrency, type CurrencyInfo } from "@/lib/currencies";
 
@@ -84,7 +84,7 @@ export function CurrencyCombobox({ value, onChange }: CurrencyComboboxProps) {
         className="w-full justify-between font-normal"
       >
         <span className="truncate">{displayLabel}</span>
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        <CaretUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
 
       {open &&

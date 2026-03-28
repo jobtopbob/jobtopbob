@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { CaretDownIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { Job } from "@/hooks/use-jobs";
 import { useUpdateJob } from "@/hooks/use-jobs";
@@ -76,7 +76,7 @@ export function MobileJobList({
               <span className="flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-card text-xs font-medium text-text-muted">
                 {jobs.length}
               </span>
-              <ChevronDown
+              <CaretDownIcon
                 className={cn(
                   "w-4 h-4 text-text-muted transition-transform",
                   isExpanded && "rotate-180"

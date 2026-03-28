@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useUpdateUserSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { SpinnerIcon } from "@phosphor-icons/react";
 
 const AI_PROVIDERS = [
   { value: "openai", label: "OpenAI" },
@@ -112,7 +112,7 @@ export function AISetupStep({ onNext, onBack }: AISetupStepProps) {
             </Button>
             <Button onClick={handleSave} disabled={updateSettings.isPending}>
               {updateSettings.isPending && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />
               )}
               {provider ? "Save & Continue" : "Continue"}
             </Button>

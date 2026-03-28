@@ -45,24 +45,24 @@ import { CURRENCIES, currencyLabel } from "@/lib/currencies";
 import { formatCurrency } from "@/lib/currency";
 import { toast } from "sonner";
 import {
-  MapPin,
-  Building2,
-  DollarSign,
-  Calendar,
-  ExternalLink,
-  Trash2,
-  X,
-  Plus,
-  Clock,
-  Briefcase,
-  Globe,
-  Star,
-  AlertCircle,
-  FileText,
-  Activity,
-  Info,
-  ChevronDown,
-} from "lucide-react";
+  MapPinIcon,
+  BuildingsIcon,
+  CurrencyDollarIcon,
+  CalendarIcon,
+  ArrowSquareOutIcon,
+  TrashIcon,
+  XIcon,
+  PlusIcon,
+  ClockIcon,
+  BriefcaseIcon,
+  GlobeIcon,
+  StarIcon,
+  WarningCircleIcon,
+  FileTextIcon,
+  PulseIcon,
+  InfoIcon,
+  CaretDownIcon,
+} from "@phosphor-icons/react";
 
 interface JobDetailSheetProps {
   job: Job | null;
@@ -228,10 +228,10 @@ export function JobDetailSheet({ job: jobProp, onClose, stages }: JobDetailSheet
     );
   };
 
-  const tabs: { id: TabId; label: string; icon: typeof FileText }[] = [
-    { id: "details", label: "Details", icon: FileText },
-    { id: "description", label: "Description", icon: Info },
-    { id: "activity", label: "Activity", icon: Activity },
+  const tabs: { id: TabId; label: string; icon: typeof FileTextIcon }[] = [
+    { id: "details", label: "Details", icon: FileTextIcon },
+    { id: "description", label: "Description", icon: InfoIcon },
+    { id: "activity", label: "Activity", icon: PulseIcon },
   ];
 
   return (
@@ -283,7 +283,7 @@ export function JobDetailSheet({ job: jobProp, onClose, stages }: JobDetailSheet
                       color={currentStage?.color ?? undefined}
                     />
                     {currentStage?.name ?? "Set stage"}
-                    <ChevronDown className="w-3 h-3 opacity-60" />
+                    <CaretDownIcon className="w-3 h-3 opacity-60" />
                   </button>
                 }
               />
@@ -318,7 +318,7 @@ export function JobDetailSheet({ job: jobProp, onClose, stages }: JobDetailSheet
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 h-7 px-2 rounded-full text-[11px] font-medium text-brand-blue hover:bg-brand-blue/5 transition-colors"
               >
-                <ExternalLink className="w-3 h-3" />
+                <ArrowSquareOutIcon className="w-3 h-3" />
                 View posting
               </a>
             )}
@@ -417,7 +417,7 @@ export function JobDetailSheet({ job: jobProp, onClose, stages }: JobDetailSheet
                     size="sm"
                     className="text-brand-red hover:text-brand-red hover:bg-brand-red/5"
                   >
-                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                    <TrashIcon className="w-3.5 h-3.5 mr-1.5" />
                     Delete
                   </Button>
                 }
@@ -493,7 +493,7 @@ function DetailsTab({
           <SectionHeader icon="job-info">Job Info</SectionHeader>
           <div className="group flex items-center sm:flex-row flex-col sm:items-center items-start gap-2 min-h-[36px] py-1">
             <div className="flex items-center gap-2 sm:w-32 w-full shrink-0">
-              <Building2 className="w-4 h-4 text-text-muted shrink-0" />
+              <BuildingsIcon className="w-4 h-4 text-text-muted shrink-0" />
               <span className="text-[13px] text-text-muted">Company</span>
             </div>
             <CompanySelector
@@ -506,7 +506,7 @@ function DetailsTab({
             />
           </div>
           <InlineEditField
-            icon={MapPin}
+            icon={MapPinIcon}
             label="Location"
             value={job.location}
             type="text"
@@ -514,7 +514,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("location", v)}
           />
           <InlineEditField
-            icon={Globe}
+            icon={GlobeIcon}
             label="Location Type"
             value={job.location_type}
             type="select"
@@ -523,7 +523,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("location_type", v)}
           />
           <InlineEditField
-            icon={Briefcase}
+            icon={BriefcaseIcon}
             label="Source"
             value={job.source}
             type="select"
@@ -532,7 +532,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("source", v)}
           />
           <InlineEditField
-            icon={Briefcase}
+            icon={BriefcaseIcon}
             label="Job Type"
             value={job.job_type}
             type="select"
@@ -541,7 +541,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("job_type", v)}
           />
           <InlineEditField
-            icon={Briefcase}
+            icon={BriefcaseIcon}
             label="Level"
             value={job.job_level}
             type="select"
@@ -550,7 +550,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("job_level", v)}
           />
           <InlineEditField
-            icon={Star}
+            icon={StarIcon}
             label="Experience"
             value={job.experience_range}
             type="text"
@@ -560,7 +560,7 @@ function DetailsTab({
           {job.application_url && (
             <div className="flex sm:flex-row flex-col sm:items-center items-start gap-2 min-h-[36px] py-1">
               <div className="flex items-center gap-2 sm:w-32 shrink-0">
-                <ExternalLink className="w-4 h-4 text-text-muted shrink-0" />
+                <ArrowSquareOutIcon className="w-4 h-4 text-text-muted shrink-0" />
                 <span className="text-[13px] text-text-muted">Apply Link</span>
               </div>
               <a
@@ -579,7 +579,7 @@ function DetailsTab({
         <div className="px-4 py-5 space-y-0.5">
           <SectionHeader icon="compensation">Compensation</SectionHeader>
           <InlineEditField
-            icon={DollarSign}
+            icon={CurrencyDollarIcon}
             label="Salary Min"
             value={job.salary_min}
             type="number"
@@ -587,7 +587,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("salary_min", v)}
           />
           <InlineEditField
-            icon={DollarSign}
+            icon={CurrencyDollarIcon}
             label="Salary Max"
             value={job.salary_max}
             type="number"
@@ -595,7 +595,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("salary_max", v)}
           />
           <InlineEditField
-            icon={Globe}
+            icon={GlobeIcon}
             label="Currency"
             value={job.salary_currency}
             type="select"
@@ -604,7 +604,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("salary_currency", v)}
           />
           <InlineEditField
-            icon={Clock}
+            icon={ClockIcon}
             label="Interval"
             value={job.salary_interval}
             type="select"
@@ -613,7 +613,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("salary_interval", v)}
           />
           <InlineEditField
-            icon={DollarSign}
+            icon={CurrencyDollarIcon}
             label="Offered"
             value={job.salary_offered}
             type="number"
@@ -621,7 +621,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("salary_offered", v)}
           />
           <InlineEditField
-            icon={DollarSign}
+            icon={CurrencyDollarIcon}
             label="Market Rate"
             value={job.salary_market}
             type="number"
@@ -634,7 +634,7 @@ function DetailsTab({
         <div className="px-4 py-5 space-y-0.5">
           <SectionHeader icon="dates">Dates</SectionHeader>
           <InlineEditField
-            icon={Calendar}
+            icon={CalendarIcon}
             label="Deadline"
             value={toDateInputValue(job.deadline)}
             type="date"
@@ -642,7 +642,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("deadline", v)}
           />
           <InlineEditField
-            icon={Calendar}
+            icon={CalendarIcon}
             label="Applied"
             value={toDateInputValue(job.applied_at)}
             type="date"
@@ -650,7 +650,7 @@ function DetailsTab({
             onSave={(v) => onUpdate("applied_at", v)}
           />
           <InlineEditField
-            icon={Clock}
+            icon={ClockIcon}
             label="Follow Up"
             value={toDateInputValue(job.follow_up_at)}
             type="date"
@@ -659,7 +659,7 @@ function DetailsTab({
           />
           <div className="flex sm:flex-row flex-col sm:items-center items-start gap-2 min-h-[36px] py-1">
             <div className="flex items-center gap-2 sm:w-32 shrink-0">
-              <Calendar className="w-4 h-4 text-text-muted shrink-0" />
+              <CalendarIcon className="w-4 h-4 text-text-muted shrink-0" />
               <span className="text-[13px] text-text-muted">Created</span>
             </div>
             <span className="text-sm text-text-tertiary px-2 truncate min-w-0">
@@ -673,7 +673,7 @@ function DetailsTab({
           <SectionHeader icon="assessment">Assessment</SectionHeader>
           <div className="flex items-center sm:flex-row flex-col sm:items-center items-start gap-2 min-h-[36px] py-1">
             <div className="flex items-center gap-2 sm:w-32 w-full shrink-0">
-              <Star className="w-4 h-4 text-text-muted shrink-0" />
+              <StarIcon className="w-4 h-4 text-text-muted shrink-0" />
               <span className="text-[13px] text-text-muted">Interest</span>
             </div>
             <div className="flex gap-1.5 px-2">
@@ -695,7 +695,7 @@ function DetailsTab({
           {job.suitability != null && (
             <div className="flex sm:flex-row flex-col sm:items-center items-start gap-2 min-h-[36px] py-1">
               <div className="flex items-center gap-2 sm:w-32 shrink-0">
-                <AlertCircle className="w-4 h-4 text-text-muted shrink-0" />
+                <WarningCircleIcon className="w-4 h-4 text-text-muted shrink-0" />
                 <span className="text-[13px] text-text-muted">
                   Suitability
                 </span>
@@ -747,7 +747,7 @@ function DetailsTab({
                 onClick={() => onRemoveTag(tag.id)}
                 className="hover:opacity-60 transition-opacity -mr-0.5"
               >
-                <X className="w-3 h-3" />
+                <XIcon className="w-3 h-3" />
               </button>
             </span>
           ))}
@@ -759,7 +759,7 @@ function DetailsTab({
                     type="button"
                     className="inline-flex items-center justify-center w-7 h-7 rounded-full border border-border-subtle text-text-muted hover:border-text-tertiary hover:text-text-tertiary transition-colors"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <PlusIcon className="w-3.5 h-3.5" />
                   </button>
                 }
               />

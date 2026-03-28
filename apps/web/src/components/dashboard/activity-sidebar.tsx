@@ -3,7 +3,7 @@
 import { useStats } from "@/hooks/use-stats";
 import { useJobs } from "@/hooks/use-jobs";
 import { useMemo } from "react";
-import { Calendar } from "lucide-react";
+import { CalendarIcon } from "@phosphor-icons/react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function formatRelativeTime(dateStr: string): string {
@@ -192,7 +192,7 @@ export function ActivitySidebar() {
               key={item.id}
               className="flex items-center gap-3 rounded-xl bg-surface p-3"
             >
-              <Calendar
+              <CalendarIcon
                 className="w-4 h-4 shrink-0"
                 style={{ color: item.color }}
               />

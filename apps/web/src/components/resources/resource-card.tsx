@@ -1,12 +1,12 @@
 "use client";
 
-import { Link2, StickyNote, Pin, ExternalLink } from "lucide-react";
+import { LinkIcon, NoteIcon, PushPinIcon, ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import type { Resource } from "@/hooks/use-resources";
 
-const typeIcons: Record<string, typeof Link2> = {
-  link: Link2,
-  note: StickyNote,
+const typeIcons: Record<string, typeof LinkIcon> = {
+  link: LinkIcon,
+  note: NoteIcon,
 };
 
 const categoryLabels: Record<string, string> = {
@@ -30,7 +30,7 @@ export function ResourceCard({
   onClick,
   onTogglePin,
 }: ResourceCardProps) {
-  const Icon = typeIcons[resource.type] ?? Link2;
+  const Icon = typeIcons[resource.type] ?? LinkIcon;
 
   return (
     <div
@@ -64,7 +64,7 @@ export function ResourceCard({
           }`}
           title={resource.pinned ? "Unpin" : "Pin"}
         >
-          <Pin className="w-3.5 h-3.5" />
+          <PushPinIcon className="w-3.5 h-3.5" />
         </button>
       </div>
 
@@ -84,7 +84,7 @@ export function ResourceCard({
           className="flex items-center gap-1 text-xs text-brand hover:underline truncate"
           onClick={(e) => e.stopPropagation()}
         >
-          <ExternalLink className="w-3 h-3 shrink-0" />
+          <ArrowSquareOutIcon className="w-3 h-3 shrink-0" />
           <span className="truncate">{resource.url}</span>
         </a>
       )}

@@ -20,13 +20,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  ExternalLink,
-  Pencil,
-  Trash2,
-  Pin,
-  Link2,
-  StickyNote,
-} from "lucide-react";
+  ArrowSquareOutIcon,
+  PencilIcon,
+  TrashIcon,
+  PushPinIcon,
+  LinkIcon,
+  NoteIcon,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import {
   useResource,
@@ -35,9 +35,9 @@ import {
   useToggleResourcePin,
 } from "@/hooks/use-resources";
 
-const typeIcons: Record<string, typeof Link2> = {
-  link: Link2,
-  note: StickyNote,
+const typeIcons: Record<string, typeof LinkIcon> = {
+  link: LinkIcon,
+  note: NoteIcon,
 };
 
 interface ResourceDetailSheetProps {
@@ -57,7 +57,7 @@ export function ResourceDetailSheet({
 
   if (!resource) return null;
 
-  const Icon = typeIcons[resource.type] ?? Link2;
+  const Icon = typeIcons[resource.type] ?? LinkIcon;
 
   function handleDelete() {
     if (!resourceId) return;
@@ -105,7 +105,7 @@ export function ResourceDetailSheet({
                 }}
                 title={resource.pinned ? "Unpin" : "Pin"}
               >
-                <Pin
+                <PushPinIcon
                   className={`w-4 h-4 ${resource.pinned ? "text-brand" : ""}`}
                 />
               </Button>
@@ -114,10 +114,10 @@ export function ResourceDetailSheet({
                 size="icon"
                 onClick={() => setEditing(!editing)}
               >
-                <Pencil className="w-4 h-4" />
+                <PencilIcon className="w-4 h-4" />
               </Button>
               <Button variant="ghost" size="icon" onClick={handleDelete}>
-                <Trash2 className="w-4 h-4 text-destructive" />
+                <TrashIcon className="w-4 h-4 text-destructive" />
               </Button>
             </div>
           </div>
@@ -157,7 +157,7 @@ export function ResourceDetailSheet({
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-sm text-brand hover:underline"
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ArrowSquareOutIcon className="w-4 h-4" />
                     {resource.url}
                   </a>
                 </div>

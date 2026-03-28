@@ -21,17 +21,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Mail,
-  Linkedin,
-  Building2,
-  Calendar,
-  CalendarDays,
-  Pencil,
-  Trash2,
-  User,
-  UserPlus,
-  Users,
-} from "lucide-react";
+  EnvelopeIcon,
+  LinkedinLogoIcon,
+  BuildingsIcon,
+  CalendarIcon,
+  PencilIcon,
+  TrashIcon,
+  UserIcon,
+  UsersIcon,
+  CalendarDotsIcon,
+  UserPlusIcon,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import {
   useContact,
@@ -148,7 +148,7 @@ export function ContactDetailSheet({
                 </div>
               )}
               <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Pencil className="w-4 h-4 text-white" />
+                <PencilIcon className="w-4 h-4 text-white" />
               </div>
             </button>
             <div className="flex-1 min-w-0">
@@ -165,10 +165,10 @@ export function ContactDetailSheet({
                 size="icon"
                 onClick={() => setEditing(!editing)}
               >
-                <Pencil className="w-4 h-4" />
+                <PencilIcon className="w-4 h-4" />
               </Button>
               <Button variant="ghost" size="icon" onClick={handleDelete}>
-                <Trash2 className="w-4 h-4 text-destructive" />
+                <TrashIcon className="w-4 h-4 text-destructive" />
               </Button>
             </div>
           </div>
@@ -196,13 +196,13 @@ export function ContactDetailSheet({
                     : undefined
                 }
               >
-                <Building2 className="w-3 h-3" />
+                <BuildingsIcon className="w-3 h-3" />
                 {contact.company_name}
               </Badge>
             )}
             {contact.source && (
               <Badge variant="outline" className="capitalize">
-                <User className="w-3 h-3" />
+                <UserIcon className="w-3 h-3" />
                 {contact.source}
               </Badge>
             )}
@@ -248,19 +248,19 @@ function DetailView({
 }) {
   const details = [
     {
-      icon: Mail,
+      icon: EnvelopeIcon,
       label: "Email",
       value: contact.email,
       href: contact.email ? `mailto:${contact.email}` : undefined,
     },
     {
-      icon: Linkedin,
+      icon: LinkedinLogoIcon,
       label: "LinkedIn",
       value: contact.linkedin_url ? "View Profile" : null,
       href: contact.linkedin_url,
     },
     {
-      icon: Building2,
+      icon: BuildingsIcon,
       label: "Company",
       value: contact.company_name,
       onClick:
@@ -269,7 +269,7 @@ function DetailView({
           : undefined,
     },
     {
-      icon: Calendar,
+      icon: CalendarIcon,
       label: "Last Contact",
       value: contact.last_contact
         ? new Date(contact.last_contact).toLocaleDateString()
@@ -353,11 +353,11 @@ const STATUS_DOT_COLORS: Record<string, string> = {
 };
 
 const SOURCE_OPTIONS = [
-  { value: "manual", label: "Manual", icon: UserPlus },
-  { value: "linkedin", label: "LinkedIn", icon: Linkedin },
-  { value: "email", label: "Email", icon: Mail },
-  { value: "referral", label: "Referral", icon: Users },
-  { value: "event", label: "Event", icon: CalendarDays },
+  { value: "manual", label: "Manual", icon: UserPlusIcon },
+  { value: "linkedin", label: "LinkedIn", icon: LinkedinLogoIcon },
+  { value: "email", label: "Email", icon: EnvelopeIcon },
+  { value: "referral", label: "Referral", icon: UsersIcon },
+  { value: "event", label: "Event", icon: CalendarDotsIcon },
 ];
 
 interface EditFormProps {

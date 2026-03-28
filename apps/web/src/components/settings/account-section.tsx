@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { SpinnerIcon, WarningIcon } from "@phosphor-icons/react";
 
 export function AccountSection() {
   authClient.useSession();
@@ -125,7 +125,7 @@ export function AccountSection() {
                 disabled={changingPassword}
               >
                 {changingPassword && (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />
                 )}
                 Update password
               </Button>
@@ -139,7 +139,7 @@ export function AccountSection() {
         <Card className="border-destructive/30">
           <CardContent className="pt-2">
             <div className="flex items-start gap-3 mb-4">
-              <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <WarningIcon className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-semibold text-destructive">Danger Zone</h3>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -167,7 +167,7 @@ export function AccountSection() {
                 onClick={handleDeleteAccount}
                 disabled={deleteConfirm !== "DELETE" || deleting}
               >
-                {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {deleting && <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />}
                 Delete my account
               </Button>
             </div>

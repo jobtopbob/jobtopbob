@@ -15,17 +15,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Loader2,
-  Check,
-  X,
-  Mail,
-  Inbox,
-  History,
-  ArrowRight,
-  ShieldCheck,
-  Zap,
-  Eye,
-} from "lucide-react";
+  SpinnerIcon,
+  CheckIcon,
+  XIcon,
+  EnvelopeIcon,
+  TrayIcon,
+  ClockCounterClockwiseIcon,
+  ArrowRightIcon,
+  ShieldCheckIcon,
+  LightningIcon,
+  EyeIcon,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 const intentLabels: Record<string, { label: string; color: string }> = {
@@ -67,7 +67,7 @@ export default function EmailIntegrationPage() {
   if (statusLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <SpinnerIcon className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -113,7 +113,7 @@ export default function EmailIntegrationPage() {
           }`}
           onClick={() => setActiveTab("inbox")}
         >
-          <Inbox className="w-4 h-4" />
+          <TrayIcon className="w-4 h-4" />
           Inbox
         </button>
         <button
@@ -124,7 +124,7 @@ export default function EmailIntegrationPage() {
           }`}
           onClick={() => setActiveTab("history")}
         >
-          <History className="w-4 h-4" />
+          <ClockCounterClockwiseIcon className="w-4 h-4" />
           History
         </button>
       </div>
@@ -162,7 +162,7 @@ function NotConnectedView() {
           <Card className="border border-border-subtle">
             <CardContent className="pt-10 pb-10 px-8 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Mail className="w-8 h-8 text-primary" />
+                <EnvelopeIcon className="w-8 h-8 text-primary" />
               </div>
               <h2 className="text-xl font-semibold text-text-primary mb-2">
                 Connect your Gmail
@@ -179,12 +179,12 @@ function NotConnectedView() {
                 disabled={connectGmail.isPending}
               >
                 {connectGmail.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <SpinnerIcon className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Mail className="w-4 h-4" />
+                  <EnvelopeIcon className="w-4 h-4" />
                 )}
                 Connect Gmail
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRightIcon className="w-4 h-4" />
               </Button>
             </CardContent>
           </Card>
@@ -193,7 +193,7 @@ function NotConnectedView() {
           <div className="grid grid-cols-3 gap-4 mt-6">
             <div className="flex flex-col items-center text-center gap-2 p-3">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <ShieldCheckIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
               <p className="text-xs text-muted-foreground leading-snug">
                 Read-only access. We never send or modify emails.
@@ -201,7 +201,7 @@ function NotConnectedView() {
             </div>
             <div className="flex flex-col items-center text-center gap-2 p-3">
               <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <EyeIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
               <p className="text-xs text-muted-foreground leading-snug">
                 Email content is never stored. Only short snippets are saved.
@@ -209,7 +209,7 @@ function NotConnectedView() {
             </div>
             <div className="flex flex-col items-center text-center gap-2 p-3">
               <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                <Zap className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <LightningIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               </div>
               <p className="text-xs text-muted-foreground leading-snug">
                 You review every event before your tracker is updated.
@@ -239,7 +239,7 @@ function InboxTab() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-48">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        <SpinnerIcon className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -248,7 +248,7 @@ function InboxTab() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-4">
-          <Inbox className="w-6 h-6 text-muted-foreground" />
+          <TrayIcon className="w-6 h-6 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium text-text-primary mb-1">
           All caught up
@@ -277,7 +277,7 @@ function HistoryTab() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-48">
-        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        <SpinnerIcon className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -286,7 +286,7 @@ function HistoryTab() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-4">
-          <History className="w-6 h-6 text-muted-foreground" />
+          <ClockCounterClockwiseIcon className="w-6 h-6 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium text-text-primary mb-1">
           No history yet
@@ -341,7 +341,7 @@ function EmailEventCard({
               )}
               {event.confirmed === true && (
                 <Badge variant="outline" className="text-xs gap-1">
-                  <Check className="w-3 h-3" />
+                  <CheckIcon className="w-3 h-3" />
                   Confirmed
                 </Badge>
               )}
@@ -383,7 +383,7 @@ function EmailEventCard({
                 }
                 disabled={confirmEvent.isPending}
               >
-                <Check className="w-3.5 h-3.5" />
+                <CheckIcon className="w-3.5 h-3.5" />
                 Confirm
               </Button>
               <Button
@@ -398,7 +398,7 @@ function EmailEventCard({
                 }
                 disabled={dismissEvent.isPending}
               >
-                <X className="w-3.5 h-3.5" />
+                <XIcon className="w-3.5 h-3.5" />
               </Button>
             </div>
           )}

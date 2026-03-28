@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreateJob } from "@/hooks/use-jobs";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { SpinnerIcon } from "@phosphor-icons/react";
 
 interface FirstJobStepProps {
   onNext: () => void;
@@ -87,7 +87,7 @@ export function FirstJobStep({ onNext, onBack }: FirstJobStepProps) {
             </Button>
             <Button onClick={handleCreate} disabled={createJob.isPending}>
               {createJob.isPending && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />
               )}
               Add & Continue
             </Button>

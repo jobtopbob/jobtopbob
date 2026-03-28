@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { Building2, Plus, X, Check, Pencil } from "lucide-react";
+import { BuildingsIcon, PlusIcon, XIcon, CheckIcon, PencilIcon } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { useSearchCompanies, useCreateCompany } from "@/hooks/use-companies";
 import type { Company } from "@/hooks/use-companies";
@@ -149,7 +149,7 @@ export function CompanySelector({
             )}
             <span className="truncate">{displayName}</span>
             {!disabled && (
-              <X
+              <XIcon
                 className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hover:text-text-primary"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -197,7 +197,7 @@ export function CompanySelector({
             onClick={handleClear}
             className="p-0.5 rounded hover:bg-surface-hover transition-colors"
           >
-            <X className="w-3.5 h-3.5 text-text-muted" />
+            <XIcon className="w-3.5 h-3.5 text-text-muted" />
           </button>
         )}
       </div>
@@ -223,7 +223,7 @@ export function CompanySelector({
         >
           <span>{placeholder ?? "Add company"}</span>
           {!disabled && (
-            <Pencil className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            <PencilIcon className="w-3 h-3 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
           )}
         </button>
       </div>
@@ -234,7 +234,7 @@ export function CompanySelector({
     <div ref={containerRef} className={cn("relative", isInline ? "flex-1 min-w-0" : "", className)}>
       <div className="relative">
         {!isInline && (
-          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+          <BuildingsIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
         )}
         <Input
           ref={inputRef}
@@ -303,7 +303,7 @@ export function CompanySelector({
                       )}
                     </div>
                     {company.id === value && (
-                      <Check className="w-4 h-4 text-brand shrink-0" />
+                      <CheckIcon className="w-4 h-4 text-brand shrink-0" />
                     )}
                   </button>
                 );
@@ -322,7 +322,7 @@ export function CompanySelector({
                 disabled={createCompany.isPending}
                 className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left hover:bg-surface-hover transition-colors text-brand"
               >
-                <Plus className="w-4 h-4 shrink-0" />
+                <PlusIcon className="w-4 h-4 shrink-0" />
                 <span className="text-sm font-medium">
                   {createCompany.isPending
                     ? "Creating..."

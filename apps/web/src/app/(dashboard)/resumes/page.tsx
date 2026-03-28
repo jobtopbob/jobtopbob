@@ -21,12 +21,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  ExternalLink,
-  RefreshCw,
-  AlertTriangle,
-  CheckCircle2,
-  Circle,
-} from "lucide-react";
+  ArrowSquareOutIcon,
+  ArrowsClockwiseIcon,
+  WarningIcon,
+  CheckCircleIcon,
+  CircleIcon,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -44,9 +44,9 @@ function FeatureStatus({
   return (
     <li className="flex items-start gap-2 text-sm">
       {configured ? (
-        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+        <CheckCircleIcon className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
       ) : (
-        <Circle className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
+        <CircleIcon className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
       )}
       <span className={configured ? "text-text-primary" : "text-text-muted"}>
         {label}
@@ -191,7 +191,7 @@ export default function ResumesPage() {
                     />
                   }
                 >
-                  <RefreshCw
+                  <ArrowsClockwiseIcon
                     className={cn(
                       "w-4 h-4",
                       syncResumes.isPending && "animate-spin"
@@ -214,7 +214,7 @@ export default function ResumesPage() {
                     />
                   }
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <ArrowSquareOutIcon className="w-4 h-4" />
                   Open Builder
                 </TooltipTrigger>
                 <TooltipContent>
@@ -235,7 +235,7 @@ export default function ResumesPage() {
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                  <WarningIcon className="w-5 h-5 text-amber-500" />
                 </div>
                 <div className="space-y-2.5">
                   <h3 className="font-semibold text-text-primary text-sm">

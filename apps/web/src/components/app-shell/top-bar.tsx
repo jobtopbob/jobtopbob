@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Search, Bell, ChevronDown, LogOut, PanelLeftOpen } from "lucide-react";
+import { MagnifyingGlassIcon, BellIcon, CaretDownIcon, SignOutIcon, SidebarIcon } from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +44,7 @@ export function TopBar({ userName: initialUserName }: TopBarProps) {
           onClick={() => setCollapsed(false)}
           className="flex items-center justify-center w-7 h-7 rounded-lg mr-3 shrink-0"
         >
-          <PanelLeftOpen className="w-[18px] h-[18px] text-text-tertiary" />
+          <SidebarIcon className="w-[18px] h-[18px] text-text-tertiary" />
         </button>
       )}
 
@@ -57,7 +57,7 @@ export function TopBar({ userName: initialUserName }: TopBarProps) {
         }}
         className="flex items-center gap-2 w-full max-w-[280px] px-3 py-2 rounded-xl bg-surface border border-border-subtle cursor-pointer hover:bg-surface-hover transition-colors"
       >
-        <Search className="w-4 h-4 text-text-muted shrink-0" />
+        <MagnifyingGlassIcon className="w-4 h-4 text-text-muted shrink-0" />
         <span className="text-sm text-text-muted flex-1 text-left">
           Search...
         </span>
@@ -70,7 +70,7 @@ export function TopBar({ userName: initialUserName }: TopBarProps) {
       <div className="flex-1" />
 
       {/* Bell */}
-      <Bell className="w-5 h-5 text-text-muted" />
+      <BellIcon className="w-5 h-5 text-text-muted" />
 
       {/* User Section */}
       <DropdownMenu>
@@ -95,13 +95,13 @@ export function TopBar({ userName: initialUserName }: TopBarProps) {
               <span className="hidden sm:inline text-sm font-medium text-text-primary">
                 {userName}
               </span>
-              <ChevronDown className="hidden sm:block w-4 h-4 text-text-muted" />
+              <CaretDownIcon className="hidden sm:block w-4 h-4 text-text-muted" />
             </button>
           }
         />
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleSignOut}>
-            <LogOut className="w-4 h-4 mr-2" />
+            <SignOutIcon className="w-4 h-4 mr-2" />
             Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { CheckIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface StepperProps {
@@ -55,7 +55,7 @@ export function Stepper({
                 aria-label={`Step ${index + 1}: ${step.label}`}
               >
                 {index < currentStep ? (
-                  <Check className="size-3.5" strokeWidth={2.5} />
+                  <CheckIcon className="size-3.5" weight="bold" />
                 ) : (
                   index + 1
                 )}

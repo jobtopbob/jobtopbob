@@ -27,7 +27,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, Circle, FileText, Mail } from "lucide-react";
+import { SpinnerIcon, CheckCircleIcon, CircleIcon, FileTextIcon, EnvelopeIcon } from "@phosphor-icons/react";
 
 export function IntegrationsSection() {
   const { data: rxKeyStatus, isLoading: rxLoading } = useRxResumeKeyStatus();
@@ -77,21 +77,21 @@ export function IntegrationsSection() {
           <CardContent className="pt-2">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
-                <FileText className="w-5 h-5 text-foreground" />
+                <FileTextIcon className="w-5 h-5 text-foreground" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold text-text-primary">Resume Builder</h3>
                   {rxLoading ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                    <SpinnerIcon className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
                   ) : rxKeyStatus?.connected ? (
                     <Badge variant="outline" className="gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      <CheckCircleIcon className="w-3 h-3 text-emerald-500" />
                       Connected
                     </Badge>
                   ) : (
                     <Badge variant="secondary" className="gap-1">
-                      <Circle className="w-3 h-3" />
+                      <CircleIcon className="w-3 h-3" />
                       Not connected
                     </Badge>
                   )}
@@ -108,7 +108,7 @@ export function IntegrationsSection() {
                     disabled={disconnectKey.isPending}
                   >
                     {disconnectKey.isPending && (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />
                     )}
                     Disconnect
                   </Button>
@@ -150,7 +150,7 @@ export function IntegrationsSection() {
                         disabled={connectKey.isPending}
                       >
                         {connectKey.isPending && (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />
                         )}
                         Connect
                       </Button>
@@ -207,21 +207,21 @@ function GmailIntegrationCard() {
       <CardContent className="pt-2">
         <div className="flex items-start gap-4">
           <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
-            <Mail className="w-5 h-5 text-foreground" />
+            <EnvelopeIcon className="w-5 h-5 text-foreground" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-text-primary">Gmail Email Integration</h3>
               {isLoading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                <SpinnerIcon className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
               ) : gmailStatus?.connected ? (
                 <Badge variant="outline" className="gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  <CheckCircleIcon className="w-3 h-3 text-emerald-500" />
                   Connected
                 </Badge>
               ) : (
                 <Badge variant="secondary" className="gap-1">
-                  <Circle className="w-3 h-3" />
+                  <CircleIcon className="w-3 h-3" />
                   Not connected
                 </Badge>
               )}
@@ -267,7 +267,7 @@ function GmailIntegrationCard() {
                         disabled={disconnectGmail.isPending}
                       >
                         {disconnectGmail.isPending && (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />
                         )}
                         Disconnect
                       </Button>
@@ -282,7 +282,7 @@ function GmailIntegrationCard() {
                 disabled={connectGmail.isPending}
               >
                 {connectGmail.isPending && (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" />
                 )}
                 Connect Gmail
               </Button>

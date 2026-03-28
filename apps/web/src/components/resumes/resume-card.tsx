@@ -16,18 +16,18 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  Download,
-  MoreHorizontal,
-  Star,
-  Trash2,
-  Pencil,
-  Briefcase,
-  GraduationCap,
-  Wrench,
-  FolderOpen,
-  Award,
-  Clock,
-} from "lucide-react";
+  DownloadSimpleIcon,
+  StarIcon,
+  TrashIcon,
+  PencilIcon,
+  BriefcaseIcon,
+  DotsThreeIcon,
+  GraduationCapIcon,
+  WrenchIcon,
+  FolderOpenIcon,
+  TrophyIcon,
+  ClockIcon,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { Resume, ResumeConfig } from "@/hooks/use-resumes";
 
@@ -62,11 +62,11 @@ export function formatRelativeTime(dateStr: string): string {
 }
 
 const SECTION_ICONS = [
-  { key: "experience_count", icon: Briefcase, label: "roles" },
-  { key: "education_count", icon: GraduationCap, label: "degrees" },
-  { key: "skills_count", icon: Wrench, label: "skills" },
-  { key: "projects_count", icon: FolderOpen, label: "projects" },
-  { key: "certs_count", icon: Award, label: "certs" },
+  { key: "experience_count", icon: BriefcaseIcon, label: "roles" },
+  { key: "education_count", icon: GraduationCapIcon, label: "degrees" },
+  { key: "skills_count", icon: WrenchIcon, label: "skills" },
+  { key: "projects_count", icon: FolderOpenIcon, label: "projects" },
+  { key: "certs_count", icon: TrophyIcon, label: "certs" },
 ] as const;
 
 interface ResumeCardProps {
@@ -209,7 +209,7 @@ export function ResumeCard({
                   />
                 }
               >
-                <Pencil className="w-4 h-4 text-text-primary" />
+                <PencilIcon className="w-4 h-4 text-text-primary" />
               </TooltipTrigger>
               <TooltipContent>Edit in Builder</TooltipContent>
             </Tooltip>
@@ -226,7 +226,7 @@ export function ResumeCard({
                   />
                 }
               >
-                <Download className="w-4 h-4 text-text-primary" />
+                <DownloadSimpleIcon className="w-4 h-4 text-text-primary" />
               </TooltipTrigger>
               <TooltipContent>
                 {pdfEnabled
@@ -251,21 +251,21 @@ export function ResumeCard({
                 <button className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface transition-colors" />
               }
             >
-              <MoreHorizontal className="w-4 h-4" />
+              <DotsThreeIcon className="w-4 h-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={pdfEnabled ? onExportPDF : undefined}
                 disabled={!pdfEnabled}
               >
-                <Download className="w-4 h-4 mr-2" />
+                <DownloadSimpleIcon className="w-4 h-4 mr-2" />
                 {pdfEnabled ? "Export PDF" : "Export PDF (not configured)"}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={resume.is_base ? undefined : onSetBase}
                 disabled={resume.is_base}
               >
-                <Star className="w-4 h-4 mr-2" />
+                <StarIcon className="w-4 h-4 mr-2" />
                 {resume.is_base ? "Base Resume" : "Set as Base"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -273,7 +273,7 @@ export function ResumeCard({
                 onClick={onDelete}
                 className="text-destructive focus:text-destructive"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
+                <TrashIcon className="w-4 h-4 mr-2" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -305,7 +305,7 @@ export function ResumeCard({
 
         {/* Updated time */}
         <p className="text-xs text-text-muted flex items-center gap-1">
-          <Clock className="w-3 h-3" />
+          <ClockIcon className="w-3 h-3" />
           Updated {formatRelativeTime(resume.updated_at)}
         </p>
       </div>

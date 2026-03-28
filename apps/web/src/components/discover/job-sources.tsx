@@ -2,21 +2,21 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Globe, Briefcase, Linkedin, Building2 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { GlobeIcon, BriefcaseIcon, LinkedinLogoIcon, BuildingsIcon } from "@phosphor-icons/react";
+import type { Icon } from "@phosphor-icons/react";
 
 interface JobSource {
   id: string;
   name: string;
   status: "active" | "coming_soon";
-  fallbackIcon: LucideIcon;
+  fallbackIcon: Icon;
 }
 
 const SOURCES: JobSource[] = [
-  { id: "adzuna", name: "Adzuna", status: "active", fallbackIcon: Globe },
-  { id: "indeed", name: "Indeed", status: "coming_soon", fallbackIcon: Briefcase },
-  { id: "linkedin", name: "LinkedIn", status: "coming_soon", fallbackIcon: Linkedin },
-  { id: "glassdoor", name: "Glassdoor", status: "coming_soon", fallbackIcon: Building2 },
+  { id: "adzuna", name: "Adzuna", status: "active", fallbackIcon: GlobeIcon },
+  { id: "indeed", name: "Indeed", status: "coming_soon", fallbackIcon: BriefcaseIcon },
+  { id: "linkedin", name: "LinkedIn", status: "coming_soon", fallbackIcon: LinkedinLogoIcon },
+  { id: "glassdoor", name: "Glassdoor", status: "coming_soon", fallbackIcon: BuildingsIcon },
 ];
 
 function SourceIcon({ source }: { source: JobSource }) {

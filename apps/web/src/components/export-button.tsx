@@ -1,6 +1,6 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { DownloadSimpleIcon } from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -51,7 +51,7 @@ export function ExportButton({ endpoint }: ExportButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-1.5 h-10 px-4 rounded-full border border-border-subtle text-sm font-medium text-text-primary hover:bg-surface-hover transition-colors outline-none">
-        <Download className="w-3.5 h-3.5 text-text-muted" />
+        <DownloadSimpleIcon className="w-3.5 h-3.5 text-text-muted" />
         Export
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8}>

@@ -3,7 +3,7 @@
 import { useScrapeRuns } from "@/hooks/use-discover";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, MapPin } from "lucide-react";
+import { MagnifyingGlassIcon, MapPinIcon } from "@phosphor-icons/react";
 
 function relativeTime(dateStr: string) {
   const now = Date.now();
@@ -71,7 +71,7 @@ export function ScrapeRunList() {
     return (
       <div className="flex items-center justify-center rounded-xl bg-muted/50 p-8">
         <div className="text-center">
-          <Search className="mx-auto h-8 w-8 text-text-muted" />
+          <MagnifyingGlassIcon className="mx-auto h-8 w-8 text-text-muted" />
           <p className="mt-2 text-sm font-medium text-text-secondary">
             No searches yet
           </p>
@@ -111,7 +111,7 @@ export function ScrapeRunList() {
               )}
               {run.location && (
                 <span className="flex items-center gap-0.5">
-                  <MapPin className="h-3 w-3" />
+                  <MapPinIcon className="h-3 w-3" />
                   {run.location}
                 </span>
               )}

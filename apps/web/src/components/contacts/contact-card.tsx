@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { User, Building2, Mail, Calendar } from "lucide-react";
+import { UserIcon, BuildingsIcon, EnvelopeIcon, CalendarIcon } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import type { Contact } from "@/hooks/use-contacts";
 
@@ -86,13 +86,13 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
       <div className="flex flex-wrap gap-1.5">
         {contact.company_name && (
           <Badge variant="secondary" className="text-[10px]">
-            <Building2 className="w-3 h-3" />
+            <BuildingsIcon className="w-3 h-3" />
             {contact.company_name}
           </Badge>
         )}
         {contact.email && (
           <Badge variant="secondary" className="text-[10px]">
-            <Mail className="w-3 h-3" />
+            <EnvelopeIcon className="w-3 h-3" />
             {contact.email}
           </Badge>
         )}
@@ -102,13 +102,13 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
       <div className="flex items-center gap-3 text-xs text-text-muted mt-auto pt-1">
         {contact.source && (
           <span className="flex items-center gap-1 capitalize">
-            <User className="w-3.5 h-3.5" />
+            <UserIcon className="w-3.5 h-3.5" />
             {contact.source}
           </span>
         )}
         {contact.last_contact && (
           <span className="flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" />
+            <CalendarIcon className="w-3.5 h-3.5" />
             {new Date(contact.last_contact).toLocaleDateString()}
           </span>
         )}

@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConnectRxResumeKey, useSyncResumes } from "@/hooks/use-resumes";
-import { ExternalLink, Key } from "lucide-react";
+import { ArrowSquareOutIcon, KeyIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 interface ConnectBuilderDialogProps {
@@ -86,7 +86,7 @@ export function ConnectBuilderDialog({
                   className="mt-2 gap-1.5"
                   onClick={() => window.open(`${builderURL}/dashboard/settings/api-keys`, "_blank")}
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ArrowSquareOutIcon className="w-3.5 h-3.5" />
                   Open Builder
                 </Button>
               </div>
@@ -145,7 +145,7 @@ export function ConnectBuilderDialog({
               "Connecting..."
             ) : (
               <>
-                <Key className="w-4 h-4" />
+                <KeyIcon className="w-4 h-4" />
                 Connect
               </>
             )}

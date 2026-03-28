@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, SlidersHorizontal, X, Settings2 } from "lucide-react";
+import { PlusIcon, SlidersHorizontalIcon, XIcon, GearIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { FilterPanel } from "./filter-panel";
 import { SortPopover } from "./sort-popover";
@@ -76,7 +76,7 @@ export function Toolbar({
               className="flex items-center justify-center w-9 h-9 rounded-full bg-surface text-text-muted hover:text-text-primary transition-colors"
               title="Manage stages"
             >
-              <Settings2 className="w-4 h-4" />
+              <GearIcon className="w-4 h-4" />
             </button>
           )}
           <div ref={viewContainerRef} className="relative flex items-center gap-1 rounded-full bg-surface p-1 h-9">
@@ -131,7 +131,7 @@ export function Toolbar({
                   : "border-border-subtle text-text-primary"
               )}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <SlidersHorizontalIcon className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Filter</span>
               {activeFilterCount > 0 && (
                 <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white text-[10px] font-bold leading-none">
@@ -162,7 +162,7 @@ export function Toolbar({
             onClick={onAddJob}
             className="flex items-center gap-1.5 h-9 lg:h-10 px-3 lg:px-4 rounded-full bg-brand text-xs lg:text-sm font-medium text-background hover:bg-brand/90"
           >
-            <Plus className="w-4 h-4 lg:w-5 lg:h-5" />
+            <PlusIcon className="w-4 h-4 lg:w-5 lg:h-5" />
             <span className="hidden sm:inline">Add Job</span>
             <span className="sm:hidden">Add</span>
           </button>
@@ -278,7 +278,7 @@ function ActiveFilterPills({
           className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full bg-surface text-[11px] font-medium text-text-primary hover:bg-surface-hover transition-colors group"
         >
           {pill.label}
-          <X className="w-3 h-3 text-text-muted group-hover:text-text-primary" />
+          <XIcon className="w-3 h-3 text-text-muted group-hover:text-text-primary" />
         </button>
       ))}
       <button

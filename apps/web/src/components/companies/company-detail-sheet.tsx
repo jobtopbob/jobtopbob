@@ -14,17 +14,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
-  Globe,
-  MapPin,
-  Users,
-  Calendar,
-  Linkedin,
-  Pencil,
-  Trash2,
-  Building2,
-  Briefcase,
-  Wand2,
-} from "lucide-react";
+  GlobeIcon,
+  MapPinIcon,
+  UsersIcon,
+  CalendarIcon,
+  PencilIcon,
+  BuildingsIcon,
+  BriefcaseIcon,
+  LinkedinLogoIcon,
+  TrashIcon,
+  MagicWandIcon,
+} from "@phosphor-icons/react";
 import { toast } from "sonner";
 import {
   useCompany,
@@ -139,7 +139,7 @@ export function CompanyDetailSheet({
                 </div>
               )}
               <div className="absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-colors">
-                <Pencil className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                <PencilIcon className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </button>
             <div className="flex-1 min-w-0">
@@ -164,17 +164,17 @@ export function CompanyDetailSheet({
                   });
                 }}
               >
-                <Wand2 className="w-4 h-4" />
+                <MagicWandIcon className="w-4 h-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setEditing(!editing)}
               >
-                <Pencil className="w-4 h-4" />
+                <PencilIcon className="w-4 h-4" />
               </Button>
               <Button variant="ghost" size="icon" onClick={handleDelete}>
-                <Trash2 className="w-4 h-4 text-destructive" />
+                <TrashIcon className="w-4 h-4 text-destructive" />
               </Button>
             </div>
           </div>
@@ -183,18 +183,18 @@ export function CompanyDetailSheet({
           <div className="flex flex-wrap gap-1.5">
             {company.industry && (
               <Badge variant="secondary">
-                <Building2 className="w-3 h-3" />
+                <BuildingsIcon className="w-3 h-3" />
                 {company.industry}
               </Badge>
             )}
             {company.size && (
               <Badge variant="secondary">
-                <Users className="w-3 h-3" />
+                <UsersIcon className="w-3 h-3" />
                 {company.size}
               </Badge>
             )}
             <Badge variant="outline">
-              <Briefcase className="w-3 h-3" />
+              <BriefcaseIcon className="w-3 h-3" />
               {jobCount} {jobCount === 1 ? "application" : "applications"}
             </Badge>
             {company.enrichment_status !== "none" && (
@@ -207,7 +207,7 @@ export function CompanyDetailSheet({
                       : "outline"
                 }
               >
-                <Wand2 className="w-3 h-3" />
+                <MagicWandIcon className="w-3 h-3" />
                 {company.enrichment_status === "enriched"
                   ? "Enriched"
                   : company.enrichment_status === "pending"
@@ -258,16 +258,16 @@ function DetailView({
   const { data: enrichmentLogs } = useEnrichmentLogs(companyId);
   const details = [
     {
-      icon: Globe,
+      icon: GlobeIcon,
       label: "Website",
       value: company.website,
       href: company.website,
     },
-    { icon: MapPin, label: "Location", value: company.location },
-    { icon: Users, label: "Employees", value: company.employee_count?.toLocaleString() },
-    { icon: Calendar, label: "Founded", value: company.founded_year },
+    { icon: MapPinIcon, label: "Location", value: company.location },
+    { icon: UsersIcon, label: "Employees", value: company.employee_count?.toLocaleString() },
+    { icon: CalendarIcon, label: "Founded", value: company.founded_year },
     {
-      icon: Linkedin,
+      icon: LinkedinLogoIcon,
       label: "LinkedIn",
       value: company.linkedin_url ? "View Profile" : null,
       href: company.linkedin_url,

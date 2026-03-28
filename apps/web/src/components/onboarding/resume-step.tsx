@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { FileTextIcon } from "@phosphor-icons/react";
 
 interface ResumeStepProps {
   onNext: () => void;
@@ -26,7 +26,7 @@ export function ResumeStep({ onNext, onBack }: ResumeStepProps) {
 
         <div className="flex items-start gap-4 rounded-lg border border-border p-5">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-hover">
-            <FileText className="size-5 text-brand" />
+            <FileTextIcon className="size-5 text-brand" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-text-primary">

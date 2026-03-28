@@ -2,13 +2,13 @@
 
 import { useState, useCallback } from "react";
 import {
-  Plus,
-  Search,
-  Building2,
-  ArrowUpDown,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
+  PlusIcon,
+  MagnifyingGlassIcon,
+  BuildingsIcon,
+  ArrowsDownUpIcon,
+  SlidersHorizontalIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -148,7 +148,7 @@ export default function CompaniesPage() {
           <div className="flex items-center gap-2">
             <ExportButton endpoint="/api/v1/export/companies" />
             <Button onClick={() => setAddDialogOpen(true)}>
-              <Plus className="w-4 h-4" />
+              <PlusIcon className="w-4 h-4" />
               Add Company
             </Button>
           </div>
@@ -158,7 +158,7 @@ export default function CompaniesPage() {
         <div className="flex items-center gap-2 flex-wrap">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
             <Input
               value={searchInput}
               onChange={(e) => {
@@ -180,7 +180,7 @@ export default function CompaniesPage() {
                   : "border-border-subtle text-text-primary hover:bg-surface-hover"
               )}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <SlidersHorizontalIcon className="w-3.5 h-3.5" />
               Filter
               {activeFilterCount > 0 && (
                 <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white text-[10px] font-bold">
@@ -253,7 +253,7 @@ export default function CompaniesPage() {
           {/* Sort Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-1.5 h-10 px-4 rounded-full border border-border-subtle text-sm font-medium text-text-primary hover:bg-surface-hover transition-colors outline-none">
-              <ArrowUpDown className="w-3.5 h-3.5 text-text-muted" />
+              <ArrowsDownUpIcon className="w-3.5 h-3.5 text-text-muted" />
               {SORT_OPTIONS.find((o) => o.value === filters.sortBy)?.label ??
                 "Sort"}
             </DropdownMenuTrigger>
@@ -365,7 +365,7 @@ export default function CompaniesPage() {
         ) : companies.length === 0 ? (
           <div className="flex flex-col items-center justify-center flex-1 gap-3 py-20">
             <div className="w-12 h-12 rounded-2xl bg-surface-hover flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-text-muted" />
+              <BuildingsIcon className="w-6 h-6 text-text-muted" />
             </div>
             <p className="text-sm text-text-muted">
               {debouncedSearch || activeFilterCount > 0
@@ -378,7 +378,7 @@ export default function CompaniesPage() {
                 size="sm"
                 onClick={() => setAddDialogOpen(true)}
               >
-                <Plus className="w-4 h-4" />
+                <PlusIcon className="w-4 h-4" />
                 Add Company
               </Button>
             )}
@@ -430,7 +430,7 @@ function FilterPill({
       className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full bg-surface text-[11px] font-medium text-text-primary hover:bg-surface-hover transition-colors group"
     >
       {label}
-      <X className="w-3 h-3 text-text-muted group-hover:text-text-primary" />
+      <XIcon className="w-3 h-3 text-text-muted group-hover:text-text-primary" />
     </button>
   );
 }

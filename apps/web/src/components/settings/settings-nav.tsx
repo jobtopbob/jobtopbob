@@ -1,15 +1,15 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { User, Brain, Plug, Shield } from "lucide-react";
+import { UserIcon, BrainIcon, PlugIcon, ShieldIcon } from "@phosphor-icons/react";
 
 export type SettingsSection = "profile" | "ai" | "integrations" | "account";
 
 const sections: { id: SettingsSection; label: string; icon: React.ElementType }[] = [
-  { id: "profile", label: "Profile", icon: User },
-  { id: "ai", label: "Artificial Intelligence", icon: Brain },
-  { id: "integrations", label: "Integrations", icon: Plug },
-  { id: "account", label: "Account", icon: Shield },
+  { id: "profile", label: "Profile", icon: UserIcon },
+  { id: "ai", label: "Artificial Intelligence", icon: BrainIcon },
+  { id: "integrations", label: "Integrations", icon: PlugIcon },
+  { id: "account", label: "Account", icon: ShieldIcon },
 ];
 
 interface SettingsNavProps {

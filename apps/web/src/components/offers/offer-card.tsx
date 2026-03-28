@@ -2,18 +2,18 @@
 
 import Image from "next/image";
 import {
-  DollarSign,
-  Banknote,
-  Calendar,
-  Check,
-  X,
-  Briefcase,
-  Building2,
-  MapPin,
-  Wifi,
-  Monitor,
-  Home,
-} from "lucide-react";
+  CurrencyDollarIcon,
+  CalendarIcon,
+  CheckIcon,
+  XIcon,
+  BriefcaseIcon,
+  BuildingsIcon,
+  MapPinIcon,
+  MoneyIcon,
+  WifiHighIcon,
+  MonitorIcon,
+  HouseIcon,
+} from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import type { Offer } from "@/hooks/use-offers";
 import { calculateTotalComp, remotePolicyLabel } from "@/lib/offer-utils";
@@ -26,11 +26,11 @@ interface OfferCardProps {
 
 const remotePolicyConfig: Record<
   string,
-  { icon: typeof Wifi; className: string }
+  { icon: typeof WifiHighIcon; className: string }
 > = {
-  remote: { icon: Wifi, className: "bg-emerald-400/15 text-emerald-600" },
-  hybrid: { icon: Home, className: "bg-amber-400/15 text-amber-600" },
-  onsite: { icon: Monitor, className: "bg-zinc-400/15 text-zinc-600" },
+  remote: { icon: WifiHighIcon, className: "bg-emerald-400/15 text-emerald-600" },
+  hybrid: { icon: HouseIcon, className: "bg-amber-400/15 text-amber-600" },
+  onsite: { icon: MonitorIcon, className: "bg-zinc-400/15 text-zinc-600" },
 };
 
 export function OfferCard({ offer, onClick }: OfferCardProps) {
@@ -64,7 +64,7 @@ export function OfferCard({ offer, onClick }: OfferCardProps) {
               />
             </div>
           ) : (
-            <Building2 className="w-6 h-6 text-text-muted shrink-0 mt-0.5" />
+            <BuildingsIcon className="w-6 h-6 text-text-muted shrink-0 mt-0.5" />
           )}
           <div className="min-w-0">
             <span className="text-sm font-semibold text-text-primary truncate block">
@@ -81,7 +81,7 @@ export function OfferCard({ offer, onClick }: OfferCardProps) {
               )}
               {offer.work_location && (
                 <span className="flex items-center gap-0.5 text-xs text-text-muted truncate">
-                  <MapPin className="w-3 h-3 shrink-0" />
+                  <MapPinIcon className="w-3 h-3 shrink-0" />
                   {offer.work_location}
                 </span>
               )}
@@ -97,9 +97,9 @@ export function OfferCard({ offer, onClick }: OfferCardProps) {
             }`}
           >
             {offer.accepted ? (
-              <Check className="w-3 h-3" />
+              <CheckIcon className="w-3 h-3" />
             ) : (
-              <X className="w-3 h-3" />
+              <XIcon className="w-3 h-3" />
             )}
             {offer.accepted ? "Accepted" : "Declined"}
           </span>
@@ -110,7 +110,7 @@ export function OfferCard({ offer, onClick }: OfferCardProps) {
       {salary != null ? (
         <div>
           <div className="flex items-center gap-1.5">
-            <Banknote className="w-4 h-4 text-brand-green" />
+            <MoneyIcon className="w-4 h-4 text-brand-green" />
             <span className="text-lg font-bold text-text-primary">
               {formatSalaryWithInterval(salary, { currency, interval: offer.salary_interval })}
             </span>
@@ -123,7 +123,7 @@ export function OfferCard({ offer, onClick }: OfferCardProps) {
         </div>
       ) : (
         <div className="flex items-center gap-1.5 py-1">
-          <DollarSign className="w-4 h-4 text-text-muted/40" />
+          <CurrencyDollarIcon className="w-4 h-4 text-text-muted/40" />
           <span className="text-sm text-text-muted italic">
             Add compensation details
           </span>
@@ -173,13 +173,13 @@ export function OfferCard({ offer, onClick }: OfferCardProps) {
       <div className="flex items-center gap-3 text-xs text-text-muted mt-auto pt-1">
         {offer.deadline && (
           <span className="flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" />
+            <CalendarIcon className="w-3.5 h-3.5" />
             Deadline: {new Date(offer.deadline).toLocaleDateString()}
           </span>
         )}
         {!offer.deadline && (
           <span className="flex items-center gap-1">
-            <Briefcase className="w-3.5 h-3.5" />
+            <BriefcaseIcon className="w-3.5 h-3.5" />
             {new Date(offer.created_at).toLocaleDateString()}
           </span>
         )}

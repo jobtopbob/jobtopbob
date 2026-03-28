@@ -4,23 +4,23 @@ import Link from "next/link";
 import { AppLogo } from "@/components/app-logo";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Compass,
-  Briefcase,
-  FileText,
-  Building2,
-  HandCoins,
-  Wrench,
-  Mail,
-  Users,
-  BookOpen,
-  Settings,
-  PanelLeftClose,
-  Sun,
-  Moon,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
+  SquaresFourIcon,
+  CompassIcon,
+  BriefcaseIcon,
+  FileTextIcon,
+  BuildingsIcon,
+  HandCoinsIcon,
+  WrenchIcon,
+  EnvelopeIcon,
+  UsersIcon,
+  BookOpenIcon,
+  GearIcon,
+  SidebarSimpleIcon,
+  SunIcon,
+  MoonIcon,
+  CaretDownIcon,
+  CaretRightIcon,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-context";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -42,19 +42,19 @@ interface NavGroup {
 const navGroups: NavGroup[] = [
   {
     label: "Job Tracking",
-    icon: Briefcase,
+    icon: BriefcaseIcon,
     items: [
-      { label: "Applications", icon: Briefcase, href: "/applications" },
-      { label: "Offers", icon: HandCoins, href: "/offers" },
+      { label: "Applications", icon: BriefcaseIcon, href: "/applications" },
+      { label: "Offers", icon: HandCoinsIcon, href: "/offers" },
     ],
   },
   {
     label: "Tools",
-    icon: Wrench,
+    icon: WrenchIcon,
     items: [
-      { label: "Resumes", icon: FileText, href: "/resumes" },
-      { label: "Resources", icon: BookOpen, href: "/resources" },
-      { label: "Email Integration", icon: Mail, href: "/email-integration" },
+      { label: "Resumes", icon: FileTextIcon, href: "/resumes" },
+      { label: "Resources", icon: BookOpenIcon, href: "/resources" },
+      { label: "Email Integration", icon: EnvelopeIcon, href: "/email-integration" },
     ],
   },
 ];
@@ -130,7 +130,7 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
         onClick={() => setTheme("light")}
         className="relative z-10 flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full"
       >
-        <Sun className={cn("w-4 h-4 transition-colors duration-200", isLight ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
+        <SunIcon className={cn("w-4 h-4 transition-colors duration-200", isLight ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
         <span className={cn("text-xs font-medium transition-colors duration-200", isLight ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Light</span>
       </button>
       <button
@@ -138,7 +138,7 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
         onClick={() => setTheme("dark")}
         className="relative z-10 flex items-center justify-center gap-1.5 flex-1 py-2 rounded-full"
       >
-        <Moon className={cn("w-4 h-4 transition-colors duration-200", isDark ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
+        <MoonIcon className={cn("w-4 h-4 transition-colors duration-200", isDark ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")} />
         <span className={cn("text-xs font-medium transition-colors duration-200", isDark ? "text-sidebar-accent-foreground" : "text-sidebar-foreground")}>Dark</span>
       </button>
     </div>
@@ -203,7 +203,7 @@ export function Sidebar() {
               collapsed ? "lg:hidden" : ""
             )}
           >
-            <PanelLeftClose className="w-[18px] h-[18px] text-sidebar-foreground" />
+            <SidebarSimpleIcon className="w-[18px] h-[18px] text-sidebar-foreground" />
           </button>
         </div>
 
@@ -224,7 +224,7 @@ export function Sidebar() {
             )}
             title="Dashboard"
           >
-            <LayoutDashboard className="w-5 h-5 shrink-0" />
+            <SquaresFourIcon className="w-5 h-5 shrink-0" />
             <span className={cn(
               "leading-6 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
               collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
@@ -245,7 +245,7 @@ export function Sidebar() {
             )}
             title="Discover"
           >
-            <Compass className="w-5 h-5 shrink-0" />
+            <CompassIcon className="w-5 h-5 shrink-0" />
             <span className={cn(
               "leading-6 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
               collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
@@ -278,9 +278,9 @@ export function Sidebar() {
                   collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[16px] opacity-100" : "max-w-[16px] opacity-100"
                 )}>
                   {expandedGroups[group.label] ? (
-                    <ChevronDown className="w-4 h-4" />
+                    <CaretDownIcon className="w-4 h-4" />
                   ) : (
-                    <ChevronRight className="w-4 h-4" />
+                    <CaretRightIcon className="w-4 h-4" />
                   )}
                 </span>
               </button>
@@ -355,7 +355,7 @@ export function Sidebar() {
             )}
             title="Contacts"
           >
-            <Users className="w-5 h-5 shrink-0" />
+            <UsersIcon className="w-5 h-5 shrink-0" />
             <span className={cn(
               "leading-6 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
               collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
@@ -376,7 +376,7 @@ export function Sidebar() {
             )}
             title="Companies"
           >
-            <Building2 className="w-5 h-5 shrink-0" />
+            <BuildingsIcon className="w-5 h-5 shrink-0" />
             <span className={cn(
               "leading-6 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
               collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"
@@ -397,7 +397,7 @@ export function Sidebar() {
             )}
             title="Settings"
           >
-            <Settings className="w-5 h-5 shrink-0" />
+            <GearIcon className="w-5 h-5 shrink-0" />
             <span className={cn(
               "leading-6 transition-[opacity,max-width] duration-200 ease-out overflow-hidden whitespace-nowrap",
               collapsed ? "lg:max-w-0 lg:opacity-0 max-w-[150px] opacity-100" : "max-w-[150px] opacity-100"

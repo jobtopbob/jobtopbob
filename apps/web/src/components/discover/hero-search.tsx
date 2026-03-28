@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MapPin, Loader2 } from "lucide-react";
+import { MagnifyingGlassIcon, MapPinIcon, SpinnerIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ResumeSearchDialog } from "@/components/discover/resume-search-dialog";
@@ -82,7 +82,7 @@ export function HeroSearch() {
           <div className="rounded-2xl bg-card shadow-lg shadow-black/5 ring-1 ring-border-subtle">
             <div className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-1 sm:p-2">
               <div className="flex flex-1 items-center gap-2 rounded-lg bg-surface-hover px-3 sm:rounded-none sm:bg-transparent">
-                <Search className="h-4 w-4 shrink-0 text-text-muted" />
+                <MagnifyingGlassIcon className="h-4 w-4 shrink-0 text-text-muted" />
                 <input
                   type="text"
                   placeholder="Job title, skills, or keywords..."
@@ -93,7 +93,7 @@ export function HeroSearch() {
               </div>
               <div className="hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
               <div className="flex items-center gap-2 rounded-lg bg-surface-hover px-3 sm:w-48 sm:rounded-none sm:bg-transparent">
-                <MapPin className="h-4 w-4 shrink-0 text-text-muted" />
+                <MapPinIcon className="h-4 w-4 shrink-0 text-text-muted" />
                 <input
                   type="text"
                   placeholder="Location"
@@ -108,9 +108,9 @@ export function HeroSearch() {
                 className="w-full shrink-0 rounded-xl bg-brand text-white hover:bg-brand/90 sm:w-auto sm:px-5"
               >
                 {quickSearch.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <SpinnerIcon className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Search className="mr-2 h-4 w-4" />
+                  <MagnifyingGlassIcon className="mr-2 h-4 w-4" />
                 )}
                 Search
               </Button>

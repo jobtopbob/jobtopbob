@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
-  FileSearch,
-  FileText,
-  Loader2,
-} from "lucide-react";
+  CaretRightIcon,
+  FileTextIcon,
+  SpinnerIcon,
+  CaretLeftIcon,
+  FileMagnifyingGlassIcon,
+} from "@phosphor-icons/react";
 import {
   Dialog,
   DialogContent,
@@ -67,7 +67,7 @@ export function ResumeSearchDialog() {
       <DialogTrigger
         className="group/button inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium whitespace-nowrap transition-all hover:bg-muted hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
       >
-        <FileSearch className="h-4 w-4" />
+        <FileMagnifyingGlassIcon className="h-4 w-4" />
         Search from Resume
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
@@ -82,7 +82,7 @@ export function ResumeSearchDialog() {
         <div className="space-y-2 mt-2">
           {loadingResumes ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <SpinnerIcon className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : !resumes || resumes.length === 0 ? (
             <div className="flex flex-col items-center py-6 px-4 text-center">
@@ -121,7 +121,7 @@ export function ResumeSearchDialog() {
                       disabled={searchFromResume.isPending}
                       className="w-full flex items-start gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-accent/50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <FileText className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
+                      <FileTextIcon className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium">
                           {resume.name ?? "Untitled Resume"}
@@ -138,7 +138,7 @@ export function ResumeSearchDialog() {
                         )}
                       </div>
                       {isSelected && (
-                        <Loader2 className="h-4 w-4 animate-spin shrink-0 ml-auto mt-0.5 text-muted-foreground" />
+                        <SpinnerIcon className="h-4 w-4 animate-spin shrink-0 ml-auto mt-0.5 text-muted-foreground" />
                       )}
                     </button>
                   );
@@ -152,7 +152,7 @@ export function ResumeSearchDialog() {
                     disabled={page === 0 || searchFromResume.isPending}
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    <ChevronLeft className="h-3.5 w-3.5" />
+                    <CaretLeftIcon className="h-3.5 w-3.5" />
                     Previous
                   </button>
                   <span className="text-xs text-muted-foreground">
@@ -168,7 +168,7 @@ export function ResumeSearchDialog() {
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Next
-                    <ChevronRight className="h-3.5 w-3.5" />
+                    <CaretRightIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
               )}
