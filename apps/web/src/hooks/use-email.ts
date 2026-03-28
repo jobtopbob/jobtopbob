@@ -97,6 +97,12 @@ export interface EmailEvent {
   confidence: number | null;
   confirmed: boolean | null;
   raw_snippet: string | null;
+  company_name: string | null;
+  from_email: string | null;
+  job_title: string | null;
+  job_company_name: string | null;
+  job_stage_id: string | null;
+  job_stage_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -105,6 +111,16 @@ export interface EmailEventList {
   data: EmailEvent[];
   total: number;
   page: number;
+}
+
+export interface StageChange {
+  from_stage: string;
+  to_stage: string;
+}
+
+export interface ConfirmResult {
+  event: EmailEvent;
+  stage_change?: StageChange;
 }
 
 export function useUnconfirmedEmailEvents(page = 1, perPage = 25) {
@@ -146,7 +162,7 @@ export function useConfirmEmailEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (eventId: string) => {
+    mutationFn: async (eventId: string): Promise<ConfirmResult> => {
       return fetchWithAuth(`/api/v1/email/events/${eventId}/confirm`, {
         method: "POST",
       });

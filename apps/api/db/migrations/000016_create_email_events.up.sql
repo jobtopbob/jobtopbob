@@ -7,6 +7,8 @@ CREATE TABLE email_events (
     confidence       float,
     confirmed        boolean,
     raw_snippet      text,
+    company_name     text,
+    from_email       text,
     created_at       timestamptz NOT NULL DEFAULT now(),
     updated_at       timestamptz NOT NULL DEFAULT now()
 );

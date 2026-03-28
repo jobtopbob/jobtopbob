@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -284,9 +285,18 @@ func CountUnconfirmedEmailEvents() gin.HandlerFunc {
 	}
 }
 
+// intentToMappedStatus maps email intent types to stage mapped_status values.
+var intentToMappedStatus = map[string]string{
+	"rejection": "rejected",
+	"offer":     "offer",
+}
+
 // ConfirmEmailEvent handles POST /api/v1/email/events/:id/confirm
+// When confirmed, if the event is linked to a job and the intent maps to a
+// stage transition, the job is automatically moved to the target stage.
 func ConfirmEmailEvent() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 		q := db.New(getTx(c))
 		userID := getUserID(c)
 
@@ -295,7 +305,7 @@ func ConfirmEmailEvent() gin.HandlerFunc {
 			return
 		}
 
-		event, err := q.ConfirmEmailEvent(c.Request.Context(), db.ConfirmEmailEventParams{
+		event, err := q.ConfirmEmailEvent(ctx, db.ConfirmEmailEventParams{
 			ID:     id,
 			UserID: userID,
 		})
@@ -304,7 +314,98 @@ func ConfirmEmailEvent() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, event)
+		resp := gin.H{
+			"event": event,
+		}
+
+		// Auto-move the linked job to the target stage
+		if event.JobID.Valid && event.DetectedType.Valid {
+			stageChange := tryStageTransition(ctx, q, userID, event)
+			if stageChange != nil {
+				resp["stage_change"] = stageChange
+			}
+		}
+
+		// Log the confirmation to activity log
+		_ = services.LogActivity(ctx, q, userID, "email_event", event.ID, "confirmed", nil, map[string]string{
+			"detected_type": event.DetectedType.String,
+		})
+
+		c.JSON(http.StatusOK, resp)
+	}
+}
+
+// tryStageTransition attempts to move a job to the appropriate stage based on
+// the email event's detected_type. Returns stage change info or nil.
+func tryStageTransition(ctx context.Context, q *db.Queries, userID string, event db.EmailEvent) map[string]string {
+	intent := event.DetectedType.String
+
+	// Determine target stage
+	var targetStage *db.Stage
+
+	if mappedStatus, ok := intentToMappedStatus[intent]; ok {
+		// rejection → "rejected", offer → "offer"
+		stage, err := q.GetStageByMappedStatus(ctx, db.GetStageByMappedStatusParams{
+			UserID:       userID,
+			MappedStatus: pgtype.Text{String: mappedStatus, Valid: true},
+		})
+		if err == nil {
+			targetStage = &stage
+		}
+	} else if intent == "interview_invite" {
+		// Try to find an interview stage by name
+		stage, err := q.GetInterviewStage(ctx, userID)
+		if err == nil {
+			targetStage = &stage
+		}
+	}
+
+	// No stage transition for assessment, follow_up, or if no target found
+	if targetStage == nil {
+		return nil
+	}
+
+	// Get the current job to check if stage actually changes
+	job, err := q.GetJob(ctx, db.GetJobParams{
+		ID:     event.JobID,
+		UserID: userID,
+	})
+	if err != nil {
+		return nil
+	}
+
+	// Don't move if already at or past the target stage
+	if job.StageID.Valid && job.StageID == targetStage.ID {
+		return nil
+	}
+
+	// Update the job's stage
+	_, err = q.BulkUpdateJobStage(ctx, db.BulkUpdateJobStageParams{
+		StageID: targetStage.ID,
+		Column2: []pgtype.UUID{event.JobID},
+		UserID:  userID,
+	})
+	if err != nil {
+		slog.Error("failed to update job stage from email confirm", "error", err, "job_id", event.JobID, "stage", targetStage.Name)
+		return nil
+	}
+
+	oldStageName := ""
+	if job.StageName.Valid {
+		oldStageName = job.StageName.String
+	}
+
+	// Log stage change to activity log
+	_ = services.LogActivity(ctx, q, userID, "job", event.JobID, "stage_changed", map[string]string{
+		"stage": oldStageName,
+	}, map[string]string{
+		"stage":  targetStage.Name,
+		"source": "email_event",
+	})
+
+	return map[string]string{
+		"from_stage": oldStageName,
+		"to_stage":   targetStage.Name,
 	}
 }
 

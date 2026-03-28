@@ -37,3 +37,6 @@ INSERT INTO stages (user_id, name, position, is_terminal, color, mapped_status) 
 
 -- name: GetStageByMappedStatus :one
 SELECT * FROM stages WHERE user_id = $1 AND mapped_status = $2 LIMIT 1;
+
+-- name: GetInterviewStage :one
+SELECT * FROM stages WHERE user_id = $1 AND LOWER(name) LIKE '%interview%' AND NOT is_terminal ORDER BY position ASC LIMIT 1;

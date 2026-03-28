@@ -9,8 +9,12 @@ import {
   useUnconfirmedCount,
   useConfirmEmailEvent,
   useDismissEmailEvent,
+  useLinkEmailEventToJob,
   type EmailEvent,
+  type ConfirmResult,
 } from "@/hooks/use-email";
+import { type Job } from "@/hooks/use-jobs";
+import { JobCombobox } from "@/components/offers/job-combobox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +29,8 @@ import {
   ShieldCheckIcon,
   LightningIcon,
   EyeIcon,
+  LinkIcon,
+  BriefcaseIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -59,6 +65,20 @@ const intentLabels: Record<string, { label: string; color: string }> = {
       "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
   },
 };
+
+/** Describes what confirming this event will do to the linked job. */
+function getProposedAction(detectedType: string | null): string | null {
+  switch (detectedType) {
+    case "interview_invite":
+      return "Will move to Interview stage";
+    case "rejection":
+      return "Will mark as Rejected";
+    case "offer":
+      return "Will move to Offer stage";
+    default:
+      return null;
+  }
+}
 
 export default function EmailIntegrationPage() {
   const { data: gmailStatus, isLoading: statusLoading } = useGmailStatus();
@@ -263,7 +283,7 @@ function InboxTab() {
   return (
     <div className="space-y-3">
       {data.data.map((event) => (
-        <EmailEventCard key={event.id} event={event} showActions />
+        <InboxEventCard key={event.id} event={event} />
       ))}
       <Pagination page={page} total={data.total} onPageChange={setPage} />
     </div>
@@ -301,34 +321,213 @@ function HistoryTab() {
   return (
     <div className="space-y-3">
       {data.data.map((event) => (
-        <EmailEventCard key={event.id} event={event} />
+        <HistoryEventCard key={event.id} event={event} />
       ))}
       <Pagination page={page} total={data.total} onPageChange={setPage} />
     </div>
   );
 }
 
-function EmailEventCard({
-  event,
-  showActions,
-}: {
-  event: EmailEvent;
-  showActions?: boolean;
-}) {
+/** Resolves the best display name for the company on an event. */
+function getCompanyDisplay(event: EmailEvent): string | null {
+  return event.job_company_name || event.company_name || null;
+}
+
+function InboxEventCard({ event }: { event: EmailEvent }) {
   const confirmEvent = useConfirmEmailEvent();
   const dismissEvent = useDismissEmailEvent();
+  const linkJob = useLinkEmailEventToJob();
+  const [linking, setLinking] = useState(false);
 
   const intent =
     intentLabels[event.detected_type ?? "other"] ?? intentLabels.other;
   const confidence =
     event.confidence != null ? Math.round(event.confidence * 100) : null;
+  const company = getCompanyDisplay(event);
+  const proposedAction = event.job_id ? getProposedAction(event.detected_type) : null;
+
+  function handleConfirm() {
+    confirmEvent.mutate(event.id, {
+      onSuccess: (result: ConfirmResult) => {
+        if (result.stage_change) {
+          toast.success(
+            `${company ?? "Job"} moved to ${result.stage_change.to_stage}`,
+          );
+        } else {
+          toast.success("Event confirmed");
+        }
+      },
+      onError: (err) => toast.error(err.message),
+    });
+  }
+
+  function handleDismiss() {
+    dismissEvent.mutate(event.id, {
+      onSuccess: () => toast.success("Event dismissed"),
+      onError: (err) => toast.error(err.message),
+    });
+  }
+
+  function handleLinkJob(job: Job | null) {
+    if (!job) return;
+    linkJob.mutate(
+      { eventId: event.id, jobId: job.id },
+      {
+        onSuccess: () => {
+          setLinking(false);
+          toast.success(`Linked to ${job.title}`);
+        },
+        onError: (err) => toast.error(err.message),
+      },
+    );
+  }
 
   return (
     <Card className="transition-colors hover:bg-accent/30">
       <CardContent className="py-4 px-5">
         <div className="flex items-start gap-4">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1.5">
+            {/* Company & Job context */}
+            <div className="flex items-center gap-2 mb-1">
+              {company && (
+                <span className="text-sm font-semibold text-text-primary truncate">
+                  {company}
+                </span>
+              )}
+              {event.job_title && (
+                <span className="text-sm text-text-muted truncate">
+                  {event.job_title}
+                </span>
+              )}
+            </div>
+
+            {/* Intent badge + confidence + proposed action */}
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${intent.color}`}
+              >
+                {intent.label}
+              </span>
+              {confidence != null && (
+                <span className="text-xs text-muted-foreground">
+                  {confidence}% confidence
+                </span>
+              )}
+              {proposedAction && (
+                <span className="text-xs text-muted-foreground italic">
+                  {proposedAction}
+                </span>
+              )}
+            </div>
+
+            {/* Snippet */}
+            {event.raw_snippet && (
+              <p className="text-sm text-foreground leading-relaxed line-clamp-2 mb-1.5">
+                {event.raw_snippet}
+              </p>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              {new Date(event.created_at).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col items-end gap-2 shrink-0 pt-0.5">
+            {event.job_id ? (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:hover:bg-emerald-950"
+                  onClick={handleConfirm}
+                  disabled={confirmEvent.isPending}
+                >
+                  {confirmEvent.isPending ? (
+                    <SpinnerIcon className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <CheckIcon className="w-3.5 h-3.5" />
+                  )}
+                  Confirm
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-red-500"
+                  onClick={handleDismiss}
+                  disabled={dismissEvent.isPending}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ) : linking ? (
+              <div className="w-56">
+                <JobCombobox value={null} onChange={handleLinkJob} />
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setLinking(true)}
+                >
+                  <LinkIcon className="w-3.5 h-3.5" />
+                  Link to job
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-red-500"
+                  onClick={handleDismiss}
+                  disabled={dismissEvent.isPending}
+                >
+                  <XIcon className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function HistoryEventCard({ event }: { event: EmailEvent }) {
+  const intent =
+    intentLabels[event.detected_type ?? "other"] ?? intentLabels.other;
+  const confidence =
+    event.confidence != null ? Math.round(event.confidence * 100) : null;
+  const company = getCompanyDisplay(event);
+
+  return (
+    <Card className="transition-colors hover:bg-accent/30">
+      <CardContent className="py-4 px-5">
+        <div className="flex items-start gap-4">
+          <div className="flex-1 min-w-0">
+            {/* Company & Job context */}
+            {(company || event.job_title) && (
+              <div className="flex items-center gap-2 mb-1">
+                {company && (
+                  <span className="text-sm font-semibold text-text-primary truncate">
+                    {company}
+                  </span>
+                )}
+                {event.job_title && (
+                  <span className="text-sm text-text-muted truncate">
+                    {event.job_title}
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${intent.color}`}
               >
@@ -350,6 +549,12 @@ function EmailEventCard({
                   Dismissed
                 </Badge>
               )}
+              {event.job_id && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <BriefcaseIcon className="w-3 h-3" />
+                  Linked
+                </div>
+              )}
             </div>
 
             {event.raw_snippet && (
@@ -368,40 +573,6 @@ function EmailEventCard({
               })}
             </p>
           </div>
-
-          {showActions && (
-            <div className="flex items-center gap-1 shrink-0 pt-0.5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:hover:bg-emerald-950"
-                onClick={() =>
-                  confirmEvent.mutate(event.id, {
-                    onSuccess: () => toast.success("Event confirmed"),
-                    onError: (err) => toast.error(err.message),
-                  })
-                }
-                disabled={confirmEvent.isPending}
-              >
-                <CheckIcon className="w-3.5 h-3.5" />
-                Confirm
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-red-500"
-                onClick={() =>
-                  dismissEvent.mutate(event.id, {
-                    onSuccess: () => toast.success("Event dismissed"),
-                    onError: (err) => toast.error(err.message),
-                  })
-                }
-                disabled={dismissEvent.isPending}
-              >
-                <XIcon className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

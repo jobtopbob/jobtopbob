@@ -4,8 +4,28 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { emailKeys } from "./use-email";
+import { toast } from "sonner";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+
+const intentLabels: Record<string, string> = {
+  interview_invite: "Interview invite",
+  rejection: "Rejection",
+  offer: "Offer",
+  assessment: "Assessment",
+  follow_up: "Follow-up",
+};
+
+interface SSEEmailEvent {
+  type: "email_event";
+  data: {
+    id: string;
+    detected_type: string;
+    confidence: number;
+    company_name: string;
+    snippet: string;
+  };
+}
 
 /**
  * useSSE establishes a Server-Sent Events connection to receive real-time
@@ -31,10 +51,32 @@ export function useSSE() {
       const es = new EventSource(url);
       eventSourceRef.current = es;
 
-      es.addEventListener("message", () => {
+      es.addEventListener("message", (e) => {
         // Invalidate email queries when a new event arrives
         queryClient.invalidateQueries({ queryKey: emailKeys.unconfirmed });
         queryClient.invalidateQueries({ queryKey: emailKeys.unconfirmedCount });
+
+        // Parse the event data and show a toast notification
+        try {
+          const payload = JSON.parse(e.data) as SSEEmailEvent;
+          if (payload.type === "email_event" && payload.data) {
+            const { detected_type, company_name } = payload.data;
+            const label = intentLabels[detected_type] ?? "Email event";
+            const message = company_name
+              ? `${label} detected from ${company_name}`
+              : `${label} detected`;
+            toast.info(message, {
+              action: {
+                label: "View",
+                onClick: () => {
+                  window.location.href = "/email-integration";
+                },
+              },
+            });
+          }
+        } catch {
+          // Silently ignore unparseable messages
+        }
       });
 
       es.onerror = () => {

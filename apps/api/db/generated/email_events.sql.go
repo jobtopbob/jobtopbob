@@ -14,7 +14,7 @@ import (
 const confirmEmailEvent = `-- name: ConfirmEmailEvent :one
 UPDATE email_events SET confirmed = true
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, created_at, updated_at
+RETURNING id, user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, company_name, from_email, created_at, updated_at
 `
 
 type ConfirmEmailEventParams struct {
@@ -34,6 +34,8 @@ func (q *Queries) ConfirmEmailEvent(ctx context.Context, arg ConfirmEmailEventPa
 		&i.Confidence,
 		&i.Confirmed,
 		&i.RawSnippet,
+		&i.CompanyName,
+		&i.FromEmail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -65,9 +67,9 @@ func (q *Queries) CountUnconfirmedEmailEvents(ctx context.Context, userID string
 }
 
 const createEmailEvent = `-- name: CreateEmailEvent :one
-INSERT INTO email_events (user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet)
-VALUES ($1, $2, $3, $4, $5, false, $6)
-RETURNING id, user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, created_at, updated_at
+INSERT INTO email_events (user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, company_name, from_email)
+VALUES ($1, $2, $3, $4, $5, false, $6, $7, $8)
+RETURNING id, user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, company_name, from_email, created_at, updated_at
 `
 
 type CreateEmailEventParams struct {
@@ -77,6 +79,8 @@ type CreateEmailEventParams struct {
 	DetectedType   pgtype.Text   `json:"detected_type"`
 	Confidence     pgtype.Float8 `json:"confidence"`
 	RawSnippet     pgtype.Text   `json:"raw_snippet"`
+	CompanyName    pgtype.Text   `json:"company_name"`
+	FromEmail      pgtype.Text   `json:"from_email"`
 }
 
 func (q *Queries) CreateEmailEvent(ctx context.Context, arg CreateEmailEventParams) (EmailEvent, error) {
@@ -87,6 +91,8 @@ func (q *Queries) CreateEmailEvent(ctx context.Context, arg CreateEmailEventPara
 		arg.DetectedType,
 		arg.Confidence,
 		arg.RawSnippet,
+		arg.CompanyName,
+		arg.FromEmail,
 	)
 	var i EmailEvent
 	err := row.Scan(
@@ -98,6 +104,8 @@ func (q *Queries) CreateEmailEvent(ctx context.Context, arg CreateEmailEventPara
 		&i.Confidence,
 		&i.Confirmed,
 		&i.RawSnippet,
+		&i.CompanyName,
+		&i.FromEmail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -117,7 +125,7 @@ func (q *Queries) DeleteEmailEventsByUser(ctx context.Context, userID string) er
 const dismissEmailEvent = `-- name: DismissEmailEvent :one
 UPDATE email_events SET confirmed = false
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, created_at, updated_at
+RETURNING id, user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, company_name, from_email, created_at, updated_at
 `
 
 type DismissEmailEventParams struct {
@@ -137,6 +145,8 @@ func (q *Queries) DismissEmailEvent(ctx context.Context, arg DismissEmailEventPa
 		&i.Confidence,
 		&i.Confirmed,
 		&i.RawSnippet,
+		&i.CompanyName,
+		&i.FromEmail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -144,7 +154,7 @@ func (q *Queries) DismissEmailEvent(ctx context.Context, arg DismissEmailEventPa
 }
 
 const getEmailEvent = `-- name: GetEmailEvent :one
-SELECT id, user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, created_at, updated_at FROM email_events
+SELECT id, user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, company_name, from_email, created_at, updated_at FROM email_events
 WHERE id = $1 AND user_id = $2
 `
 
@@ -165,6 +175,8 @@ func (q *Queries) GetEmailEvent(ctx context.Context, arg GetEmailEventParams) (E
 		&i.Confidence,
 		&i.Confirmed,
 		&i.RawSnippet,
+		&i.CompanyName,
+		&i.FromEmail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -172,7 +184,7 @@ func (q *Queries) GetEmailEvent(ctx context.Context, arg GetEmailEventParams) (E
 }
 
 const getEmailEventByMessageID = `-- name: GetEmailEventByMessageID :one
-SELECT id, user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, created_at, updated_at FROM email_events
+SELECT id, user_id, job_id, gmail_message_id, detected_type, confidence, confirmed, raw_snippet, company_name, from_email, created_at, updated_at FROM email_events
 WHERE user_id = $1 AND gmail_message_id = $2
 `
 
@@ -193,6 +205,8 @@ func (q *Queries) GetEmailEventByMessageID(ctx context.Context, arg GetEmailEven
 		&i.Confidence,
 		&i.Confirmed,
 		&i.RawSnippet,
+		&i.CompanyName,
+		&i.FromEmail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -200,8 +214,15 @@ func (q *Queries) GetEmailEventByMessageID(ctx context.Context, arg GetEmailEven
 }
 
 const listEmailEvents = `-- name: ListEmailEvents :many
-SELECT e.id, e.user_id, e.job_id, e.gmail_message_id, e.detected_type, e.confidence, e.confirmed, e.raw_snippet, e.created_at, e.updated_at
+SELECT e.id, e.user_id, e.job_id, e.gmail_message_id, e.detected_type, e.confidence, e.confirmed, e.raw_snippet, e.company_name, e.from_email, e.created_at, e.updated_at,
+       j.title AS job_title,
+       c.name AS job_company_name,
+       j.stage_id AS job_stage_id,
+       s.name AS job_stage_name
 FROM email_events e
+LEFT JOIN jobs j ON j.id = e.job_id
+LEFT JOIN companies c ON c.id = j.company_id
+LEFT JOIN stages s ON s.id = j.stage_id
 WHERE e.user_id = $1
 ORDER BY e.created_at DESC
 LIMIT $2 OFFSET $3
@@ -213,15 +234,34 @@ type ListEmailEventsParams struct {
 	Offset int32  `json:"offset"`
 }
 
-func (q *Queries) ListEmailEvents(ctx context.Context, arg ListEmailEventsParams) ([]EmailEvent, error) {
+type ListEmailEventsRow struct {
+	ID             pgtype.UUID        `json:"id"`
+	UserID         string             `json:"user_id"`
+	JobID          pgtype.UUID        `json:"job_id"`
+	GmailMessageID pgtype.Text        `json:"gmail_message_id"`
+	DetectedType   pgtype.Text        `json:"detected_type"`
+	Confidence     pgtype.Float8      `json:"confidence"`
+	Confirmed      pgtype.Bool        `json:"confirmed"`
+	RawSnippet     pgtype.Text        `json:"raw_snippet"`
+	CompanyName    pgtype.Text        `json:"company_name"`
+	FromEmail      pgtype.Text        `json:"from_email"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	JobTitle       pgtype.Text        `json:"job_title"`
+	JobCompanyName pgtype.Text        `json:"job_company_name"`
+	JobStageID     pgtype.UUID        `json:"job_stage_id"`
+	JobStageName   pgtype.Text        `json:"job_stage_name"`
+}
+
+func (q *Queries) ListEmailEvents(ctx context.Context, arg ListEmailEventsParams) ([]ListEmailEventsRow, error) {
 	rows, err := q.db.Query(ctx, listEmailEvents, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []EmailEvent{}
+	items := []ListEmailEventsRow{}
 	for rows.Next() {
-		var i EmailEvent
+		var i ListEmailEventsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -231,8 +271,14 @@ func (q *Queries) ListEmailEvents(ctx context.Context, arg ListEmailEventsParams
 			&i.Confidence,
 			&i.Confirmed,
 			&i.RawSnippet,
+			&i.CompanyName,
+			&i.FromEmail,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.JobTitle,
+			&i.JobCompanyName,
+			&i.JobStageID,
+			&i.JobStageName,
 		); err != nil {
 			return nil, err
 		}
@@ -245,8 +291,15 @@ func (q *Queries) ListEmailEvents(ctx context.Context, arg ListEmailEventsParams
 }
 
 const listUnconfirmedEmailEvents = `-- name: ListUnconfirmedEmailEvents :many
-SELECT e.id, e.user_id, e.job_id, e.gmail_message_id, e.detected_type, e.confidence, e.confirmed, e.raw_snippet, e.created_at, e.updated_at
+SELECT e.id, e.user_id, e.job_id, e.gmail_message_id, e.detected_type, e.confidence, e.confirmed, e.raw_snippet, e.company_name, e.from_email, e.created_at, e.updated_at,
+       j.title AS job_title,
+       c.name AS job_company_name,
+       j.stage_id AS job_stage_id,
+       s.name AS job_stage_name
 FROM email_events e
+LEFT JOIN jobs j ON j.id = e.job_id
+LEFT JOIN companies c ON c.id = j.company_id
+LEFT JOIN stages s ON s.id = j.stage_id
 WHERE e.user_id = $1 AND (e.confirmed IS NULL OR e.confirmed = false)
 ORDER BY e.created_at DESC
 LIMIT $2 OFFSET $3
@@ -258,15 +311,34 @@ type ListUnconfirmedEmailEventsParams struct {
 	Offset int32  `json:"offset"`
 }
 
-func (q *Queries) ListUnconfirmedEmailEvents(ctx context.Context, arg ListUnconfirmedEmailEventsParams) ([]EmailEvent, error) {
+type ListUnconfirmedEmailEventsRow struct {
+	ID             pgtype.UUID        `json:"id"`
+	UserID         string             `json:"user_id"`
+	JobID          pgtype.UUID        `json:"job_id"`
+	GmailMessageID pgtype.Text        `json:"gmail_message_id"`
+	DetectedType   pgtype.Text        `json:"detected_type"`
+	Confidence     pgtype.Float8      `json:"confidence"`
+	Confirmed      pgtype.Bool        `json:"confirmed"`
+	RawSnippet     pgtype.Text        `json:"raw_snippet"`
+	CompanyName    pgtype.Text        `json:"company_name"`
+	FromEmail      pgtype.Text        `json:"from_email"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	JobTitle       pgtype.Text        `json:"job_title"`
+	JobCompanyName pgtype.Text        `json:"job_company_name"`
+	JobStageID     pgtype.UUID        `json:"job_stage_id"`
+	JobStageName   pgtype.Text        `json:"job_stage_name"`
+}
+
+func (q *Queries) ListUnconfirmedEmailEvents(ctx context.Context, arg ListUnconfirmedEmailEventsParams) ([]ListUnconfirmedEmailEventsRow, error) {
 	rows, err := q.db.Query(ctx, listUnconfirmedEmailEvents, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []EmailEvent{}
+	items := []ListUnconfirmedEmailEventsRow{}
 	for rows.Next() {
-		var i EmailEvent
+		var i ListUnconfirmedEmailEventsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
@@ -276,8 +348,14 @@ func (q *Queries) ListUnconfirmedEmailEvents(ctx context.Context, arg ListUnconf
 			&i.Confidence,
 			&i.Confirmed,
 			&i.RawSnippet,
+			&i.CompanyName,
+			&i.FromEmail,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.JobTitle,
+			&i.JobCompanyName,
+			&i.JobStageID,
+			&i.JobStageName,
 		); err != nil {
 			return nil, err
 		}

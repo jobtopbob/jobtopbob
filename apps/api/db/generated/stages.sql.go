@@ -64,6 +64,27 @@ func (q *Queries) DeleteStage(ctx context.Context, arg DeleteStageParams) (pgcon
 	return q.db.Exec(ctx, deleteStage, arg.ID, arg.UserID)
 }
 
+const getInterviewStage = `-- name: GetInterviewStage :one
+SELECT id, user_id, name, position, is_terminal, color, mapped_status, created_at, updated_at FROM stages WHERE user_id = $1 AND LOWER(name) LIKE '%interview%' AND NOT is_terminal ORDER BY position ASC LIMIT 1
+`
+
+func (q *Queries) GetInterviewStage(ctx context.Context, userID string) (Stage, error) {
+	row := q.db.QueryRow(ctx, getInterviewStage, userID)
+	var i Stage
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Position,
+		&i.IsTerminal,
+		&i.Color,
+		&i.MappedStatus,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getStage = `-- name: GetStage :one
 SELECT id, user_id, name, position, is_terminal, color, mapped_status, created_at, updated_at FROM stages WHERE id = $1 AND user_id = $2
 `

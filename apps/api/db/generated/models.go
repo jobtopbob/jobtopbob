@@ -85,6 +85,8 @@ type EmailEvent struct {
 	Confidence     pgtype.Float8      `json:"confidence"`
 	Confirmed      pgtype.Bool        `json:"confirmed"`
 	RawSnippet     pgtype.Text        `json:"raw_snippet"`
+	CompanyName    pgtype.Text        `json:"company_name"`
+	FromEmail      pgtype.Text        `json:"from_email"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }

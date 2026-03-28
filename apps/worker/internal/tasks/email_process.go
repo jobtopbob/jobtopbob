@@ -221,6 +221,8 @@ func processEmail(ctx context.Context, deps *EmailProcessDeps, q *db.Queries, us
 		DetectedType:   pgtype.Text{String: classification.Intent, Valid: true},
 		Confidence:     pgtype.Float8{Float64: classification.Confidence, Valid: true},
 		RawSnippet:     pgtype.Text{String: classification.Snippet, Valid: classification.Snippet != ""},
+		CompanyName:    pgtype.Text{String: classification.CompanyName, Valid: classification.CompanyName != ""},
+		FromEmail:      pgtype.Text{String: rawEmail.From, Valid: rawEmail.From != ""},
 	})
 	if err != nil {
 		return fmt.Errorf("create event: %w", err)
