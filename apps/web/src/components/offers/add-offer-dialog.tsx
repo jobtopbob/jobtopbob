@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Controller, useForm, type Control, type UseFormReturn } from "react-hook-form";
+import { Controller, useForm, type Control, } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -118,7 +118,7 @@ export function AddOfferDialog({
     mode: "onTouched",
   });
 
-  const { control, handleSubmit, reset, trigger, watch, setValue, formState } = form;
+  const { control, handleSubmit, reset, trigger, watch, setValue } = form;
   const [currentStep, setCurrentStep] = useState(0);
   const isLastStep = currentStep === LAST_STEP;
 

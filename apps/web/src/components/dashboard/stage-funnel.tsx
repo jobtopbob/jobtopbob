@@ -20,8 +20,10 @@ export function StageFunnel() {
     );
   }
 
-  const maxCount = Math.max(...funnel.map((s) => s.count ?? 0), 1);
-  const totalCount = funnel.reduce((sum, s) => sum + (s.count ?? 0), 0);
+  // Only show stages that have jobs — no empty rows
+  const activeStages = funnel.filter((s) => (s.count ?? 0) > 0);
+  const maxCount = Math.max(...activeStages.map((s) => s.count ?? 0), 1);
+  const totalCount = activeStages.reduce((sum, s) => sum + (s.count ?? 0), 0);
 
   return (
     <div className="flex flex-col gap-5 rounded-xl bg-card border border-border-subtle p-5">
@@ -35,9 +37,9 @@ export function StageFunnel() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {funnel.map((stage, i) => {
+        {activeStages.map((stage, i) => {
           const count = stage.count ?? 0;
-          const width = Math.max((count / maxCount) * 100, 6);
+          const width = count > 0 ? Math.max((count / maxCount) * 100, 6) : 0;
           const color = stage.color || "#6B7280";
 
           return (

@@ -45,7 +45,7 @@ export function WelcomeStep({ onNext }: { onNext: () => void }) {
             Welcome to JobTopBob
           </h2>
           <p className="text-sm text-text-muted max-w-md mx-auto">
-            Your open-source job search command center. Let's get you set up in
+            Your open-source job search command center. Let&apos;s get you set up in
             a few quick steps.
           </p>
         </div>

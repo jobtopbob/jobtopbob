@@ -29,7 +29,7 @@ export function DoneStep() {
 
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-text-primary">
-              You're all set!
+              You&apos;re all set!
             </h2>
             <p className="text-sm text-text-muted max-w-sm mx-auto">
               Your workspace is ready. Start tracking applications, building

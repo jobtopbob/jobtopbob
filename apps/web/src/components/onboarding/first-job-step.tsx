@@ -50,7 +50,7 @@ export function FirstJobStep({ onNext, onBack }: FirstJobStepProps) {
             Add Your First Application
           </h2>
           <p className="text-sm text-text-muted">
-            Track a job you're interested in or have already applied to. You can
+            Track a job you&apos;re interested in or have already applied to. You can
             always add more later.
           </p>
         </div>

@@ -197,7 +197,7 @@ SELECT date_trunc('week', created_at)::date AS week_start, count(*) AS count
 FROM jobs
 WHERE user_id = $1
   AND created_at >= $2
-  AND status != 'discovered'
+  AND status IS DISTINCT FROM 'discovered'
 GROUP BY week_start
 ORDER BY week_start ASC
 `
@@ -236,7 +236,7 @@ const countJobsThisWeek = `-- name: CountJobsThisWeek :one
 SELECT count(*) FROM jobs
 WHERE user_id = $1
   AND created_at >= date_trunc('week', now())
-  AND status != 'discovered'
+  AND status IS DISTINCT FROM 'discovered'
 `
 
 func (q *Queries) CountJobsThisWeek(ctx context.Context, userID string) (int64, error) {
@@ -593,7 +593,7 @@ const jobsBySource = `-- name: JobsBySource :many
 SELECT COALESCE(source, 'unknown') AS source, count(*) AS count
 FROM jobs
 WHERE user_id = $1
-  AND status != 'discovered'
+  AND status IS DISTINCT FROM 'discovered'
 GROUP BY source
 ORDER BY count DESC
 `
@@ -944,7 +944,7 @@ FROM jobs j
 LEFT JOIN stages s ON s.id = j.stage_id
 WHERE j.user_id = $1
   AND j.created_at >= $2
-  AND j.status != 'discovered'
+  AND j.status IS DISTINCT FROM 'discovered'
 GROUP BY week_start
 ORDER BY week_start ASC
 `
@@ -983,7 +983,7 @@ func (q *Queries) ResponseRateByWeek(ctx context.Context, arg ResponseRateByWeek
 const stageFunnel = `-- name: StageFunnel :many
 SELECT s.name AS stage_name, s.position, s.color, count(j.id) AS count
 FROM stages s
-LEFT JOIN jobs j ON j.stage_id = s.id AND j.user_id = s.user_id AND j.status != 'discovered'
+LEFT JOIN jobs j ON j.stage_id = s.id AND j.user_id = s.user_id AND j.status IS DISTINCT FROM 'discovered'
 WHERE s.user_id = $1
 GROUP BY s.id, s.name, s.position, s.color
 ORDER BY s.position ASC

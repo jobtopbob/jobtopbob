@@ -1,33 +1,77 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import { useMemo } from "react";
 import { ActionStrip } from "@/components/dashboard/action-strip";
 import { StageFunnel } from "@/components/dashboard/stage-funnel";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { authClient } from "@/lib/auth-client";
-import { useStats } from "@/hooks/use-stats";
+import { useJobs } from "@/hooks/use-jobs";
+import { ClockIcon } from "@phosphor-icons/react";
 import { Skeleton } from "@/components/ui/skeleton";
+
+function formatDeadline(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffDays < 0) return "Overdue";
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Tomorrow";
+  if (diffDays <= 7) return `${diffDays} days left`;
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function getUrgencyColor(dateStr: string): string {
+  const diffDays = Math.floor(
+    (new Date(dateStr).getTime() - Date.now()) / 86400000
+  );
+  if (diffDays < 0) return "text-red-500";
+  if (diffDays <= 3) return "text-amber-500";
+  return "text-text-muted";
+}
 
 export default function DashboardPage() {
   const { data: session } = authClient.useSession();
-  const { data: stats, isLoading } = useStats();
+  const { data: jobsData, isLoading } = useJobs({
+    sortBy: "deadline",
+    sortOrder: "asc",
+    perPage: 25,
+  });
   const firstName =
     session?.user?.name?.split(" ")[0] ??
     session?.user?.email?.split("@")[0] ??
     "there";
 
-  // Derive interviewing count from the stage funnel (consistent with the pipeline widget).
-  const funnel = stats?.stage_funnel ?? [];
-  const interviewingCount = funnel
-    .filter(
-      (s) =>
-        s.name?.toLowerCase() === "interviewing" ||
-        s.name?.toLowerCase() === "screening"
-    )
-    .reduce((sum, s) => sum + (s.count ?? 0), 0);
+  const deadlines = useMemo(() => {
+    if (!jobsData?.data) return [];
+    const now = new Date();
+    // Show deadlines within the next 30 days (and overdue ones from the last 7 days)
+    const cutoffPast = new Date(now.getTime() - 7 * 86400000);
+    return jobsData.data
+      .filter(
+        (job) =>
+          job.deadline &&
+          new Date(job.deadline) > cutoffPast &&
+          new Date(job.deadline) < new Date(now.getTime() + 30 * 86400000)
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime()
+      )
+      .slice(0, 3)
+      .map((job) => ({
+        id: job.id,
+        title: job.title,
+        company: job.company_name ?? "Unknown",
+        deadline: job.deadline!,
+      }));
+  }, [jobsData]);
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="h-full overflow-y-auto">
       <div className="flex flex-col gap-6 sm:gap-8 p-4 sm:p-8 max-w-[960px] mx-auto">
         {/* Hero Header */}
         <div className="flex items-start justify-between gap-6">
@@ -44,32 +88,33 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* Hero metrics */}
+            {/* Upcoming deadlines */}
             {isLoading ? (
-              <div className="flex gap-8">
-                <Skeleton className="h-8 w-12" />
-                <Skeleton className="h-8 w-12" />
+              <Skeleton className="h-5 w-48" />
+            ) : deadlines.length > 0 ? (
+              <div className="flex flex-col gap-1.5">
+                {deadlines.map((d) => (
+                  <Link
+                    key={d.id}
+                    href={`/applications?job=${d.id}`}
+                    className="flex items-center gap-2 group"
+                  >
+                    <ClockIcon
+                      className={`w-3.5 h-3.5 shrink-0 ${getUrgencyColor(d.deadline)}`}
+                    />
+                    <span className="text-xs text-text-muted group-hover:text-text-primary transition-colors truncate">
+                      <span className="font-medium text-text-primary">
+                        {d.company}
+                      </span>
+                      {" — "}
+                      <span className={getUrgencyColor(d.deadline)}>
+                        {formatDeadline(d.deadline)}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
               </div>
-            ) : (
-              <div className="flex gap-8 sm:gap-10">
-                <div className="flex flex-col">
-                  <span className="text-2xl sm:text-3xl font-bold text-text-primary tabular-nums tracking-tight">
-                    {stats?.total_jobs ?? 0}
-                  </span>
-                  <span className="text-xs text-text-muted mt-0.5">
-                    Total Jobs
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl sm:text-3xl font-bold text-text-primary tabular-nums tracking-tight">
-                    {interviewingCount}
-                  </span>
-                  <span className="text-xs text-text-muted mt-0.5">
-                    Interviewing
-                  </span>
-                </div>
-              </div>
-            )}
+            ) : null}
           </div>
 
           {/* Hero illustration */}
