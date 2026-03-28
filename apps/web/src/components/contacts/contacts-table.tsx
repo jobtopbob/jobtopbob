@@ -163,14 +163,16 @@ export function ContactsTable({
                   {contact.company_name ? (
                     <div className="flex items-center gap-2">
                       {contact.company_logo_url ? (
-                        <Image
-                          src={contact.company_logo_url}
-                          alt={contact.company_name}
-                          width={20}
-                          height={20}
-                          unoptimized
-                          className="w-5 h-5 rounded object-contain shrink-0"
-                        />
+                        <div className="w-5 h-5 rounded bg-white p-px shrink-0">
+                          <Image
+                            src={contact.company_logo_url}
+                            alt={contact.company_name}
+                            width={20}
+                            height={20}
+                            unoptimized
+                            className="w-full h-full rounded-[3px] object-contain"
+                          />
+                        </div>
                       ) : (
                         <div
                           className="flex items-center justify-center w-5 h-5 rounded text-white text-[9px] font-semibold shrink-0"

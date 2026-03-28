@@ -120,14 +120,16 @@ export function CompanyDetailSheet({
               title="Click to upload logo"
             >
               {company.logo_url ? (
-                <Image
-                  src={company.logo_url}
-                  alt={company.name}
-                  width={48}
-                  height={48}
-                  unoptimized
-                  className="w-12 h-12 rounded-xl object-contain bg-card border border-border-subtle p-0.5"
-                />
+                <div className="w-12 h-12 rounded-xl bg-white border border-border-subtle p-0.5">
+                  <Image
+                    src={company.logo_url}
+                    alt={company.name}
+                    width={48}
+                    height={48}
+                    unoptimized
+                    className="w-full h-full rounded-lg object-contain"
+                  />
+                </div>
               ) : (
                 <div
                   className="flex items-center justify-center w-12 h-12 rounded-xl"

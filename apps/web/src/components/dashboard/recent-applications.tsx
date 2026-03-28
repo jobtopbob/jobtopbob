@@ -93,14 +93,16 @@ export function RecentApplications() {
                 className="flex items-center gap-3 py-2.5 border-b border-border-subtle last:border-b-0"
               >
                 {job.company_logo_url ? (
-                  <Image
-                    src={job.company_logo_url}
-                    alt={companyName}
-                    width={28}
-                    height={28}
-                    unoptimized
-                    className="w-7 h-7 rounded-md shrink-0 object-contain"
-                  />
+                  <div className="w-7 h-7 rounded-md bg-white p-px shrink-0">
+                    <Image
+                      src={job.company_logo_url}
+                      alt={companyName}
+                      width={28}
+                      height={28}
+                      unoptimized
+                      className="w-full h-full rounded-[5px] object-contain"
+                    />
+                  </div>
                 ) : (
                   <div
                     className="flex items-center justify-center w-7 h-7 rounded-md shrink-0"

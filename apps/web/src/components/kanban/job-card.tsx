@@ -52,14 +52,16 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
       {/* Company */}
       <div className="flex items-center gap-1.5">
         {job.company_logo_url && (
-          <Image
-            src={job.company_logo_url}
-            alt=""
-            width={16}
-            height={16}
-            unoptimized
-            className="w-4 h-4 rounded-sm object-contain"
-          />
+          <div className="w-4 h-4 rounded-sm bg-white p-px shrink-0">
+            <Image
+              src={job.company_logo_url}
+              alt=""
+              width={16}
+              height={16}
+              unoptimized
+              className="w-full h-full rounded-[1px] object-contain"
+            />
+          </div>
         )}
         <span className="text-xs font-medium text-text-muted">
           {job.company_name ?? "Unknown Company"}

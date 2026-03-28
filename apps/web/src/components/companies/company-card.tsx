@@ -49,14 +49,16 @@ export function CompanyCard({ company, onClick }: CompanyCardProps) {
       {/* Header: Logo + Name + Enrichment dot */}
       <div className="flex items-start gap-3">
         {company.logo_url ? (
-          <Image
-            src={company.logo_url}
-            alt={company.name}
-            width={40}
-            height={40}
-            unoptimized
-            className="w-10 h-10 rounded-xl object-contain bg-card border border-border-subtle p-0.5 shrink-0"
-          />
+          <div className="w-10 h-10 rounded-xl bg-white border border-border-subtle p-0.5 shrink-0">
+            <Image
+              src={company.logo_url}
+              alt={company.name}
+              width={40}
+              height={40}
+              unoptimized
+              className="w-full h-full rounded-lg object-contain"
+            />
+          </div>
         ) : (
           <div
             className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0"

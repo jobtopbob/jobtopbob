@@ -241,14 +241,16 @@ export function JobDetailSheet({ job: jobProp, onClose, stages }: JobDetailSheet
         <SheetHeader className="px-6 pt-6 pb-0 space-y-3">
           <div className="flex items-center gap-2.5">
             {job.company_logo_url ? (
-              <Image
-                src={job.company_logo_url}
-                alt=""
-                width={36}
-                height={36}
-                unoptimized
-                className="w-9 h-9 rounded-xl object-contain bg-card border border-border-subtle p-0.5"
-              />
+              <div className="w-9 h-9 rounded-xl bg-white border border-border-subtle p-0.5 shrink-0">
+                <Image
+                  src={job.company_logo_url}
+                  alt=""
+                  width={36}
+                  height={36}
+                  unoptimized
+                  className="w-full h-full rounded-lg object-contain"
+                />
+              </div>
             ) : (
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-surface-hover to-surface-active flex items-center justify-center text-sm font-semibold text-text-tertiary">
                 {(job.company_name ?? "?")[0]?.toUpperCase()}

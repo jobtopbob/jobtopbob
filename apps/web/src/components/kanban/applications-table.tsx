@@ -224,14 +224,16 @@ export function ApplicationsTable({
                 <TableCell>
                   <div className="flex items-center gap-2.5">
                     {job.company_logo_url ? (
-                      <Image
-                        src={job.company_logo_url}
-                        alt={companyName}
-                        width={36}
-                        height={36}
-                        unoptimized
-                        className="w-9 h-9 rounded-lg shrink-0 object-contain"
-                      />
+                      <div className="w-9 h-9 rounded-lg bg-white p-0.5 shrink-0">
+                        <Image
+                          src={job.company_logo_url}
+                          alt={companyName}
+                          width={36}
+                          height={36}
+                          unoptimized
+                          className="w-full h-full rounded-md object-contain"
+                        />
+                      </div>
                     ) : (
                       <div
                         className="flex items-center justify-center w-9 h-9 rounded-lg text-white text-xs font-semibold shrink-0"
