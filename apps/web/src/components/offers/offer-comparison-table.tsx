@@ -114,12 +114,8 @@ export function OfferComparisonTable({ offers, onOfferClick }: OfferComparisonTa
     },
   ];
 
-  // Filter out rows where ALL values are "—"
-  const filterEmpty = (rows: Row[]) =>
-    rows.filter((r) => r.values.some((v) => v !== "—"));
-
-  const visibleComp = filterEmpty(compensationRows);
-  const visibleBenefits = filterEmpty(benefitsRows);
+  const visibleComp = compensationRows;
+  const visibleBenefits = benefitsRows;
 
   return (
     <div className="overflow-x-auto">
@@ -137,8 +133,9 @@ export function OfferComparisonTable({ offers, onOfferClick }: OfferComparisonTa
                   key={offer.id}
                   className="sticky top-0 z-10 bg-background min-w-[180px] px-5 pt-6 pb-4 text-center align-top"
                 >
+                  <div className="flex flex-col h-full">
                   <div
-                    className={`flex flex-col items-center gap-2 ${onOfferClick ? "cursor-pointer rounded-lg hover:bg-surface/60 transition-colors p-2 -m-2" : ""}`}
+                    className={`flex flex-col items-center gap-2 flex-1 ${onOfferClick ? "cursor-pointer rounded-lg hover:bg-surface/60 transition-colors p-2 -m-2" : ""}`}
                     onClick={() => onOfferClick?.(offer.id)}
                     role={onOfferClick ? "button" : undefined}
                     tabIndex={onOfferClick ? 0 : undefined}
@@ -167,30 +164,34 @@ export function OfferComparisonTable({ offers, onOfferClick }: OfferComparisonTa
                       <div className="text-sm font-semibold text-text-primary leading-tight">
                         {offer.job_title ?? "Untitled"}
                       </div>
-                      {offer.company_name && (
-                        <div className="text-xs text-text-muted mt-0.5">
-                          {offer.company_name}
-                        </div>
-                      )}
+                      <div className="text-xs mt-0.5">
+                        {offer.company_name ? (
+                          <span className="text-text-muted">{offer.company_name}</span>
+                        ) : (
+                          <span className="text-text-muted/40 italic">No company</span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Total Comp */}
-                    {tc != null && (
-                      <div className="mt-1">
-                        <div
-                          className={`text-xl font-bold tracking-tight ${
-                            isBestTc
+                    <div className="mt-1">
+                      <div
+                        className={`text-xl font-bold tracking-tight ${
+                          tc != null
+                            ? isBestTc
                               ? "text-brand-green"
                               : "text-text-primary"
-                          }`}
-                        >
-                          {formatCurrency(tc, { currency: offer.currency })}
-                        </div>
-                        <div className="text-[10px] text-text-muted uppercase tracking-wider">
-                          Total Comp (Y1)
-                        </div>
+                            : "text-text-muted/40 italic font-normal"
+                        }`}
+                      >
+                        {tc != null
+                          ? formatCurrency(tc, { currency: offer.currency })
+                          : "Not provided"}
                       </div>
-                    )}
+                      <div className={`text-[10px] uppercase tracking-wider ${tc != null ? "text-text-muted" : "text-text-muted/40"}`}>
+                        Total Comp (Y1)
+                      </div>
+                    </div>
 
                     {/* Status */}
                     {offer.accepted != null && (
@@ -199,7 +200,8 @@ export function OfferComparisonTable({ offers, onOfferClick }: OfferComparisonTa
                   </div>
 
                   {/* Divider */}
-                  <div className="mt-4 h-px bg-border-subtle" />
+                  <div className="mt-auto pt-4"><div className="h-px bg-border-subtle" /></div>
+                  </div>
                 </th>
               );
             })}
@@ -275,11 +277,17 @@ function DataRow({
             row.highlight === ci
               ? "text-brand-green font-semibold"
               : val === "—"
-                ? "text-text-muted/50"
+                ? ""
                 : "text-text-primary"
           }`}
         >
-          {row.label === "Status" ? <StatusPillInline value={val} /> : val}
+          {row.label === "Status" ? (
+            <StatusPillInline value={val} />
+          ) : val === "—" ? (
+            <span className="text-xs text-text-muted/40 italic">Not provided</span>
+          ) : (
+            val
+          )}
         </td>
       ))}
     </tr>

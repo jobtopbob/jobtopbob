@@ -15,13 +15,18 @@ import {
   HouseIcon,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { Offer } from "@/hooks/use-offers";
 import { calculateTotalComp, remotePolicyLabel } from "@/lib/offer-utils";
 import { formatSalaryWithInterval, formatCurrency } from "@/lib/currency";
+import { cn } from "@/lib/utils";
 
 interface OfferCardProps {
   offer: Offer;
   onClick: () => void;
+  selected?: boolean;
+  onSelectToggle?: (id: string) => void;
+  selectionDisabled?: boolean;
 }
 
 const remotePolicyConfig: Record<
@@ -33,7 +38,7 @@ const remotePolicyConfig: Record<
   onsite: { icon: MonitorIcon, className: "bg-zinc-400/15 text-zinc-600" },
 };
 
-export function OfferCard({ offer, onClick }: OfferCardProps) {
+export function OfferCard({ offer, onClick, selected, onSelectToggle, selectionDisabled }: OfferCardProps) {
   const salary = offer.base_salary;
   const currency = offer.currency ?? "USD";
   const totalComp = calculateTotalComp(offer);
@@ -47,10 +52,30 @@ export function OfferCard({ offer, onClick }: OfferCardProps) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col gap-3 rounded-xl bg-card border border-border-subtle p-4 text-left transition-colors hover:border-border-subtle/80 hover:bg-card/80 cursor-pointer"
+      className={cn(
+        "relative flex flex-col gap-3 rounded-xl bg-card border p-4 text-left transition-colors cursor-pointer",
+        selected
+          ? "border-brand/40 bg-brand/5"
+          : "border-border-subtle hover:border-border-subtle/80 hover:bg-card/80"
+      )}
     >
+      {/* Selection checkbox */}
+      {onSelectToggle && (
+        <div
+          className="absolute top-3 right-3 z-10"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={selected ?? false}
+            onCheckedChange={() => onSelectToggle(offer.id)}
+            disabled={selectionDisabled}
+          />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-start justify-between gap-2">
+      <div className={cn("flex items-start justify-between gap-2", onSelectToggle && "pr-6")}>
         <div className="flex items-start gap-2.5 min-w-0">
           {offer.company_logo_url ? (
             <div className="w-6 h-6 rounded bg-white p-0.5 shrink-0 mt-0.5">

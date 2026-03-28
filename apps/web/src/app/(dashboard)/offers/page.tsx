@@ -14,9 +14,12 @@ import { OfferDetailSheet } from "@/components/offers/offer-detail-sheet";
 import { AddOfferDialog } from "@/components/offers/add-offer-dialog";
 import { OfferComparisonTable } from "@/components/offers/offer-comparison-table";
 import { OffersToolbar } from "@/components/offers/offers-toolbar";
+import { OfferSelectionBar } from "@/components/offers/offer-selection-bar";
 import { PaginationControls } from "@/components/kanban/pagination-controls";
 import { cn } from "@/lib/utils";
 import { ExportButton } from "@/components/export-button";
+
+const MAX_COMPARE = 3;
 
 type ViewMode = "cards" | "compare";
 
@@ -27,16 +30,33 @@ export default function OffersPage() {
   const { data: result, isLoading, error } = useOffers(filters);
 
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
+  const [selectedOfferIds, setSelectedOfferIds] = useState<Set<string>>(new Set());
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   const offers = result?.data ?? [];
   const total = result?.total ?? 0;
 
+  const offersToCompare = offers.filter((o) => selectedOfferIds.has(o.id));
+
   const handleFilterChange = useCallback(
-    (update: Partial<OfferFilters>) =>
-      setFilters((prev) => ({ ...prev, ...update })),
+    (update: Partial<OfferFilters>) => {
+      setFilters((prev) => ({ ...prev, ...update }));
+      // Clear selection when filters change (but not pagination)
+      if (!("page" in update) || Object.keys(update).length > 1) {
+        setSelectedOfferIds(new Set());
+      }
+    },
     []
   );
+
+  const handleSelectToggle = useCallback((id: string) => {
+    setSelectedOfferIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < MAX_COMPARE) next.add(id);
+      return next;
+    });
+  }, []);
 
   if (error) {
     return (
@@ -85,16 +105,19 @@ export default function OffersPage() {
                 Cards
               </button>
               <button
-                onClick={() => setViewMode("compare")}
+                onClick={() => selectedOfferIds.size >= 2 && setViewMode("compare")}
+                disabled={selectedOfferIds.size < 2}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors",
-                  viewMode === "compare"
-                    ? "bg-surface text-text-primary"
-                    : "text-text-muted hover:text-text-primary"
+                  selectedOfferIds.size < 2
+                    ? "text-text-muted/40 cursor-not-allowed"
+                    : viewMode === "compare"
+                      ? "bg-surface text-text-primary"
+                      : "text-text-muted hover:text-text-primary"
                 )}
               >
                 <ColumnsIcon className="w-3.5 h-3.5" />
-                Compare
+                Compare{selectedOfferIds.size >= 2 ? ` (${selectedOfferIds.size})` : ""}
               </button>
             </div>
             <ExportButton endpoint="/api/v1/export/offers" />
@@ -137,15 +160,44 @@ export default function OffersPage() {
             )}
           </div>
         ) : viewMode === "compare" ? (
-          <OfferComparisonTable offers={offers} onOfferClick={setSelectedOfferId} />
+          offersToCompare.length >= 2 ? (
+            <OfferComparisonTable offers={offersToCompare} onOfferClick={setSelectedOfferId} />
+          ) : (
+            <div className="flex flex-col items-center justify-center flex-1 gap-3 py-20">
+              <div className="w-12 h-12 rounded-2xl bg-surface-hover flex items-center justify-center">
+                <ColumnsIcon className="w-6 h-6 text-text-muted" />
+              </div>
+              <p className="text-sm text-text-muted">
+                Select 2–3 offers to compare side by side.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setViewMode("cards")}
+              >
+                <GridFourIcon className="w-4 h-4" />
+                Back to Cards
+              </Button>
+            </div>
+          )
         ) : (
           <>
+            {selectedOfferIds.size > 0 && (
+              <OfferSelectionBar
+                selectedCount={selectedOfferIds.size}
+                onCompare={() => setViewMode("compare")}
+                onClear={() => setSelectedOfferIds(new Set())}
+              />
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {offers.map((offer) => (
                 <OfferCard
                   key={offer.id}
                   offer={offer}
                   onClick={() => setSelectedOfferId(offer.id)}
+                  selected={selectedOfferIds.has(offer.id)}
+                  onSelectToggle={handleSelectToggle}
+                  selectionDisabled={selectedOfferIds.size >= MAX_COMPARE && !selectedOfferIds.has(offer.id)}
                 />
               ))}
             </div>
