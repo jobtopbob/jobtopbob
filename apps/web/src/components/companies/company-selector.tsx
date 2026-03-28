@@ -32,7 +32,7 @@ interface CompanySelectorProps {
   value: string | null | undefined;
   displayName?: string | null;
   logoUrl?: string | null;
-  onChange: (companyId: string | null, companyName: string | null) => void;
+  onChange: (companyId: string | null, companyName: string | null, logoUrl?: string | null) => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -84,7 +84,7 @@ export function CompanySelector({
   }, [editing]);
 
   function handleSelect(company: Company) {
-    onChange(company.id, company.name);
+    onChange(company.id, company.name, company.logo_url);
     setQuery("");
     setEditing(false);
   }

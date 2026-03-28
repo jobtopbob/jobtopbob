@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 	db "github.com/jobtopbob/jobtopbob/apps/api/db/generated"
 	"github.com/jobtopbob/jobtopbob/apps/api/internal/services"
+	"github.com/jobtopbob/jobtopbob/internal/storage"
 )
 
 // ListContacts handles GET /api/v1/contacts
@@ -152,11 +154,19 @@ func UpdateContact() gin.HandlerFunc {
 		q := db.New(getTx(c))
 		userID := getUserID(c)
 
+		// If company_id is explicitly set to empty string, clear it
+		if req.CompanyID != nil && *req.CompanyID == "" {
+			_ = q.UpdateContactCompanyID(c.Request.Context(), db.UpdateContactCompanyIDParams{
+				ID:     id,
+				UserID: userID,
+			})
+		}
+
 		var params db.UpdateContactParams
 		if req.Name != nil {
 			params.Name = pgtextValid(*req.Name)
 		}
-		if req.CompanyID != nil {
+		if req.CompanyID != nil && *req.CompanyID != "" {
 			params.CompanyID = parseUUID(*req.CompanyID)
 		}
 		if req.Role != nil {
@@ -241,5 +251,121 @@ func SearchContacts() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, contacts)
+	}
+}
+
+// contactAvatarKey returns the storage key for a contact's avatar.
+func contactAvatarKey(contactID, ext string) string {
+	return fmt.Sprintf("avatars/contacts/%s%s", contactID, ext)
+}
+
+// UploadContactAvatar handles POST /api/v1/contacts/:id/avatar
+func UploadContactAvatar(store *storage.Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, ok := parsePathUUID(c, "id")
+		if !ok {
+			return
+		}
+
+		if store == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "storage not configured"})
+			return
+		}
+
+		file, header, err := c.Request.FormFile("file")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
+			return
+		}
+		defer file.Close()
+
+		if header.Size > maxLogoSize {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "file too large, maximum 5 MB"})
+			return
+		}
+
+		contentType := header.Header.Get("Content-Type")
+		ext, valid := allowedLogoTypes[contentType]
+		if !valid {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported image type, use JPEG, PNG, WebP, GIF, or SVG"})
+			return
+		}
+
+		q := db.New(getTx(c))
+		userID := getUserID(c)
+
+		// Verify contact belongs to user
+		_, err = q.GetContact(c.Request.Context(), db.GetContactParams{ID: id, UserID: userID})
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "contact not found"})
+			return
+		}
+
+		// Delete old avatar files with different extensions
+		idStr := fmt.Sprintf("%x-%x-%x-%x-%x", id.Bytes[0:4], id.Bytes[4:6], id.Bytes[6:8], id.Bytes[8:10], id.Bytes[10:16])
+		for _, e := range allowedLogoTypes {
+			if e != ext {
+				_ = store.Delete(c.Request.Context(), contactAvatarKey(idStr, e))
+			}
+		}
+
+		key := contactAvatarKey(idStr, ext)
+		url, err := store.Upload(c.Request.Context(), key, file, contentType)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload avatar"})
+			return
+		}
+
+		// Update contact avatar_url
+		_, err = q.UpdateContactAvatarURL(c.Request.Context(), db.UpdateContactAvatarURLParams{
+			ID:        id,
+			UserID:    userID,
+			AvatarUrl: pgtype.Text{String: url, Valid: true},
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save avatar URL"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"url": url})
+	}
+}
+
+// DeleteContactAvatar handles DELETE /api/v1/contacts/:id/avatar
+func DeleteContactAvatar(store *storage.Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, ok := parsePathUUID(c, "id")
+		if !ok {
+			return
+		}
+
+		q := db.New(getTx(c))
+		userID := getUserID(c)
+
+		contact, err := q.GetContact(c.Request.Context(), db.GetContactParams{ID: id, UserID: userID})
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "contact not found"})
+			return
+		}
+
+		// Delete from storage
+		if contact.AvatarUrl.Valid && store != nil {
+			idStr := fmt.Sprintf("%x-%x-%x-%x-%x", id.Bytes[0:4], id.Bytes[4:6], id.Bytes[6:8], id.Bytes[8:10], id.Bytes[10:16])
+			for _, ext := range allowedLogoTypes {
+				_ = store.Delete(c.Request.Context(), contactAvatarKey(idStr, ext))
+			}
+		}
+
+		// Clear avatar_url
+		_, err = q.UpdateContactAvatarURL(c.Request.Context(), db.UpdateContactAvatarURLParams{
+			ID:     id,
+			UserID: userID,
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to remove avatar"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"url": ""})
 	}
 }

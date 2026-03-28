@@ -168,3 +168,61 @@ export function useDeleteContact() {
     },
   });
 }
+
+export function useUploadContactAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, file }: { id: string; file: File }) => {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+      const { authClient } = await import("@/lib/auth-client");
+      const { data: tokenData } = await authClient.token();
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(
+        `${baseUrl}/api/v1/contacts/${id}/avatar`,
+        {
+          method: "POST",
+          headers: tokenData?.token
+            ? { Authorization: `Bearer ${tokenData.token}` }
+            : {},
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error ?? `Upload failed (${response.status})`
+        );
+      }
+
+      return (await response.json()) as { url: string };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    },
+  });
+}
+
+export function useDeleteContactAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await api.DELETE("/api/v1/contacts/{id}/avatar", {
+        params: { path: { id } },
+      });
+      if (error)
+        throw new Error(
+          (error as { error?: string })?.error ?? "Failed to delete avatar"
+        );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    },
+  });
+}

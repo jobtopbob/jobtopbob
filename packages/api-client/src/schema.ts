@@ -1770,6 +1770,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/contacts/{id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload contact avatar
+         * @description Upload an avatar image (max 5 MB, JPEG/PNG/WebP/GIF/SVG). Stores in RustFS and updates contact avatar_url.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Avatar uploaded */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            url?: string;
+                        };
+                    };
+                };
+                /** @description Invalid file */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Contact not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        /**
+         * Remove contact avatar
+         * @description Removes the avatar from storage and clears the contact avatar_url.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Avatar removed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            url?: string;
+                        };
+                    };
+                };
+                /** @description Contact not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tags": {
         parameters: {
             query?: never;
@@ -3302,10 +3406,13 @@ export interface components {
             /** Format: uuid */
             company_id?: string | null;
             company_name?: string | null;
+            /** @description Company logo URL from storage */
+            company_logo_url?: string | null;
             name: string;
             role?: string | null;
             email?: string | null;
             linkedin_url?: string | null;
+            avatar_url?: string | null;
             source?: string | null;
             status?: string | null;
             notes?: string | null;

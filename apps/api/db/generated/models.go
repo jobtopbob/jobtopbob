@@ -67,6 +67,7 @@ type Contact struct {
 	Role        pgtype.Text        `json:"role"`
 	Email       pgtype.Text        `json:"email"`
 	LinkedinUrl pgtype.Text        `json:"linkedin_url"`
+	AvatarUrl   pgtype.Text        `json:"avatar_url"`
 	Source      pgtype.Text        `json:"source"`
 	Status      pgtype.Text        `json:"status"`
 	Notes       pgtype.Text        `json:"notes"`

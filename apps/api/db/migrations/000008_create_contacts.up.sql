@@ -6,6 +6,7 @@ CREATE TABLE contacts (
     role         text,
     email        text,
     linkedin_url text,
+    avatar_url   text,
     source       text,
     status       text,
     notes        text,

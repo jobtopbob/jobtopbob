@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Image from "next/image";
 import {
   Sheet,
   SheetContent,
@@ -24,15 +25,19 @@ import {
   Linkedin,
   Building2,
   Calendar,
+  CalendarDays,
   Pencil,
   Trash2,
   User,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useContact,
   useUpdateContact,
   useDeleteContact,
+  useUploadContactAvatar,
 } from "@/hooks/use-contacts";
 import { CompanySelector } from "@/components/companies/company-selector";
 
@@ -64,16 +69,20 @@ function getAvatarColor(name: string): string {
 interface ContactDetailSheetProps {
   contactId: string | null;
   onClose: () => void;
+  onCompanyClick?: (companyId: string) => void;
 }
 
 export function ContactDetailSheet({
   contactId,
   onClose,
+  onCompanyClick,
 }: ContactDetailSheetProps) {
   const { data: contact } = useContact(contactId ?? undefined);
   const updateContact = useUpdateContact();
   const deleteContact = useDeleteContact();
+  const uploadAvatar = useUploadContactAvatar();
   const [editing, setEditing] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   if (!contact) return null;
 
@@ -97,12 +106,51 @@ export function ContactDetailSheet({
         <SheetHeader className="px-6 pt-6 pb-0 space-y-4">
           {/* Avatar + Name */}
           <div className="flex items-start gap-4">
-            <div
-              className="flex items-center justify-center w-12 h-12 rounded-full shrink-0"
-              style={{ backgroundColor: color }}
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file || !contactId) return;
+                uploadAvatar.mutate(
+                  { id: contactId, file },
+                  {
+                    onSuccess: () => toast.success("Avatar uploaded"),
+                    onError: (err) => toast.error(err.message),
+                  }
+                );
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              className="relative group shrink-0 rounded-full focus:outline-none"
+              title="Click to upload avatar"
             >
-              <span className="text-lg font-bold text-white">{initial}</span>
-            </div>
+              {contact.avatar_url ? (
+                <Image
+                  src={contact.avatar_url}
+                  alt={contact.name}
+                  width={48}
+                  height={48}
+                  unoptimized
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              ) : (
+                <div
+                  className="flex items-center justify-center w-12 h-12 rounded-full"
+                  style={{ backgroundColor: color }}
+                >
+                  <span className="text-lg font-bold text-white">{initial}</span>
+                </div>
+              )}
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Pencil className="w-4 h-4 text-white" />
+              </div>
+            </button>
             <div className="flex-1 min-w-0">
               <SheetTitle className="text-lg font-semibold text-text-primary truncate">
                 {contact.name}
@@ -129,19 +177,31 @@ export function ContactDetailSheet({
           <div className="flex flex-wrap gap-1.5">
             {contact.status && (
               <span
-                className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${statusColors[contact.status] ?? statusColors.dormant}`}
+                className={`text-xs font-medium px-2.5 py-0.5 rounded-full capitalize ${statusColors[contact.status] ?? statusColors.dormant}`}
               >
                 {contact.status}
               </span>
             )}
             {contact.company_name && (
-              <Badge variant="secondary">
+              <Badge
+                variant="secondary"
+                className={
+                  contact.company_id && onCompanyClick
+                    ? "cursor-pointer hover:bg-secondary/80 transition-colors"
+                    : undefined
+                }
+                onClick={
+                  contact.company_id && onCompanyClick
+                    ? () => onCompanyClick(contact.company_id!)
+                    : undefined
+                }
+              >
                 <Building2 className="w-3 h-3" />
                 {contact.company_name}
               </Badge>
             )}
             {contact.source && (
-              <Badge variant="outline">
+              <Badge variant="outline" className="capitalize">
                 <User className="w-3 h-3" />
                 {contact.source}
               </Badge>
@@ -171,7 +231,7 @@ export function ContactDetailSheet({
               isPending={updateContact.isPending}
             />
           ) : (
-            <DetailView contact={contact} />
+            <DetailView contact={contact} onCompanyClick={onCompanyClick} />
           )}
         </div>
       </SheetContent>
@@ -179,7 +239,13 @@ export function ContactDetailSheet({
   );
 }
 
-function DetailView({ contact }: { contact: NonNullable<ReturnType<typeof useContact>["data"]> }) {
+function DetailView({
+  contact,
+  onCompanyClick,
+}: {
+  contact: NonNullable<ReturnType<typeof useContact>["data"]>;
+  onCompanyClick?: (companyId: string) => void;
+}) {
   const details = [
     {
       icon: Mail,
@@ -197,6 +263,10 @@ function DetailView({ contact }: { contact: NonNullable<ReturnType<typeof useCon
       icon: Building2,
       label: "Company",
       value: contact.company_name,
+      onClick:
+        contact.company_id && onCompanyClick
+          ? () => onCompanyClick(contact.company_id!)
+          : undefined,
     },
     {
       icon: Calendar,
@@ -216,7 +286,7 @@ function DetailView({ contact }: { contact: NonNullable<ReturnType<typeof useCon
         </h3>
         <div className="space-y-2.5">
           {details.map(
-            ({ icon: Icon, label, value, href }) =>
+            ({ icon: Icon, label, value, href, onClick }) =>
               value && (
                 <div key={label} className="flex items-center gap-3 text-sm">
                   <Icon className="w-4 h-4 text-text-muted shrink-0" />
@@ -230,6 +300,13 @@ function DetailView({ contact }: { contact: NonNullable<ReturnType<typeof useCon
                     >
                       {value as string}
                     </a>
+                  ) : onClick ? (
+                    <button
+                      onClick={onClick}
+                      className="text-brand hover:underline truncate"
+                    >
+                      {String(value)}
+                    </button>
                   ) : (
                     <span className="text-text-primary truncate">
                       {String(value)}
@@ -264,17 +341,23 @@ function DetailView({ contact }: { contact: NonNullable<ReturnType<typeof useCon
 }
 
 const STATUS_OPTIONS = [
-  { value: "active", label: "Active" },
-  { value: "follow-up", label: "Follow Up" },
-  { value: "dormant", label: "Dormant" },
+  { value: "active", label: "Active", dotColor: "bg-emerald-500" },
+  { value: "follow-up", label: "Follow Up", dotColor: "bg-amber-500" },
+  { value: "dormant", label: "Dormant", dotColor: "bg-zinc-400" },
 ];
 
+const STATUS_DOT_COLORS: Record<string, string> = {
+  active: "bg-emerald-500",
+  "follow-up": "bg-amber-500",
+  dormant: "bg-zinc-400",
+};
+
 const SOURCE_OPTIONS = [
-  { value: "manual", label: "Manual" },
-  { value: "linkedin", label: "LinkedIn" },
-  { value: "email", label: "Email" },
-  { value: "referral", label: "Referral" },
-  { value: "event", label: "Event" },
+  { value: "manual", label: "Manual", icon: UserPlus },
+  { value: "linkedin", label: "LinkedIn", icon: Linkedin },
+  { value: "email", label: "Email", icon: Mail },
+  { value: "referral", label: "Referral", icon: Users },
+  { value: "event", label: "Event", icon: CalendarDays },
 ];
 
 interface EditFormProps {
@@ -288,6 +371,8 @@ function EditForm({ contact, onSave, onCancel, isPending }: EditFormProps) {
   const [form, setForm] = useState({
     name: contact.name,
     companyId: contact.company_id ?? "",
+    companyName: contact.company_name ?? "",
+    companyLogoUrl: "",
     role: contact.role ?? "",
     email: contact.email ?? "",
     linkedin_url: contact.linkedin_url ?? "",
@@ -300,7 +385,7 @@ function EditForm({ contact, onSave, onCancel, isPending }: EditFormProps) {
     e.preventDefault();
     onSave({
       name: form.name || undefined,
-      company_id: form.companyId || undefined,
+      company_id: form.companyId ?? "",
       role: form.role || undefined,
       email: form.email || undefined,
       linkedin_url: form.linkedin_url || undefined,
@@ -324,7 +409,16 @@ function EditForm({ contact, onSave, onCancel, isPending }: EditFormProps) {
         <label className="text-xs font-medium text-text-muted">Company</label>
         <CompanySelector
           value={form.companyId || null}
-          onChange={(id) => setForm({ ...form, companyId: id ?? "" })}
+          displayName={form.companyName || null}
+          logoUrl={form.companyLogoUrl || null}
+          onChange={(id, name, logoUrl) =>
+            setForm({
+              ...form,
+              companyId: id ?? "",
+              companyName: name ?? "",
+              companyLogoUrl: logoUrl ?? "",
+            })
+          }
         />
       </div>
 
@@ -365,12 +459,24 @@ function EditForm({ contact, onSave, onCancel, isPending }: EditFormProps) {
             onValueChange={(v) => setForm({ ...form, status: v ?? "" })}
           >
             <SelectTrigger>
-              <SelectValue />
+              <span className="flex items-center gap-2 capitalize">
+                {form.status && (
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_COLORS[form.status] ?? ""}`}
+                  />
+                )}
+                <SelectValue />
+              </span>
             </SelectTrigger>
             <SelectContent>
               {STATUS_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${opt.dotColor}`}
+                    />
+                    {opt.label}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -379,16 +485,30 @@ function EditForm({ contact, onSave, onCancel, isPending }: EditFormProps) {
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-text-muted">Source</label>
           <Select
-            value={form.source || undefined}
+            value={form.source || ""}
             onValueChange={(v) => setForm({ ...form, source: v ?? "" })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select..." />
+              <span className="flex items-center gap-2 capitalize">
+                {form.source &&
+                  (() => {
+                    const Icon = SOURCE_OPTIONS.find(
+                      (o) => o.value === form.source
+                    )?.icon;
+                    return Icon ? (
+                      <Icon className="w-3.5 h-3.5 shrink-0 text-text-muted" />
+                    ) : null;
+                  })()}
+                <SelectValue placeholder="Select..." />
+              </span>
             </SelectTrigger>
             <SelectContent>
               {SOURCE_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
+                  <span className="flex items-center gap-2">
+                    <opt.icon className="w-3.5 h-3.5 shrink-0 text-text-muted" />
+                    {opt.label}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>

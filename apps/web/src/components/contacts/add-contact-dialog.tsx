@@ -21,6 +21,13 @@ import {
 import { CompanySelector } from "@/components/companies/company-selector";
 import { useCreateContact } from "@/hooks/use-contacts";
 import { toast } from "sonner";
+import {
+  Linkedin,
+  Mail,
+  Users,
+  CalendarDays,
+  UserPlus,
+} from "lucide-react";
 
 interface AddContactDialogProps {
   open: boolean;
@@ -30,6 +37,8 @@ interface AddContactDialogProps {
 const initialForm = {
   name: "",
   companyId: "",
+  companyName: "",
+  companyLogoUrl: "",
   role: "",
   email: "",
   linkedinUrl: "",
@@ -39,17 +48,23 @@ const initialForm = {
 };
 
 const STATUS_OPTIONS = [
-  { value: "active", label: "Active" },
-  { value: "follow-up", label: "Follow Up" },
-  { value: "dormant", label: "Dormant" },
+  { value: "active", label: "Active", dotColor: "bg-emerald-500" },
+  { value: "follow-up", label: "Follow Up", dotColor: "bg-amber-500" },
+  { value: "dormant", label: "Dormant", dotColor: "bg-zinc-400" },
 ];
 
+const STATUS_DOT_COLORS: Record<string, string> = {
+  active: "bg-emerald-500",
+  "follow-up": "bg-amber-500",
+  dormant: "bg-zinc-400",
+};
+
 const SOURCE_OPTIONS = [
-  { value: "manual", label: "Manual" },
-  { value: "linkedin", label: "LinkedIn" },
-  { value: "email", label: "Email" },
-  { value: "referral", label: "Referral" },
-  { value: "event", label: "Event" },
+  { value: "manual", label: "Manual", icon: UserPlus },
+  { value: "linkedin", label: "LinkedIn", icon: Linkedin },
+  { value: "email", label: "Email", icon: Mail },
+  { value: "referral", label: "Referral", icon: Users },
+  { value: "event", label: "Event", icon: CalendarDays },
 ];
 
 export function AddContactDialog({
@@ -114,7 +129,16 @@ export function AddContactDialog({
             </label>
             <CompanySelector
               value={form.companyId || null}
-              onChange={(id) => setForm({ ...form, companyId: id ?? "" })}
+              displayName={form.companyName || null}
+              logoUrl={form.companyLogoUrl || null}
+              onChange={(id, name, logoUrl) =>
+                setForm({
+                  ...form,
+                  companyId: id ?? "",
+                  companyName: name ?? "",
+                  companyLogoUrl: logoUrl ?? "",
+                })
+              }
             />
           </div>
 
@@ -166,12 +190,24 @@ export function AddContactDialog({
                 onValueChange={(v) => setForm({ ...form, status: v ?? "" })}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <span className="flex items-center gap-2 capitalize">
+                    {form.status && (
+                      <span
+                        className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_COLORS[form.status] ?? ""}`}
+                      />
+                    )}
+                    <SelectValue />
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                      <span className="flex items-center gap-2">
+                        <span
+                          className={`w-2 h-2 rounded-full shrink-0 ${opt.dotColor}`}
+                        />
+                        {opt.label}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -182,16 +218,30 @@ export function AddContactDialog({
                 Source
               </label>
               <Select
-                value={form.source || undefined}
+                value={form.source}
                 onValueChange={(v) => setForm({ ...form, source: v ?? "" })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
+                  <span className="flex items-center gap-2 capitalize">
+                    {form.source &&
+                      (() => {
+                        const Icon = SOURCE_OPTIONS.find(
+                          (o) => o.value === form.source
+                        )?.icon;
+                        return Icon ? (
+                          <Icon className="w-3.5 h-3.5 shrink-0 text-text-muted" />
+                        ) : null;
+                      })()}
+                    <SelectValue placeholder="Select..." />
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {SOURCE_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                      <span className="flex items-center gap-2">
+                        <opt.icon className="w-3.5 h-3.5 shrink-0 text-text-muted" />
+                        {opt.label}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

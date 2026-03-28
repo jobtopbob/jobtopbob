@@ -103,6 +103,8 @@ func New(cfg Config) *gin.Engine {
 			contacts.GET("/:id", handlers.GetContact())
 			contacts.PUT("/:id", handlers.UpdateContact())
 			contacts.DELETE("/:id", handlers.DeleteContact())
+			contacts.POST("/:id/avatar", handlers.UploadContactAvatar(cfg.Store))
+			contacts.DELETE("/:id/avatar", handlers.DeleteContactAvatar(cfg.Store))
 		}
 
 		// Offers

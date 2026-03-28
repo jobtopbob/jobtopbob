@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -28,10 +29,10 @@ import {
   defaultContactFilters,
   type ContactFilters,
 } from "@/hooks/use-contacts";
-import { ContactCard } from "@/components/contacts/contact-card";
+import { ContactsTable } from "@/components/contacts/contacts-table";
 import { ContactDetailSheet } from "@/components/contacts/contact-detail-sheet";
 import { AddContactDialog } from "@/components/contacts/add-contact-dialog";
-import { PaginationControls } from "@/components/kanban/pagination-controls";
+import { CompanyDetailSheet } from "@/components/companies/company-detail-sheet";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { ExportButton } from "@/components/export-button";
@@ -79,6 +80,9 @@ export default function ContactsPage() {
   const { data: result, isLoading, error } = useContacts(activeFilters);
 
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
+    null
+  );
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
     null
   );
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -302,9 +306,9 @@ export default function ContactsPage() {
 
         {/* Content */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-36 rounded-xl" />
+              <Skeleton key={i} className="h-10 rounded-lg" />
             ))}
           </div>
         ) : contacts.length === 0 ? (
@@ -329,26 +333,16 @@ export default function ContactsPage() {
             )}
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {contacts.map((contact) => (
-                <ContactCard
-                  key={contact.id}
-                  contact={contact}
-                  onClick={() => setSelectedContactId(contact.id)}
-                />
-              ))}
-            </div>
-
-            <PaginationControls
-              page={filters.page}
-              perPage={filters.perPage}
-              total={total}
-              onPageChange={(page) =>
-                setFilters((prev) => ({ ...prev, page }))
-              }
-            />
-          </>
+          <ContactsTable
+            contacts={contacts}
+            onContactClick={(id) => setSelectedContactId(id)}
+            page={filters.page}
+            perPage={filters.perPage}
+            total={total}
+            onPageChange={(page) =>
+              setFilters((prev) => ({ ...prev, page }))
+            }
+          />
         )}
       </div>
 
@@ -356,6 +350,13 @@ export default function ContactsPage() {
       <ContactDetailSheet
         contactId={selectedContactId}
         onClose={() => setSelectedContactId(null)}
+        onCompanyClick={(id) => setSelectedCompanyId(id)}
+      />
+
+      {/* Company Detail Sheet (opened from contact details) */}
+      <CompanyDetailSheet
+        companyId={selectedCompanyId}
+        onClose={() => setSelectedCompanyId(null)}
       />
 
       {/* Add Dialog */}

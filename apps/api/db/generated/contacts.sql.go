@@ -54,7 +54,7 @@ INSERT INTO contacts (
     linkedin_url, source, status, notes, last_contact
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-) RETURNING id, user_id, company_id, name, role, email, linkedin_url, source, status, notes, last_contact, created_at, updated_at
+) RETURNING id, user_id, company_id, name, role, email, linkedin_url, avatar_url, source, status, notes, last_contact, created_at, updated_at
 `
 
 type CreateContactParams struct {
@@ -92,6 +92,7 @@ func (q *Queries) CreateContact(ctx context.Context, arg CreateContactParams) (C
 		&i.Role,
 		&i.Email,
 		&i.LinkedinUrl,
+		&i.AvatarUrl,
 		&i.Source,
 		&i.Status,
 		&i.Notes,
@@ -116,8 +117,9 @@ func (q *Queries) DeleteContact(ctx context.Context, arg DeleteContactParams) (p
 }
 
 const getContact = `-- name: GetContact :one
-SELECT ct.id, ct.user_id, ct.company_id, ct.name, ct.role, ct.email, ct.linkedin_url, ct.source, ct.status, ct.notes, ct.last_contact, ct.created_at, ct.updated_at,
-       c.name AS company_name
+SELECT ct.id, ct.user_id, ct.company_id, ct.name, ct.role, ct.email, ct.linkedin_url, ct.avatar_url, ct.source, ct.status, ct.notes, ct.last_contact, ct.created_at, ct.updated_at,
+       c.name AS company_name,
+       c.logo_url AS company_logo_url
 FROM contacts ct
 LEFT JOIN companies c ON c.id = ct.company_id
 WHERE ct.id = $1 AND ct.user_id = $2
@@ -129,20 +131,22 @@ type GetContactParams struct {
 }
 
 type GetContactRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	UserID      string             `json:"user_id"`
-	CompanyID   pgtype.UUID        `json:"company_id"`
-	Name        string             `json:"name"`
-	Role        pgtype.Text        `json:"role"`
-	Email       pgtype.Text        `json:"email"`
-	LinkedinUrl pgtype.Text        `json:"linkedin_url"`
-	Source      pgtype.Text        `json:"source"`
-	Status      pgtype.Text        `json:"status"`
-	Notes       pgtype.Text        `json:"notes"`
-	LastContact pgtype.Timestamptz `json:"last_contact"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	CompanyName pgtype.Text        `json:"company_name"`
+	ID             pgtype.UUID        `json:"id"`
+	UserID         string             `json:"user_id"`
+	CompanyID      pgtype.UUID        `json:"company_id"`
+	Name           string             `json:"name"`
+	Role           pgtype.Text        `json:"role"`
+	Email          pgtype.Text        `json:"email"`
+	LinkedinUrl    pgtype.Text        `json:"linkedin_url"`
+	AvatarUrl      pgtype.Text        `json:"avatar_url"`
+	Source         pgtype.Text        `json:"source"`
+	Status         pgtype.Text        `json:"status"`
+	Notes          pgtype.Text        `json:"notes"`
+	LastContact    pgtype.Timestamptz `json:"last_contact"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	CompanyName    pgtype.Text        `json:"company_name"`
+	CompanyLogoUrl pgtype.Text        `json:"company_logo_url"`
 }
 
 func (q *Queries) GetContact(ctx context.Context, arg GetContactParams) (GetContactRow, error) {
@@ -156,6 +160,7 @@ func (q *Queries) GetContact(ctx context.Context, arg GetContactParams) (GetCont
 		&i.Role,
 		&i.Email,
 		&i.LinkedinUrl,
+		&i.AvatarUrl,
 		&i.Source,
 		&i.Status,
 		&i.Notes,
@@ -163,13 +168,15 @@ func (q *Queries) GetContact(ctx context.Context, arg GetContactParams) (GetCont
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CompanyName,
+		&i.CompanyLogoUrl,
 	)
 	return i, err
 }
 
 const listContacts = `-- name: ListContacts :many
-SELECT ct.id, ct.user_id, ct.company_id, ct.name, ct.role, ct.email, ct.linkedin_url, ct.source, ct.status, ct.notes, ct.last_contact, ct.created_at, ct.updated_at,
-       c.name AS company_name
+SELECT ct.id, ct.user_id, ct.company_id, ct.name, ct.role, ct.email, ct.linkedin_url, ct.avatar_url, ct.source, ct.status, ct.notes, ct.last_contact, ct.created_at, ct.updated_at,
+       c.name AS company_name,
+       c.logo_url AS company_logo_url
 FROM contacts ct
 LEFT JOIN companies c ON c.id = ct.company_id
 WHERE ct.user_id = $1
@@ -207,20 +214,22 @@ type ListContactsParams struct {
 }
 
 type ListContactsRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	UserID      string             `json:"user_id"`
-	CompanyID   pgtype.UUID        `json:"company_id"`
-	Name        string             `json:"name"`
-	Role        pgtype.Text        `json:"role"`
-	Email       pgtype.Text        `json:"email"`
-	LinkedinUrl pgtype.Text        `json:"linkedin_url"`
-	Source      pgtype.Text        `json:"source"`
-	Status      pgtype.Text        `json:"status"`
-	Notes       pgtype.Text        `json:"notes"`
-	LastContact pgtype.Timestamptz `json:"last_contact"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	CompanyName pgtype.Text        `json:"company_name"`
+	ID             pgtype.UUID        `json:"id"`
+	UserID         string             `json:"user_id"`
+	CompanyID      pgtype.UUID        `json:"company_id"`
+	Name           string             `json:"name"`
+	Role           pgtype.Text        `json:"role"`
+	Email          pgtype.Text        `json:"email"`
+	LinkedinUrl    pgtype.Text        `json:"linkedin_url"`
+	AvatarUrl      pgtype.Text        `json:"avatar_url"`
+	Source         pgtype.Text        `json:"source"`
+	Status         pgtype.Text        `json:"status"`
+	Notes          pgtype.Text        `json:"notes"`
+	LastContact    pgtype.Timestamptz `json:"last_contact"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	CompanyName    pgtype.Text        `json:"company_name"`
+	CompanyLogoUrl pgtype.Text        `json:"company_logo_url"`
 }
 
 func (q *Queries) ListContacts(ctx context.Context, arg ListContactsParams) ([]ListContactsRow, error) {
@@ -250,6 +259,7 @@ func (q *Queries) ListContacts(ctx context.Context, arg ListContactsParams) ([]L
 			&i.Role,
 			&i.Email,
 			&i.LinkedinUrl,
+			&i.AvatarUrl,
 			&i.Source,
 			&i.Status,
 			&i.Notes,
@@ -257,6 +267,7 @@ func (q *Queries) ListContacts(ctx context.Context, arg ListContactsParams) ([]L
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CompanyName,
+			&i.CompanyLogoUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -269,7 +280,7 @@ func (q *Queries) ListContacts(ctx context.Context, arg ListContactsParams) ([]L
 }
 
 const listContactsByCompany = `-- name: ListContactsByCompany :many
-SELECT ct.id, ct.user_id, ct.company_id, ct.name, ct.role, ct.email, ct.linkedin_url, ct.source, ct.status, ct.notes, ct.last_contact, ct.created_at, ct.updated_at, c.name AS company_name
+SELECT ct.id, ct.user_id, ct.company_id, ct.name, ct.role, ct.email, ct.linkedin_url, ct.avatar_url, ct.source, ct.status, ct.notes, ct.last_contact, ct.created_at, ct.updated_at, c.name AS company_name
 FROM contacts ct
 LEFT JOIN companies c ON c.id = ct.company_id
 WHERE ct.user_id = $1 AND ct.company_id = $2
@@ -289,6 +300,7 @@ type ListContactsByCompanyRow struct {
 	Role        pgtype.Text        `json:"role"`
 	Email       pgtype.Text        `json:"email"`
 	LinkedinUrl pgtype.Text        `json:"linkedin_url"`
+	AvatarUrl   pgtype.Text        `json:"avatar_url"`
 	Source      pgtype.Text        `json:"source"`
 	Status      pgtype.Text        `json:"status"`
 	Notes       pgtype.Text        `json:"notes"`
@@ -315,6 +327,7 @@ func (q *Queries) ListContactsByCompany(ctx context.Context, arg ListContactsByC
 			&i.Role,
 			&i.Email,
 			&i.LinkedinUrl,
+			&i.AvatarUrl,
 			&i.Source,
 			&i.Status,
 			&i.Notes,
@@ -334,7 +347,7 @@ func (q *Queries) ListContactsByCompany(ctx context.Context, arg ListContactsByC
 }
 
 const searchContacts = `-- name: SearchContacts :many
-SELECT ct.id, ct.user_id, ct.company_id, ct.name, ct.role, ct.email, ct.linkedin_url, ct.source, ct.status, ct.notes, ct.last_contact, ct.created_at, ct.updated_at, c.name AS company_name
+SELECT ct.id, ct.user_id, ct.company_id, ct.name, ct.role, ct.email, ct.linkedin_url, ct.avatar_url, ct.source, ct.status, ct.notes, ct.last_contact, ct.created_at, ct.updated_at, c.name AS company_name
 FROM contacts ct
 LEFT JOIN companies c ON c.id = ct.company_id
 WHERE ct.user_id = $1
@@ -356,6 +369,7 @@ type SearchContactsRow struct {
 	Role        pgtype.Text        `json:"role"`
 	Email       pgtype.Text        `json:"email"`
 	LinkedinUrl pgtype.Text        `json:"linkedin_url"`
+	AvatarUrl   pgtype.Text        `json:"avatar_url"`
 	Source      pgtype.Text        `json:"source"`
 	Status      pgtype.Text        `json:"status"`
 	Notes       pgtype.Text        `json:"notes"`
@@ -382,6 +396,7 @@ func (q *Queries) SearchContacts(ctx context.Context, arg SearchContactsParams) 
 			&i.Role,
 			&i.Email,
 			&i.LinkedinUrl,
+			&i.AvatarUrl,
 			&i.Source,
 			&i.Status,
 			&i.Notes,
@@ -407,12 +422,13 @@ UPDATE contacts SET
     role = COALESCE($5, role),
     email = COALESCE($6, email),
     linkedin_url = COALESCE($7, linkedin_url),
-    source = COALESCE($8, source),
-    status = COALESCE($9, status),
-    notes = COALESCE($10, notes),
-    last_contact = COALESCE($11, last_contact)
+    avatar_url = COALESCE($8, avatar_url),
+    source = COALESCE($9, source),
+    status = COALESCE($10, status),
+    notes = COALESCE($11, notes),
+    last_contact = COALESCE($12, last_contact)
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, company_id, name, role, email, linkedin_url, source, status, notes, last_contact, created_at, updated_at
+RETURNING id, user_id, company_id, name, role, email, linkedin_url, avatar_url, source, status, notes, last_contact, created_at, updated_at
 `
 
 type UpdateContactParams struct {
@@ -423,6 +439,7 @@ type UpdateContactParams struct {
 	Role        pgtype.Text        `json:"role"`
 	Email       pgtype.Text        `json:"email"`
 	LinkedinUrl pgtype.Text        `json:"linkedin_url"`
+	AvatarUrl   pgtype.Text        `json:"avatar_url"`
 	Source      pgtype.Text        `json:"source"`
 	Status      pgtype.Text        `json:"status"`
 	Notes       pgtype.Text        `json:"notes"`
@@ -438,6 +455,7 @@ func (q *Queries) UpdateContact(ctx context.Context, arg UpdateContactParams) (C
 		arg.Role,
 		arg.Email,
 		arg.LinkedinUrl,
+		arg.AvatarUrl,
 		arg.Source,
 		arg.Status,
 		arg.Notes,
@@ -452,6 +470,7 @@ func (q *Queries) UpdateContact(ctx context.Context, arg UpdateContactParams) (C
 		&i.Role,
 		&i.Email,
 		&i.LinkedinUrl,
+		&i.AvatarUrl,
 		&i.Source,
 		&i.Status,
 		&i.Notes,
@@ -460,4 +479,54 @@ func (q *Queries) UpdateContact(ctx context.Context, arg UpdateContactParams) (C
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateContactAvatarURL = `-- name: UpdateContactAvatarURL :one
+UPDATE contacts SET avatar_url = $3
+WHERE id = $1 AND user_id = $2
+RETURNING id, user_id, company_id, name, role, email, linkedin_url, avatar_url, source, status, notes, last_contact, created_at, updated_at
+`
+
+type UpdateContactAvatarURLParams struct {
+	ID        pgtype.UUID `json:"id"`
+	UserID    string      `json:"user_id"`
+	AvatarUrl pgtype.Text `json:"avatar_url"`
+}
+
+func (q *Queries) UpdateContactAvatarURL(ctx context.Context, arg UpdateContactAvatarURLParams) (Contact, error) {
+	row := q.db.QueryRow(ctx, updateContactAvatarURL, arg.ID, arg.UserID, arg.AvatarUrl)
+	var i Contact
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CompanyID,
+		&i.Name,
+		&i.Role,
+		&i.Email,
+		&i.LinkedinUrl,
+		&i.AvatarUrl,
+		&i.Source,
+		&i.Status,
+		&i.Notes,
+		&i.LastContact,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateContactCompanyID = `-- name: UpdateContactCompanyID :exec
+UPDATE contacts SET company_id = $3
+WHERE id = $1 AND user_id = $2
+`
+
+type UpdateContactCompanyIDParams struct {
+	ID        pgtype.UUID `json:"id"`
+	UserID    string      `json:"user_id"`
+	CompanyID pgtype.UUID `json:"company_id"`
+}
+
+func (q *Queries) UpdateContactCompanyID(ctx context.Context, arg UpdateContactCompanyIDParams) error {
+	_, err := q.db.Exec(ctx, updateContactCompanyID, arg.ID, arg.UserID, arg.CompanyID)
+	return err
 }

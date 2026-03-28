@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { User, Building2, Mail, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Contact } from "@/hooks/use-contacts";
@@ -45,12 +46,23 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
     >
       {/* Header: Avatar + Name */}
       <div className="flex items-start gap-3">
-        <div
-          className="flex items-center justify-center w-10 h-10 rounded-full shrink-0"
-          style={{ backgroundColor: color }}
-        >
-          <span className="text-base font-bold text-white">{initial}</span>
-        </div>
+        {contact.avatar_url ? (
+          <Image
+            src={contact.avatar_url}
+            alt={contact.name}
+            width={40}
+            height={40}
+            unoptimized
+            className="w-10 h-10 rounded-full object-cover shrink-0"
+          />
+        ) : (
+          <div
+            className="flex items-center justify-center w-10 h-10 rounded-full shrink-0"
+            style={{ backgroundColor: color }}
+          >
+            <span className="text-base font-bold text-white">{initial}</span>
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <span className="text-sm font-semibold text-text-primary truncate block">
             {contact.name}
@@ -63,7 +75,7 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
         </div>
         {contact.status && (
           <span
-            className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${statusColors[contact.status] ?? statusColors.dormant}`}
+            className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 capitalize ${statusColors[contact.status] ?? statusColors.dormant}`}
           >
             {contact.status}
           </span>
@@ -89,7 +101,7 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
       {/* Footer */}
       <div className="flex items-center gap-3 text-xs text-text-muted mt-auto pt-1">
         {contact.source && (
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 capitalize">
             <User className="w-3.5 h-3.5" />
             {contact.source}
           </span>

@@ -1,6 +1,7 @@
 -- name: ListContacts :many
 SELECT ct.*,
-       c.name AS company_name
+       c.name AS company_name,
+       c.logo_url AS company_logo_url
 FROM contacts ct
 LEFT JOIN companies c ON c.id = ct.company_id
 WHERE ct.user_id = $1
@@ -40,7 +41,8 @@ WHERE ct.user_id = $1
 
 -- name: GetContact :one
 SELECT ct.*,
-       c.name AS company_name
+       c.name AS company_name,
+       c.logo_url AS company_logo_url
 FROM contacts ct
 LEFT JOIN companies c ON c.id = ct.company_id
 WHERE ct.id = $1 AND ct.user_id = $2;
@@ -60,10 +62,20 @@ UPDATE contacts SET
     role = COALESCE(sqlc.narg('role'), role),
     email = COALESCE(sqlc.narg('email'), email),
     linkedin_url = COALESCE(sqlc.narg('linkedin_url'), linkedin_url),
+    avatar_url = COALESCE(sqlc.narg('avatar_url'), avatar_url),
     source = COALESCE(sqlc.narg('source'), source),
     status = COALESCE(sqlc.narg('status'), status),
     notes = COALESCE(sqlc.narg('notes'), notes),
     last_contact = COALESCE(sqlc.narg('last_contact'), last_contact)
+WHERE id = $1 AND user_id = $2
+RETURNING *;
+
+-- name: UpdateContactCompanyID :exec
+UPDATE contacts SET company_id = sqlc.narg('company_id')
+WHERE id = $1 AND user_id = $2;
+
+-- name: UpdateContactAvatarURL :one
+UPDATE contacts SET avatar_url = sqlc.narg('avatar_url')
 WHERE id = $1 AND user_id = $2
 RETURNING *;
 

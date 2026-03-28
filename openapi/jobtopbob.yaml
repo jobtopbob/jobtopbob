@@ -710,6 +710,10 @@ components:
         company_name:
           type: string
           nullable: true
+        company_logo_url:
+          type: string
+          nullable: true
+          description: Company logo URL from storage
         name:
           type: string
         role:
@@ -719,6 +723,9 @@ components:
           type: string
           nullable: true
         linkedin_url:
+          type: string
+          nullable: true
+        avatar_url:
           type: string
           nullable: true
         source:
@@ -2420,6 +2427,77 @@ paths:
           description: Contact deleted
         "404":
           description: Contact not found
+
+  /api/v1/contacts/{id}/avatar:
+    post:
+      summary: Upload contact avatar
+      description: Upload an avatar image (max 5 MB, JPEG/PNG/WebP/GIF/SVG). Stores in RustFS and updates contact avatar_url.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Avatar uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        "400":
+          description: Invalid file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Contact not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Remove contact avatar
+      description: Removes the avatar from storage and clears the contact avatar_url.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Avatar removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        "404":
+          description: Contact not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/v1/tags:
     get:
