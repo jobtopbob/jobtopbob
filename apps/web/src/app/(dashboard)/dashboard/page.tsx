@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import Image from "next/image";
 import { ActionStrip } from "@/components/dashboard/action-strip";
 import { StageFunnel } from "@/components/dashboard/stage-funnel";
@@ -9,70 +8,23 @@ import { authClient } from "@/lib/auth-client";
 import { useStats } from "@/hooks/use-stats";
 import { Skeleton } from "@/components/ui/skeleton";
 
-function HeroMetrics() {
-  const { data: stats, isLoading: statsLoading } = useStats();
-
-  // Derive response rate from the stage funnel (server-side, covers all jobs).
-  // Stages at position > 1 (Screening, Interviewing, Offer, etc.) indicate a response.
-  const responseRate = useMemo(() => {
-    const funnel = stats?.stage_funnel;
-    if (!funnel || funnel.length === 0) return null;
-
-    const total = funnel.reduce((sum, s) => sum + (s.count ?? 0), 0);
-    if (total === 0) return null;
-
-    // Stages beyond position 1 ("Applied") mean the company responded
-    const responded = funnel
-      .filter((s) => s.position > 1)
-      .reduce((sum, s) => sum + (s.count ?? 0), 0);
-
-    return Math.round((responded / total) * 100);
-  }, [stats]);
-
-  const isLoading = statsLoading;
-
-  const byStatus = stats?.by_status ?? {};
-  const offerCount = byStatus["offer"] ?? byStatus["Offer"] ?? 0;
-
-  const metrics = [
-    { label: "Total Jobs", value: String(stats?.total_jobs ?? 0) },
-    { label: "Response Rate", value: responseRate != null ? `${responseRate}%` : "--" },
-    { label: "Offers", value: String(offerCount) },
-  ];
-
-  if (isLoading) {
-    return (
-      <div className="flex gap-8">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="flex flex-col gap-1">
-            <Skeleton className="h-8 w-12" />
-            <Skeleton className="h-3 w-16" />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex gap-8 sm:gap-10">
-      {metrics.map((m) => (
-        <div key={m.label} className="flex flex-col">
-          <span className="text-2xl sm:text-3xl font-bold text-text-primary tabular-nums tracking-tight">
-            {m.value}
-          </span>
-          <span className="text-xs text-text-muted mt-0.5">{m.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   const { data: session } = authClient.useSession();
+  const { data: stats, isLoading } = useStats();
   const firstName =
     session?.user?.name?.split(" ")[0] ??
     session?.user?.email?.split("@")[0] ??
     "there";
+
+  // Derive interviewing count from the stage funnel (consistent with the pipeline widget).
+  const funnel = stats?.stage_funnel ?? [];
+  const interviewingCount = funnel
+    .filter(
+      (s) =>
+        s.name?.toLowerCase() === "interviewing" ||
+        s.name?.toLowerCase() === "screening"
+    )
+    .reduce((sum, s) => sum + (s.count ?? 0), 0);
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -91,7 +43,33 @@ export default function DashboardPage() {
                 Welcome back, {firstName}. Here&apos;s your job search overview.
               </p>
             </div>
-            <HeroMetrics />
+
+            {/* Hero metrics */}
+            {isLoading ? (
+              <div className="flex gap-8">
+                <Skeleton className="h-8 w-12" />
+                <Skeleton className="h-8 w-12" />
+              </div>
+            ) : (
+              <div className="flex gap-8 sm:gap-10">
+                <div className="flex flex-col">
+                  <span className="text-2xl sm:text-3xl font-bold text-text-primary tabular-nums tracking-tight">
+                    {stats?.total_jobs ?? 0}
+                  </span>
+                  <span className="text-xs text-text-muted mt-0.5">
+                    Total Jobs
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl sm:text-3xl font-bold text-text-primary tabular-nums tracking-tight">
+                    {interviewingCount}
+                  </span>
+                  <span className="text-xs text-text-muted mt-0.5">
+                    Interviewing
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Hero illustration */}
@@ -107,7 +85,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Action Strip: Weekly Goal + Follow-ups */}
+        {/* Action Strip: Email Activity + Follow-ups */}
         <ActionStrip />
 
         {/* Pipeline Funnel */}

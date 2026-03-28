@@ -381,7 +381,7 @@ var demoJobs = []job{
 		Tags: []string{"TypeScript", "Senior"},
 	},
 	{
-		Title: "Frontend Engineer", CompanyName: "Figma", StageName: "Applied",
+		Title: "Frontend Engineer", CompanyName: "Figma", StageName: "Screening",
 		Source: "linkedin", Location: "New York, NY", LocationType: "onsite",
 		SalaryMin: 170000, SalaryMax: 230000, Interest: 4,
 		MonthOffset: -1, DayOfMonth: 25, AppliedMonthOffset: -1, AppliedDayOfMonth: 26,

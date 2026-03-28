@@ -48,7 +48,7 @@ const formSchema = z.object({
   title: z.string().min(1, "Job title is required"),
   companyId: z.string(),
   companyName: z.string(),
-  stageId: z.string(),
+  stageId: z.string().min(1, "Stage is required"),
   jobType: z.string(),
   jobLevel: z.string(),
   source: z.string(),
@@ -65,7 +65,7 @@ const formSchema = z.object({
   deadline: z.string(),
   appliedAt: z.string(),
   followUpAt: z.string(),
-  interest: z.string(),
+  interest: z.string().min(1, "Interest level is required"),
   jdRaw: z.string(),
 });
 
@@ -98,9 +98,9 @@ const defaultValues: FormValues = {
 
 // Step 0 fields validated when clicking "Next"
 const STEP_FIELDS: Record<number, (keyof FormValues)[]> = {
-  0: ["title"],
+  0: ["title", "stageId"],
   1: [],
-  2: [],
+  2: ["interest"],
 };
 
 const STEPS = [
@@ -154,7 +154,13 @@ export function AddJobSheet({ open, onOpenChange, stages }: AddJobSheetProps) {
   const isLastStep = currentStep === LAST_STEP;
 
   const titleValue = watch("title");
-  const canAdvance = currentStep === 0 ? (titleValue?.trim().length ?? 0) > 0 : true;
+  const stageIdValue = watch("stageId");
+  const interestValue = watch("interest");
+  const canAdvance = currentStep === 0
+    ? (titleValue?.trim().length ?? 0) > 0 && !!stageIdValue
+    : currentStep === 2
+      ? !!interestValue
+      : true;
 
   // Focus first input on step change
   useEffect(() => {
@@ -353,9 +359,11 @@ function StepBasics({ control, watch, setValue, stages }: {
       <Controller
         name="stageId"
         control={control}
-        render={({ field }) => (
-          <Field>
-            <FieldLabel>Stage</FieldLabel>
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid || undefined}>
+            <FieldLabel>
+              Stage <span className="text-brand-red">*</span>
+            </FieldLabel>
             <Select value={field.value} onValueChange={field.onChange}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select stage">
@@ -370,6 +378,7 @@ function StepBasics({ control, watch, setValue, stages }: {
                 ))}
               </SelectContent>
             </Select>
+            {fieldState.error && <FieldError errors={[fieldState.error]} />}
           </Field>
         )}
       />
@@ -517,8 +526,7 @@ function StepSourceLocation({ control }: { control: Control<FormValues> }) {
 }
 
 function StepDetails({ form }: { form: UseFormReturn<FormValues> }) {
-  const { control, watch, setValue } = form;
-  const interest = watch("interest");
+  const { control } = form;
 
   return (
     <div className="space-y-5">
@@ -634,25 +642,34 @@ function StepDetails({ form }: { form: UseFormReturn<FormValues> }) {
 
       <Separator />
 
-      <Field>
-        <FieldLabel>Interest</FieldLabel>
-        <div className="flex gap-1.5">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setValue("interest", String(n))}
-              className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${
-                parseInt(interest || "0") >= n
-                  ? "bg-brand text-white"
-                  : "bg-surface-hover text-text-muted hover:bg-surface-active"
-              }`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </Field>
+      <Controller
+        name="interest"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid || undefined}>
+            <FieldLabel>
+              Interest <span className="text-brand-red">*</span>
+            </FieldLabel>
+            <div className="flex gap-1.5">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => field.onChange(String(n))}
+                  className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${
+                    parseInt(field.value || "0") >= n
+                      ? "bg-brand text-white"
+                      : "bg-surface-hover text-text-muted hover:bg-surface-active"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            {fieldState.error && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
 
       <Controller
         name="jdRaw"
