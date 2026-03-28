@@ -45,8 +45,6 @@ const SORT_OPTIONS = [
 const TYPE_OPTIONS = [
   { value: "link", label: "Link" },
   { value: "note", label: "Note" },
-  { value: "file", label: "File" },
-  { value: "template", label: "Template" },
 ];
 
 const CATEGORY_OPTIONS = [
@@ -260,7 +258,7 @@ export default function ResourcesPage() {
             {filters.types.map((t) => (
               <FilterPill
                 key={`type-${t}`}
-                label={`Type: ${t.charAt(0).toUpperCase() + t.slice(1)}`}
+                label={`Type: ${TYPE_OPTIONS.find((o) => o.value === t)?.label ?? t}`}
                 onRemove={() =>
                   updateFilter({
                     types: filters.types.filter((x) => x !== t),
@@ -271,7 +269,7 @@ export default function ResourcesPage() {
             {filters.categories.map((c) => (
               <FilterPill
                 key={`cat-${c}`}
-                label={`Category: ${c.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}`}
+                label={`Category: ${CATEGORY_OPTIONS.find((o) => o.value === c)?.label ?? c}`}
                 onRemove={() =>
                   updateFilter({
                     categories: filters.categories.filter((x) => x !== c),

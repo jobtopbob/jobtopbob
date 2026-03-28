@@ -26,7 +26,6 @@ import {
   Pin,
   Link2,
   StickyNote,
-  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -39,8 +38,6 @@ import {
 const typeIcons: Record<string, typeof Link2> = {
   link: Link2,
   note: StickyNote,
-  file: FileText,
-  template: FileText,
 };
 
 interface ResourceDetailSheetProps {
@@ -86,12 +83,12 @@ export function ResourceDetailSheet({
                 {resource.title}
               </SheetTitle>
               <div className="flex items-center gap-1.5 mt-1">
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-[10px] capitalize">
                   {resource.type}
                 </Badge>
                 {resource.category && (
                   <Badge variant="outline" className="text-[10px]">
-                    {resource.category}
+                    {CATEGORY_OPTIONS.find((o) => o.value === resource.category)?.label ?? resource.category}
                   </Badge>
                 )}
               </div>
@@ -204,18 +201,16 @@ export function ResourceDetailSheet({
 const TYPE_OPTIONS = [
   { value: "link", label: "Link" },
   { value: "note", label: "Note" },
-  { value: "file", label: "File" },
-  { value: "template", label: "Template" },
 ];
 
 const CATEGORY_OPTIONS = [
-  "interview-prep",
-  "salary-negotiation",
-  "resume-tips",
-  "networking",
-  "career-development",
-  "company-research",
-  "other",
+  { value: "interview-prep", label: "Interview Prep" },
+  { value: "salary-negotiation", label: "Salary Negotiation" },
+  { value: "resume-tips", label: "Resume Tips" },
+  { value: "networking", label: "Networking" },
+  { value: "career-development", label: "Career Development" },
+  { value: "company-research", label: "Company Research" },
+  { value: "other", label: "Other" },
 ];
 
 interface EditFormProps {
@@ -263,6 +258,7 @@ function EditForm({ resource, onSave, onCancel, isPending }: EditFormProps) {
           <Select
             value={form.type}
             onValueChange={(v) => setForm({ ...form, type: v ?? "link" })}
+            items={TYPE_OPTIONS}
           >
             <SelectTrigger>
               <SelectValue />
@@ -281,19 +277,17 @@ function EditForm({ resource, onSave, onCancel, isPending }: EditFormProps) {
             Category
           </label>
           <Select
-            value={form.category || undefined}
+            value={form.category}
             onValueChange={(v) => setForm({ ...form, category: v ?? "" })}
+            items={CATEGORY_OPTIONS}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
             <SelectContent>
-              {CATEGORY_OPTIONS.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat
-                    .split("-")
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(" ")}
+              {CATEGORY_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
                 </SelectItem>
               ))}
             </SelectContent>

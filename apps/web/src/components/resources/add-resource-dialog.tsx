@@ -38,18 +38,16 @@ const initialForm = {
 const TYPE_OPTIONS = [
   { value: "link", label: "Link" },
   { value: "note", label: "Note" },
-  { value: "file", label: "File" },
-  { value: "template", label: "Template" },
 ];
 
 const CATEGORY_OPTIONS = [
-  "interview-prep",
-  "salary-negotiation",
-  "resume-tips",
-  "networking",
-  "career-development",
-  "company-research",
-  "other",
+  { value: "interview-prep", label: "Interview Prep" },
+  { value: "salary-negotiation", label: "Salary Negotiation" },
+  { value: "resume-tips", label: "Resume Tips" },
+  { value: "networking", label: "Networking" },
+  { value: "career-development", label: "Career Development" },
+  { value: "company-research", label: "Company Research" },
+  { value: "other", label: "Other" },
 ];
 
 export function AddResourceDialog({
@@ -114,6 +112,7 @@ export function AddResourceDialog({
               <Select
                 value={form.type}
                 onValueChange={(v) => setForm({ ...form, type: v ?? "link" })}
+                items={TYPE_OPTIONS}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -132,21 +131,19 @@ export function AddResourceDialog({
                 Category
               </label>
               <Select
-                value={form.category || undefined}
+                value={form.category}
                 onValueChange={(v) =>
                   setForm({ ...form, category: v ?? "" })
                 }
+                items={CATEGORY_OPTIONS}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORY_OPTIONS.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat
-                        .split("-")
-                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                        .join(" ")}
+                  {CATEGORY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -178,7 +175,7 @@ export function AddResourceDialog({
             />
           </div>
 
-          {(form.type === "note" || form.type === "template") && (
+          {form.type === "note" && (
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-text-muted">
                 Content

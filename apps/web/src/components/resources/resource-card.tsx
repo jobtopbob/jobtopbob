@@ -1,14 +1,22 @@
 "use client";
 
-import { Link2, FileText, StickyNote, Pin, ExternalLink } from "lucide-react";
+import { Link2, StickyNote, Pin, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Resource } from "@/hooks/use-resources";
 
 const typeIcons: Record<string, typeof Link2> = {
   link: Link2,
   note: StickyNote,
-  file: FileText,
-  template: FileText,
+};
+
+const categoryLabels: Record<string, string> = {
+  "interview-prep": "Interview Prep",
+  "salary-negotiation": "Salary Negotiation",
+  "resume-tips": "Resume Tips",
+  networking: "Networking",
+  "career-development": "Career Development",
+  "company-research": "Company Research",
+  other: "Other",
 };
 
 interface ResourceCardProps {
@@ -25,22 +33,22 @@ export function ResourceCard({
   const Icon = typeIcons[resource.type] ?? Link2;
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-xl bg-card border border-border-subtle p-4 transition-colors hover:border-border-subtle/80 hover:bg-card/80">
+    <div
+      onClick={onClick}
+      className="flex flex-col gap-2.5 rounded-xl bg-card border border-border-subtle p-4 transition-colors hover:border-border-subtle/80 hover:bg-card/80 cursor-pointer"
+    >
       {/* Header */}
       <div className="flex items-start gap-3">
         <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-surface shrink-0">
           <Icon className="w-4 h-4 text-text-muted" />
         </div>
         <div className="flex-1 min-w-0">
-          <button
-            onClick={onClick}
-            className="text-sm font-semibold text-text-primary truncate block text-left hover:text-brand transition-colors cursor-pointer"
-          >
+          <span className="text-sm font-semibold text-text-primary truncate block text-left">
             {resource.title}
-          </button>
+          </span>
           {resource.category && (
             <Badge variant="secondary" className="text-[10px] mt-1">
-              {resource.category}
+              {categoryLabels[resource.category] ?? resource.category}
             </Badge>
           )}
         </div>
