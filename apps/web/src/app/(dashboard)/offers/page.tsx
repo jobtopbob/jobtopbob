@@ -55,12 +55,12 @@ export default function OffersPage() {
 
   return (
     <div className="flex h-full bg-background">
-      <div className="flex-1 flex flex-col gap-5 p-7 pt-7 overflow-y-auto">
+      <div className="flex-1 flex flex-col gap-5 p-4 sm:p-7 overflow-y-auto">
         {/* Page Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1
-              className="text-4xl font-bold text-text-primary tracking-tight"
+              className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight"
               style={{ letterSpacing: -1 }}
             >
               Offers
@@ -69,7 +69,7 @@ export default function OffersPage() {
               {isLoading ? "Loading..." : `${total} offer${total !== 1 ? "s" : ""} received`}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* View toggle */}
             <div className="flex items-center rounded-full border border-border-subtle overflow-hidden">
               <button
