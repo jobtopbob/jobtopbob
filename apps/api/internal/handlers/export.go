@@ -33,10 +33,9 @@ func ExportJobs() gin.HandlerFunc {
 			c.Header("Content-Type", "text/csv")
 			c.Header("Content-Disposition", "attachment; filename=\"jobs.csv\"")
 			w := csv.NewWriter(c.Writer)
-			_ = w.Write([]string{"id", "title", "company", "status", "stage", "location", "location_type", "source", "salary_min", "salary_max", "salary_offered", "salary_currency", "applied_at", "created_at"})
+			_ = w.Write([]string{"title", "company", "status", "stage", "location", "location_type", "source", "salary_min", "salary_max", "salary_offered", "salary_currency", "applied_at", "created_at"})
 			for _, j := range result.Jobs {
 				_ = w.Write([]string{
-					uuidStr(j.ID),
 					j.Title,
 					pgStr(j.CompanyName),
 					pgStr(j.Status),
@@ -58,7 +57,26 @@ func ExportJobs() gin.HandlerFunc {
 
 		c.Header("Content-Type", "application/json")
 		c.Header("Content-Disposition", "attachment; filename=\"jobs.json\"")
-		_ = json.NewEncoder(c.Writer).Encode(result.Jobs)
+		rows := make([]map[string]any, len(result.Jobs))
+		for i, j := range result.Jobs {
+			rows[i] = map[string]any{
+				"title":         j.Title,
+				"company":       pgStr(j.CompanyName),
+				"status":        pgStr(j.Status),
+				"stage":         pgStr(j.StageName),
+				"location":      pgStr(j.Location),
+				"location_type": pgStr(j.LocationType),
+				"source":        pgStr(j.Source),
+				"salary_min":    j.SalaryMin,
+				"salary_max":    j.SalaryMax,
+				"salary_offered": j.SalaryOffered,
+				"salary_currency": pgStr(j.SalaryCurrency),
+				"applied_at":    j.AppliedAt,
+				"created_at":    j.CreatedAt,
+				"tags":          j.Tags,
+			}
+		}
+		_ = json.NewEncoder(c.Writer).Encode(rows)
 	}
 }
 
@@ -82,10 +100,9 @@ func ExportCompanies() gin.HandlerFunc {
 			c.Header("Content-Type", "text/csv")
 			c.Header("Content-Disposition", "attachment; filename=\"companies.csv\"")
 			w := csv.NewWriter(c.Writer)
-			_ = w.Write([]string{"id", "name", "domain", "website", "industry", "size", "location", "employee_count", "created_at"})
+			_ = w.Write([]string{"name", "domain", "website", "industry", "size", "location", "employee_count", "created_at"})
 			for _, co := range result.Data {
 				_ = w.Write([]string{
-					uuidStr(co.ID),
 					co.Name,
 					pgStr(co.Domain),
 					pgStr(co.Website),
@@ -102,7 +119,20 @@ func ExportCompanies() gin.HandlerFunc {
 
 		c.Header("Content-Type", "application/json")
 		c.Header("Content-Disposition", "attachment; filename=\"companies.json\"")
-		_ = json.NewEncoder(c.Writer).Encode(result.Data)
+		rows := make([]map[string]any, len(result.Data))
+		for i, co := range result.Data {
+			rows[i] = map[string]any{
+				"name":           co.Name,
+				"domain":         pgStr(co.Domain),
+				"website":        pgStr(co.Website),
+				"industry":       pgStr(co.Industry),
+				"size":           pgStr(co.Size),
+				"location":       pgStr(co.Location),
+				"employee_count": co.EmployeeCount,
+				"created_at":     co.CreatedAt,
+			}
+		}
+		_ = json.NewEncoder(c.Writer).Encode(rows)
 	}
 }
 
@@ -126,10 +156,9 @@ func ExportContacts() gin.HandlerFunc {
 			c.Header("Content-Type", "text/csv")
 			c.Header("Content-Disposition", "attachment; filename=\"contacts.csv\"")
 			w := csv.NewWriter(c.Writer)
-			_ = w.Write([]string{"id", "name", "role", "email", "company", "status", "source", "linkedin_url", "last_contact", "created_at"})
+			_ = w.Write([]string{"name", "role", "email", "company", "status", "source", "linkedin_url", "last_contact", "created_at"})
 			for _, ct := range result.Data {
 				_ = w.Write([]string{
-					uuidStr(ct.ID),
 					ct.Name,
 					pgStr(ct.Role),
 					pgStr(ct.Email),
@@ -147,7 +176,21 @@ func ExportContacts() gin.HandlerFunc {
 
 		c.Header("Content-Type", "application/json")
 		c.Header("Content-Disposition", "attachment; filename=\"contacts.json\"")
-		_ = json.NewEncoder(c.Writer).Encode(result.Data)
+		rows := make([]map[string]any, len(result.Data))
+		for i, ct := range result.Data {
+			rows[i] = map[string]any{
+				"name":         ct.Name,
+				"role":         pgStr(ct.Role),
+				"email":        pgStr(ct.Email),
+				"company":      pgStr(ct.CompanyName),
+				"status":       pgStr(ct.Status),
+				"source":       pgStr(ct.Source),
+				"linkedin_url": pgStr(ct.LinkedinUrl),
+				"last_contact": ct.LastContact,
+				"created_at":   ct.CreatedAt,
+			}
+		}
+		_ = json.NewEncoder(c.Writer).Encode(rows)
 	}
 }
 
@@ -172,7 +215,7 @@ func ExportOffers() gin.HandlerFunc {
 			c.Header("Content-Disposition", "attachment; filename=\"offers.csv\"")
 			w := csv.NewWriter(c.Writer)
 			_ = w.Write([]string{
-				"id", "job_title", "company", "base_salary", "currency", "salary_interval",
+				"job_title", "company", "base_salary", "currency", "salary_interval",
 				"sign_on_bonus", "annual_bonus", "equity", "equity_value", "equity_schedule",
 				"bonus", "pto_days", "remote_policy", "retirement_match", "relocation",
 				"work_location", "deadline", "accepted", "created_at",
@@ -187,7 +230,6 @@ func ExportOffers() gin.HandlerFunc {
 					}
 				}
 				_ = w.Write([]string{
-					uuidStr(o.ID),
 					pgStr(o.JobTitle),
 					pgStr(o.CompanyName),
 					pgIntStr(o.BaseSalary),
@@ -215,16 +257,43 @@ func ExportOffers() gin.HandlerFunc {
 
 		c.Header("Content-Type", "application/json")
 		c.Header("Content-Disposition", "attachment; filename=\"offers.json\"")
-		_ = json.NewEncoder(c.Writer).Encode(result.Data)
+		rows := make([]map[string]any, len(result.Data))
+		for i, o := range result.Data {
+			accepted := ""
+			if o.Accepted.Valid {
+				if o.Accepted.Bool {
+					accepted = "yes"
+				} else {
+					accepted = "no"
+				}
+			}
+			rows[i] = map[string]any{
+				"job_title":        pgStr(o.JobTitle),
+				"company":          pgStr(o.CompanyName),
+				"base_salary":      o.BaseSalary,
+				"currency":         pgStr(o.Currency),
+				"salary_interval":  pgStr(o.SalaryInterval),
+				"sign_on_bonus":    o.SignOnBonus,
+				"annual_bonus":     pgStr(o.AnnualBonus),
+				"equity":           pgStr(o.Equity),
+				"equity_value":     o.EquityValue,
+				"equity_schedule":  pgStr(o.EquitySchedule),
+				"bonus":            pgStr(o.Bonus),
+				"pto_days":         o.PtoDays,
+				"remote_policy":    pgStr(o.RemotePolicy),
+				"retirement_match": pgStr(o.RetirementMatch),
+				"relocation":       pgStr(o.Relocation),
+				"work_location":    pgStr(o.WorkLocation),
+				"deadline":         o.Deadline,
+				"accepted":         accepted,
+				"created_at":       o.CreatedAt,
+			}
+		}
+		_ = json.NewEncoder(c.Writer).Encode(rows)
 	}
 }
 
 // --- CSV helper functions ---
-
-func uuidStr(u pgtype.UUID) string {
-	b := u.Bytes
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
-}
 
 func pgStr(t pgtype.Text) string {
 	if !t.Valid {

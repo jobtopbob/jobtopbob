@@ -212,7 +212,9 @@ You pay your provider directly — JobTopBob never charges for AI usage. The clo
 
 ## Licence
 
-AGPL-3.0. Self-host, fork, and modify freely. Anyone hosting a modified version must publish their source code under the same licence. Commercial licence available for institutions with procurement constraints.
+AGPL-3.0. Self-host, fork, and modify freely. 
+
+Anyone hosting a modified version must publish their source code under the same licence. Commercial licence available for institutions with procurement constraints.
 
 ---
 
@@ -236,7 +238,7 @@ All contributions welcome — features, templates, extractors, translations, and
 
 ---
 
-*Built on the shoulders of Reactive Resume, job-ops, and the open-source job-search community.*
+*Built on the shoulders of Reactive Resume, and the open-source job-search community.*
 
 ## Star History
 
