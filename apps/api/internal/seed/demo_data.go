@@ -120,6 +120,122 @@ var demoTags = []struct {
 	{"FAANG", "#EF4444"},
 }
 
+type contact struct {
+	Name        string
+	CompanyName string // matches company in demoCompanies
+	Role        string
+	Email       string
+	LinkedInURL string
+	Source      string
+	Status      string
+	Notes       string
+	DaysAgo     int // last_contact = now - DaysAgo
+}
+
+type resource struct {
+	Title       string
+	URL         string
+	Type        string // "link", "note", "file"
+	Category    string
+	Description string
+	Content     string
+	Pinned      bool
+}
+
+var demoContacts = []contact{
+	{
+		Name: "Sarah Chen", CompanyName: "Stripe", Role: "Engineering Manager",
+		Email: "sarah.chen@stripe.com", LinkedInURL: "https://linkedin.com/in/sarahchen",
+		Source: "referral", Status: "active",
+		Notes: "Met at StrangeLoop 2025. Open to referring for senior roles.", DaysAgo: 3,
+	},
+	{
+		Name: "James Rodriguez", CompanyName: "Vercel", Role: "Staff Engineer",
+		Email: "james.r@vercel.com", LinkedInURL: "https://linkedin.com/in/jamesrodriguez",
+		Source: "linkedin", Status: "active",
+		Notes: "DM'd on Twitter about the Staff Frontend role. Very responsive.", DaysAgo: 7,
+	},
+	{
+		Name: "Emily Park", CompanyName: "Airbnb", Role: "Senior Recruiter",
+		Email: "emily.park@airbnb.com", LinkedInURL: "https://linkedin.com/in/emilypark",
+		Source: "linkedin", Status: "active",
+		Notes: "Reached out about Staff SWE position. Scheduled phone screen.", DaysAgo: 1,
+	},
+	{
+		Name: "Michael Torres", CompanyName: "Figma", Role: "Tech Lead",
+		Email: "m.torres@figma.com", LinkedInURL: "https://linkedin.com/in/michaeltorres",
+		Source: "referral", Status: "active",
+		Notes: "Former coworker from Acme Corp. Can provide internal referral.", DaysAgo: 14,
+	},
+	{
+		Name: "Priya Sharma", CompanyName: "GitHub", Role: "Director of Engineering",
+		Email: "priya.sharma@github.com", LinkedInURL: "https://linkedin.com/in/priyasharma",
+		Source: "conference", Status: "active",
+		Notes: "Connected at ReactConf. Mentioned upcoming senior roles on her team.", DaysAgo: 21,
+	},
+	{
+		Name: "Alex Kim", CompanyName: "Linear", Role: "Founding Engineer",
+		Email: "alex@linear.app", LinkedInURL: "https://linkedin.com/in/alexkim",
+		Source: "twitter", Status: "active",
+		Notes: "Engaged with their open-source work. Warm intro possible.", DaysAgo: 10,
+	},
+	{
+		Name: "Rachel Green", CompanyName: "HashiCorp", Role: "HR Business Partner",
+		Email: "rachel.green@hashicorp.com", LinkedInURL: "https://linkedin.com/in/rachelgreen",
+		Source: "linkedin", Status: "replied",
+		Notes: "Handling my offer negotiation. Very professional and transparent.", DaysAgo: 2,
+	},
+	{
+		Name: "David Liu", CompanyName: "Atlassian", Role: "VP of Engineering",
+		Email: "david.liu@atlassian.com", LinkedInURL: "https://linkedin.com/in/davidliu",
+		Source: "referral", Status: "active",
+		Notes: "Referred by a mutual friend. Looking for EM candidates for NY office.", DaysAgo: 5,
+	},
+}
+
+var demoResources = []resource{
+	{
+		Title: "System Design Interview Guide", URL: "https://github.com/donnemartin/system-design-primer",
+		Type: "link", Category: "Interview Prep", Pinned: true,
+		Description: "Comprehensive system design interview prep with real-world examples",
+	},
+	{
+		Title: "Negotiation Tips from levels.fyi", URL: "https://www.levels.fyi/blog/salary-negotiation-tips.html",
+		Type: "link", Category: "Negotiation", Pinned: true,
+		Description: "Data-driven salary negotiation strategies for tech roles",
+	},
+	{
+		Title: "My STAR Stories", Type: "note", Category: "Interview Prep", Pinned: true,
+		Description: "Behavioral interview answers using the STAR format",
+		Content: "Leadership: Led migration of monolith to microservices, reducing deploy time by 80%.\n\nConflict: Disagreed with PM on scope — proposed phased rollout that satisfied both eng and product.\n\nFailure: Pushed a bad config change to prod. Built automated rollback system afterward.",
+	},
+	{
+		Title: "Blind — TC Negotiation Thread", URL: "https://www.teamblind.com/post/Negotiation-tips",
+		Type: "link", Category: "Negotiation",
+		Description: "Community thread with real negotiation outcomes at FAANG companies",
+	},
+	{
+		Title: "Neetcode 150", URL: "https://neetcode.io/practice",
+		Type: "link", Category: "Interview Prep", Pinned: false,
+		Description: "Curated list of LeetCode problems organized by pattern",
+	},
+	{
+		Title: "Company Research Template", Type: "note", Category: "Research",
+		Description: "Template for researching companies before interviews",
+		Content: "1. Mission & Values\n2. Recent funding / IPO status\n3. Engineering blog posts\n4. Glassdoor reviews (eng team)\n5. Tech stack & open source contributions\n6. Recent product launches\n7. Key competitors",
+	},
+	{
+		Title: "Questions to Ask Interviewers", Type: "note", Category: "Interview Prep",
+		Description: "Strong questions to ask at the end of interviews",
+		Content: "- What does the onboarding process look like for new engineers?\n- How do you measure success for this role in the first 6 months?\n- What's the biggest technical challenge the team is facing right now?\n- How does the team handle technical debt vs feature work?\n- What does the promotion process look like?",
+	},
+	{
+		Title: "Remote Job Boards List", URL: "https://github.com/remoteintech/remote-jobs",
+		Type: "link", Category: "Job Search",
+		Description: "Curated list of companies with fully remote positions",
+	},
+}
+
 var demoJobs = []job{
 	// --- 3 months ago: closed applications ---
 	{
@@ -527,6 +643,44 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		}
 	}
 
+	// 5. Insert contacts
+	for _, c := range demoContacts {
+		var companyID *string
+		if c.CompanyName != "" {
+			if id, ok := companyIDs[c.CompanyName]; ok {
+				companyID = &id
+			}
+		}
+
+		var lastContact *time.Time
+		if c.DaysAgo > 0 {
+			t := now.Add(-time.Duration(c.DaysAgo) * 24 * time.Hour)
+			lastContact = &t
+		}
+
+		_, err = tx.Exec(ctx, `
+			INSERT INTO contacts (user_id, company_id, name, role, email, linkedin_url, source, status, notes, last_contact, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)`,
+			demoUserID, companyID, c.Name, nilIfEmpty(c.Role), nilIfEmpty(c.Email),
+			nilIfEmpty(c.LinkedInURL), nilIfEmpty(c.Source), nilIfEmpty(c.Status),
+			nilIfEmpty(c.Notes), lastContact, now)
+		if err != nil {
+			return fmt.Errorf("insert contact %s: %w", c.Name, err)
+		}
+	}
+
+	// 6. Insert resources
+	for _, r := range demoResources {
+		_, err = tx.Exec(ctx, `
+			INSERT INTO resources (user_id, title, url, type, category, description, content, pinned, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)`,
+			demoUserID, r.Title, nilIfEmpty(r.URL), r.Type, nilIfEmpty(r.Category),
+			nilIfEmpty(r.Description), nilIfEmpty(r.Content), r.Pinned, now)
+		if err != nil {
+			return fmt.Errorf("insert resource %s: %w", r.Title, err)
+		}
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit transaction: %w", err)
 	}
@@ -537,6 +691,8 @@ func SeedDemoData(ctx context.Context, pool *pgxpool.Pool, store *storage.Client
 		"companies", len(demoCompanies),
 		"jobs", len(demoJobs),
 		"tags", len(demoTags),
+		"contacts", len(demoContacts),
+		"resources", len(demoResources),
 	)
 	return nil
 }
