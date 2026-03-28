@@ -3,6 +3,7 @@
 import Image from "next/image";
 import {
   DollarSign,
+  Banknote,
   Calendar,
   Check,
   X,
@@ -109,7 +110,7 @@ export function OfferCard({ offer, onClick }: OfferCardProps) {
       {salary != null ? (
         <div>
           <div className="flex items-center gap-1.5">
-            <DollarSign className="w-4 h-4 text-brand-green" />
+            <Banknote className="w-4 h-4 text-brand-green" />
             <span className="text-lg font-bold text-text-primary">
               {formatSalaryWithInterval(salary, { currency, interval: offer.salary_interval })}
             </span>

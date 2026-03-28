@@ -19,6 +19,7 @@ import {
 import Image from "next/image";
 import {
   DollarSign,
+  Banknote,
   Calendar,
   Pencil,
   Trash2,
@@ -114,7 +115,7 @@ export function OfferDetailSheet({ offerId, onClose }: OfferDetailSheetProps) {
           {offer.base_salary != null && (
             <div>
               <div className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-brand-green" />
+                <Banknote className="w-5 h-5 text-brand-green" />
                 <span className="text-2xl font-bold text-text-primary">
                   {formatSalaryWithInterval(offer.base_salary, {
                     currency,
