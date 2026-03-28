@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useDraggable } from "@dnd-kit/react";
 import type { Job } from "@/hooks/use-jobs";
 import type { Tag } from "@/hooks/use-tags";
+import { formatSalaryRange } from "@/lib/currency";
 
 interface JobCardProps {
   job: Job;
@@ -29,38 +30,6 @@ export function formatRelativeDate(dateStr: string | null | undefined): {
   return { text: `${Math.floor(diffDays / 365)}y`, isToday: false };
 }
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: "$",
-  EUR: "€",
-  GBP: "£",
-  CAD: "C$",
-  AUD: "A$",
-};
-
-export function formatSalary(
-  min: number | null | undefined,
-  max: number | null | undefined,
-  interval?: string | null | undefined,
-  currency?: string | null | undefined
-): string | null {
-  if (!min && !max) return null;
-  const sym = CURRENCY_SYMBOLS[currency ?? "USD"] ?? currency ?? "$";
-  const fmt = (n: number) => {
-    if (n >= 1000) return `${sym}${Math.round(n / 1000)}k`;
-    return `${sym}${n}`;
-  };
-  let range: string;
-  if (min && max) range = `${fmt(min)}-${fmt(max)}`;
-  else if (min) range = `${fmt(min)}+`;
-  else if (max) range = `up to ${fmt(max)}`;
-  else return null;
-
-  if (interval && interval !== "annual") {
-    const suffix = interval === "hourly" ? "/hr" : "/mo";
-    return `${range}${suffix}`;
-  }
-  return range;
-}
 
 export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
   const { ref, isDragging } = useDraggable({
@@ -69,7 +38,7 @@ export function JobCard({ job, onClick, isClosedColumn }: JobCardProps) {
   });
 
   const date = formatRelativeDate(job.created_at);
-  const salary = formatSalary(job.salary_min, job.salary_max, job.salary_interval, job.salary_currency);
+  const salary = formatSalaryRange(job.salary_min, job.salary_max, { currency: job.salary_currency, interval: job.salary_interval, compact: true });
   const tags = (job.tags ?? []) as Tag[];
   const displayTags = tags.slice(0, 3);
 

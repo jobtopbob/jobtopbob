@@ -2279,6 +2279,18 @@ paths:
                 $ref: "#/components/schemas/Offer"
         "404":
           description: Offer not found
+    delete:
+      summary: Delete an offer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Offer deleted
+        "404":
+          description: Offer not found
 
   /api/v1/contacts:
     get:

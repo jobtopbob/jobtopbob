@@ -112,6 +112,7 @@ func New(cfg Config) *gin.Engine {
 			offers.POST("", handlers.CreateOffer())
 			offers.GET("/:id", handlers.GetOffer())
 			offers.PUT("/:id", handlers.UpdateOffer())
+			offers.DELETE("/:id", handlers.DeleteOffer())
 		}
 
 		// Resources

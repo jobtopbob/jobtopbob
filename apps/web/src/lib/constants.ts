@@ -13,13 +13,6 @@ export const LOCATION_TYPES = [
   { value: "onsite", label: "Onsite" },
 ] as const;
 
-export const CURRENCIES = [
-  { value: "USD", label: "USD" },
-  { value: "EUR", label: "EUR" },
-  { value: "GBP", label: "GBP" },
-  { value: "CAD", label: "CAD" },
-  { value: "AUD", label: "AUD" },
-] as const;
 
 export const JOB_TYPES = [
   { value: "full_time", label: "Full-time" },

@@ -12,7 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Job } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
-import { formatSalary } from "./job-card";
+import { formatSalaryRange } from "@/lib/currency";
 import { PaginationControls } from "./pagination-controls";
 import { StageIcon } from "./stage-icons";
 import { JOB_TYPES, JOB_LEVELS } from "@/lib/constants";
@@ -196,7 +196,7 @@ export function ApplicationsTable({
           {jobs.map((job) => {
             const stage = job.stage_id ? stageMap.get(job.stage_id) : undefined;
             const pillStyle = getStagePillStyle(stage);
-            const salary = formatSalary(job.salary_min, job.salary_max, job.salary_interval, job.salary_currency);
+            const salary = formatSalaryRange(job.salary_min, job.salary_max, { currency: job.salary_currency, interval: job.salary_interval, compact: true });
             const appliedDate = formatDate(job.applied_at);
             const addedDate = formatDate(job.created_at);
             const deadline = formatDeadline(job.deadline);

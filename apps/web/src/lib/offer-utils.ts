@@ -53,27 +53,6 @@ export function calculateTotalComp(offer: Offer): number | null {
   return Math.round(annualBase + signOn + annualBonus + equityPerYear);
 }
 
-/** Format salary with currency symbol and interval suffix. */
-export function formatSalaryWithInterval(
-  salary: number,
-  currency?: string | null,
-  interval?: string | null
-): string {
-  const sym = (currency ?? "USD") === "USD" ? "$" : (currency ?? "") + " ";
-  const suffix =
-    interval === "hourly" ? "/hr" : interval === "monthly" ? "/mo" : "/yr";
-  return `${sym}${salary.toLocaleString()}${suffix}`;
-}
-
-/** Format a currency amount with symbol. */
-export function formatCurrency(
-  amount: number | null | undefined,
-  currency?: string | null
-): string {
-  if (amount == null) return "—";
-  const sym = (currency ?? "USD") === "USD" ? "$" : (currency ?? "") + " ";
-  return `${sym}${amount.toLocaleString()}`;
-}
 
 /** Human-readable label for remote policy. */
 export function remotePolicyLabel(

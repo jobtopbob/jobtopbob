@@ -40,7 +40,9 @@ import { InlineEditField } from "./inline-edit-field";
 import { CompanySelector } from "@/components/companies/company-selector";
 import { StageIcon } from "./stage-icons";
 import { SectionIcon, type SectionIconName } from "./section-icons";
-import { SOURCES, LOCATION_TYPES, CURRENCIES, JOB_TYPES, JOB_LEVELS, SALARY_INTERVALS } from "@/lib/constants";
+import { SOURCES, LOCATION_TYPES, JOB_TYPES, JOB_LEVELS, SALARY_INTERVALS } from "@/lib/constants";
+import { CURRENCIES, currencyLabel } from "@/lib/currencies";
+import { formatCurrency } from "@/lib/currency";
 import { toast } from "sonner";
 import {
   MapPin,
@@ -597,7 +599,7 @@ function DetailsTab({
             label="Currency"
             value={job.salary_currency}
             type="select"
-            options={CURRENCIES}
+            options={CURRENCIES.map((c) => ({ value: c.code, label: `${c.flag} ${c.code}` }))}
             placeholder="USD"
             onSave={(v) => onUpdate("salary_currency", v)}
           />
@@ -1057,19 +1059,19 @@ const FIELD_META: Record<string, {
     label: "Salary Min",
     format: (v) => {
       const n = Number(v);
-      return isNaN(n) ? v : `$${n.toLocaleString()}`;
+      return isNaN(n) ? v : formatCurrency(n);
     },
   },
   salary_max: {
     label: "Salary Max",
     format: (v) => {
       const n = Number(v);
-      return isNaN(n) ? v : `$${n.toLocaleString()}`;
+      return isNaN(n) ? v : formatCurrency(n);
     },
   },
   salary_currency: {
     label: "Currency",
-    format: (v) => CURRENCIES.find((o) => o.value === v)?.label ?? v,
+    format: (v) => currencyLabel(v),
   },
   salary_interval: {
     label: "Pay Interval",

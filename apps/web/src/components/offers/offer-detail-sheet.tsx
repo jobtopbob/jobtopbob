@@ -21,6 +21,7 @@ import {
   DollarSign,
   Calendar,
   Pencil,
+  Trash2,
   Check,
   X,
   TrendingUp,
@@ -38,14 +39,15 @@ import {
   Building2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useOffer, useUpdateOffer } from "@/hooks/use-offers";
+import { useOffer, useUpdateOffer, useDeleteOffer } from "@/hooks/use-offers";
 import {
   calculateTotalComp,
-  formatSalaryWithInterval,
-  formatCurrency,
   remotePolicyLabel,
   intervalLabel,
 } from "@/lib/offer-utils";
+import { formatSalaryWithInterval, formatCurrency } from "@/lib/currency";
+import { CurrencyCombobox } from "@/components/ui/currency-combobox";
+import { currencyLabel } from "@/lib/currencies";
 
 interface OfferDetailSheetProps {
   offerId: string | null;
@@ -55,7 +57,20 @@ interface OfferDetailSheetProps {
 export function OfferDetailSheet({ offerId, onClose }: OfferDetailSheetProps) {
   const { data: offer } = useOffer(offerId ?? undefined);
   const updateOffer = useUpdateOffer();
+  const deleteOffer = useDeleteOffer();
   const [editing, setEditing] = useState(false);
+
+  function handleDelete() {
+    if (!offerId) return;
+    if (!window.confirm("Are you sure you want to delete this offer? This cannot be undone.")) return;
+    deleteOffer.mutate(offerId, {
+      onSuccess: () => {
+        toast.success("Offer deleted");
+        onClose();
+      },
+      onError: () => toast.error("Failed to delete offer"),
+    });
+  }
 
   if (!offer) return null;
 
@@ -93,15 +108,6 @@ export function OfferDetailSheet({ offerId, onClose }: OfferDetailSheetProps) {
                 )}
               </div>
             </div>
-            <div className="flex gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setEditing(!editing)}
-              >
-                <Pencil className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
 
           {/* Salary highlight */}
@@ -110,16 +116,15 @@ export function OfferDetailSheet({ offerId, onClose }: OfferDetailSheetProps) {
               <div className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-brand-green" />
                 <span className="text-2xl font-bold text-text-primary">
-                  {formatSalaryWithInterval(
-                    offer.base_salary,
+                  {formatSalaryWithInterval(offer.base_salary, {
                     currency,
-                    offer.salary_interval
-                  )}
+                    interval: offer.salary_interval,
+                  })}
                 </span>
               </div>
               {totalComp != null && totalComp !== offer.base_salary && (
                 <span className="text-sm text-text-muted ml-7">
-                  ~${totalComp.toLocaleString()} Total Comp (Year 1 est.)
+                  ~{formatCurrency(totalComp, { currency })} Total Comp (Year 1 est.)
                 </span>
               )}
             </div>
@@ -169,6 +174,28 @@ export function OfferDetailSheet({ offerId, onClose }: OfferDetailSheetProps) {
             <DetailView offer={offer} />
           )}
         </div>
+
+        {/* Bottom action bar */}
+        <div className="border-t border-border-subtle px-6 py-4 flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEditing(!editing)}
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            {editing ? "Cancel" : "Edit"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDelete}
+            disabled={deleteOffer.isPending}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {deleteOffer.isPending ? "Deleting..." : "Delete"}
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
   );
@@ -195,7 +222,7 @@ function DetailView({
       label: "Base Salary",
       value:
         offer.base_salary != null
-          ? `${formatSalaryWithInterval(offer.base_salary, currency, offer.salary_interval)}`
+          ? formatSalaryWithInterval(offer.base_salary, { currency, interval: offer.salary_interval })
           : null,
     },
     {
@@ -203,7 +230,7 @@ function DetailView({
       label: "Sign-on Bonus",
       value:
         offer.sign_on_bonus != null
-          ? formatCurrency(offer.sign_on_bonus, currency)
+          ? formatCurrency(offer.sign_on_bonus, { currency })
           : null,
     },
     {
@@ -221,7 +248,7 @@ function DetailView({
       label: "Equity Value",
       value:
         offer.equity_value != null
-          ? formatCurrency(offer.equity_value, currency)
+          ? formatCurrency(offer.equity_value, { currency })
           : null,
     },
     {
@@ -237,7 +264,7 @@ function DetailView({
     {
       icon: DollarSign,
       label: "Currency",
-      value: offer.currency,
+      value: currencyLabel(offer.currency),
     },
   ];
 
@@ -483,11 +510,9 @@ function EditForm({ offer, onSave, onCancel, isPending }: EditFormProps) {
             <label className="text-xs font-medium text-text-muted">
               Currency
             </label>
-            <Input
+            <CurrencyCombobox
               value={form.currency}
-              onChange={(e) =>
-                setForm({ ...form, currency: e.target.value.toUpperCase() })
-              }
+              onChange={(v) => setForm({ ...form, currency: v })}
             />
           </div>
         </div>

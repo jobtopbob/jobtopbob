@@ -33,11 +33,11 @@ import type { Stage } from "@/hooks/use-stages";
 import {
   SOURCES,
   LOCATION_TYPES,
-  CURRENCIES,
   JOB_TYPES,
   JOB_LEVELS,
   SALARY_INTERVALS,
 } from "@/lib/constants";
+import { CurrencyCombobox } from "@/components/ui/currency-combobox";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CompanySelector } from "@/components/companies/company-selector";
@@ -532,20 +532,10 @@ function StepDetails({ form }: { form: UseFormReturn<FormValues> }) {
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Currency</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue>
-                        {findLabel(CURRENCIES, field.value)}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <CurrencyCombobox
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
                 </Field>
               )}
             />

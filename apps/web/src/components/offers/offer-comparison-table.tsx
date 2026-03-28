@@ -3,18 +3,15 @@
 import Image from "next/image";
 import { Check, X, Building2 } from "lucide-react";
 import type { Offer } from "@/hooks/use-offers";
-import {
-  calculateTotalComp,
-  formatSalaryWithInterval,
-  formatCurrency,
-  remotePolicyLabel,
-} from "@/lib/offer-utils";
+import { calculateTotalComp, remotePolicyLabel } from "@/lib/offer-utils";
+import { formatSalaryWithInterval, formatCurrency } from "@/lib/currency";
 
 interface OfferComparisonTableProps {
   offers: Offer[];
+  onOfferClick?: (id: string) => void;
 }
 
-export function OfferComparisonTable({ offers }: OfferComparisonTableProps) {
+export function OfferComparisonTable({ offers, onOfferClick }: OfferComparisonTableProps) {
   if (offers.length === 0) return null;
 
   // Pre-compute totals
@@ -47,18 +44,17 @@ export function OfferComparisonTable({ offers }: OfferComparisonTableProps) {
       label: "Base Salary",
       values: offers.map((o) =>
         o.base_salary != null
-          ? formatSalaryWithInterval(
-              o.base_salary,
-              o.currency,
-              o.salary_interval
-            )
+          ? formatSalaryWithInterval(o.base_salary, {
+              currency: o.currency,
+              interval: o.salary_interval,
+            })
           : "—"
       ),
       highlight: maxSalaryIdx,
     },
     {
       label: "Sign-on Bonus",
-      values: offers.map((o) => formatCurrency(o.sign_on_bonus, o.currency)),
+      values: offers.map((o) => formatCurrency(o.sign_on_bonus, { currency: o.currency })),
       highlight: maxSignOnIdx,
     },
     {
@@ -67,7 +63,7 @@ export function OfferComparisonTable({ offers }: OfferComparisonTableProps) {
     },
     {
       label: "Equity Value",
-      values: offers.map((o) => formatCurrency(o.equity_value, o.currency)),
+      values: offers.map((o) => formatCurrency(o.equity_value, { currency: o.currency })),
       highlight: maxEquityIdx,
     },
     {
@@ -141,7 +137,13 @@ export function OfferComparisonTable({ offers }: OfferComparisonTableProps) {
                   key={offer.id}
                   className="sticky top-0 z-10 bg-background min-w-[180px] px-5 pt-6 pb-4 text-center align-top"
                 >
-                  <div className="flex flex-col items-center gap-2">
+                  <div
+                    className={`flex flex-col items-center gap-2 ${onOfferClick ? "cursor-pointer rounded-lg hover:bg-surface/60 transition-colors p-2 -m-2" : ""}`}
+                    onClick={() => onOfferClick?.(offer.id)}
+                    role={onOfferClick ? "button" : undefined}
+                    tabIndex={onOfferClick ? 0 : undefined}
+                    onKeyDown={onOfferClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOfferClick(offer.id); } } : undefined}
+                  >
                     {/* Company Logo */}
                     {offer.company_logo_url ? (
                       <div className="w-10 h-10 rounded-lg bg-white p-1">
@@ -182,7 +184,7 @@ export function OfferComparisonTable({ offers }: OfferComparisonTableProps) {
                               : "text-text-primary"
                           }`}
                         >
-                          ${tc.toLocaleString()}
+                          {formatCurrency(tc, { currency: offer.currency })}
                         </div>
                         <div className="text-[10px] text-text-muted uppercase tracking-wider">
                           Total Comp (Y1)

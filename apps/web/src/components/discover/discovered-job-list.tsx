@@ -14,22 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useDiscoveredJobs, type DiscoveredJob } from "@/hooks/use-discover";
 import { useDebounce } from "@/hooks/use-debounce";
 import { PaginationControls } from "@/components/kanban/pagination-controls";
-
-function formatSalary(job: DiscoveredJob) {
-  if (!job.salary_min && !job.salary_max) return null;
-  const currency = job.salary_currency ?? "USD";
-  const fmt = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  });
-  if (job.salary_min && job.salary_max) {
-    return `${fmt.format(job.salary_min)} - ${fmt.format(job.salary_max)}`;
-  }
-  return job.salary_min
-    ? `From ${fmt.format(job.salary_min)}`
-    : `Up to ${fmt.format(job.salary_max!)}`;
-}
+import { formatSalaryRange } from "@/lib/currency";
 
 function companyInitialColor(name: string) {
   let hash = 0;
@@ -48,7 +33,7 @@ function companyInitialColor(name: string) {
 }
 
 function JobCard({ job }: { job: DiscoveredJob }) {
-  const salary = formatSalary(job);
+  const salary = formatSalaryRange(job.salary_min, job.salary_max, { currency: job.salary_currency });
 
   return (
     <div className="group relative flex flex-col rounded-xl border border-border-subtle bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">

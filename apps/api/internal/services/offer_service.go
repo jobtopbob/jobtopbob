@@ -169,6 +169,15 @@ func EnsureOfferExists(ctx context.Context, q *db.Queries, userID string, jobID 
 	_, _ = q.CreateOffer(ctx, db.CreateOfferParams{UserID: userID, JobID: jobID})
 }
 
+// DeleteOffer deletes an offer by ID.
+func DeleteOffer(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID) (int64, error) {
+	result, err := q.DeleteOffer(ctx, db.DeleteOfferParams{ID: id, UserID: userID})
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 // UpdateOffer updates an offer's fields.
 func UpdateOffer(ctx context.Context, q *db.Queries, userID string, id pgtype.UUID, params db.UpdateOfferParams) (db.Offer, error) {
 	params.ID = id

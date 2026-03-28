@@ -98,3 +98,6 @@ UPDATE offers SET
     negotiation_log = COALESCE(sqlc.narg('negotiation_log'), negotiation_log)
 WHERE id = $1 AND user_id = $2
 RETURNING *;
+
+-- name: DeleteOffer :execresult
+DELETE FROM offers WHERE id = $1 AND user_id = $2;

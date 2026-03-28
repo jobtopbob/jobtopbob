@@ -184,6 +184,31 @@ func CreateOffer() gin.HandlerFunc {
 	}
 }
 
+// DeleteOffer handles DELETE /api/v1/offers/:id
+func DeleteOffer() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, ok := parsePathUUID(c, "id")
+		if !ok {
+			return
+		}
+
+		q := db.New(getTx(c))
+		userID := getUserID(c)
+
+		rows, err := services.DeleteOffer(c.Request.Context(), q, userID, id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete offer"})
+			return
+		}
+		if rows == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "offer not found"})
+			return
+		}
+
+		c.Status(http.StatusNoContent)
+	}
+}
+
 type updateOfferRequest struct {
 	BaseSalary      *int32          `json:"base_salary"`
 	Currency        *string         `json:"currency"`

@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -134,6 +135,19 @@ func (q *Queries) CreateOffer(ctx context.Context, arg CreateOfferParams) (Offer
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const deleteOffer = `-- name: DeleteOffer :execresult
+DELETE FROM offers WHERE id = $1 AND user_id = $2
+`
+
+type DeleteOfferParams struct {
+	ID     pgtype.UUID `json:"id"`
+	UserID string      `json:"user_id"`
+}
+
+func (q *Queries) DeleteOffer(ctx context.Context, arg DeleteOfferParams) (pgconn.CommandTag, error) {
+	return q.db.Exec(ctx, deleteOffer, arg.ID, arg.UserID)
 }
 
 const getOffer = `-- name: GetOffer :one

@@ -124,6 +124,27 @@ export function useUpdateOffer() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["offers"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
+}
+
+export function useDeleteOffer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await api.DELETE("/api/v1/offers/{id}", {
+        params: { path: { id } },
+      });
+      if (error)
+        throw new Error(
+          (error as { error?: string })?.error ?? "Failed to delete offer"
+        );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["offers"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
   });
 }

@@ -30,6 +30,7 @@ import { JobCombobox } from "./job-combobox";
 import type { Job } from "@/hooks/use-jobs";
 import { toast } from "sonner";
 import { intervalLabel, remotePolicyLabel } from "@/lib/offer-utils";
+import { CurrencyCombobox } from "@/components/ui/currency-combobox";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // --- Schema ---
@@ -375,10 +376,9 @@ function StepJobAndPay({
         render={({ field }) => (
           <Field>
             <FieldLabel>Currency</FieldLabel>
-            <Input
-              {...field}
-              onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-              placeholder="USD"
+            <CurrencyCombobox
+              value={field.value}
+              onChange={field.onChange}
             />
           </Field>
         )}

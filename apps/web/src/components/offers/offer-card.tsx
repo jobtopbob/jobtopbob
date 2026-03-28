@@ -15,11 +15,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Offer } from "@/hooks/use-offers";
-import {
-  calculateTotalComp,
-  formatSalaryWithInterval,
-  remotePolicyLabel,
-} from "@/lib/offer-utils";
+import { calculateTotalComp, remotePolicyLabel } from "@/lib/offer-utils";
+import { formatSalaryWithInterval, formatCurrency } from "@/lib/currency";
 
 interface OfferCardProps {
   offer: Offer;
@@ -114,12 +111,12 @@ export function OfferCard({ offer, onClick }: OfferCardProps) {
           <div className="flex items-center gap-1.5">
             <DollarSign className="w-4 h-4 text-brand-green" />
             <span className="text-lg font-bold text-text-primary">
-              {formatSalaryWithInterval(salary, currency, offer.salary_interval)}
+              {formatSalaryWithInterval(salary, { currency, interval: offer.salary_interval })}
             </span>
           </div>
           {showTotalComp && (
             <span className="text-xs text-text-muted ml-5.5 pl-px">
-              ~${totalComp.toLocaleString()} TC (est.)
+              ~{formatCurrency(totalComp, { currency })} TC (est.)
             </span>
           )}
         </div>

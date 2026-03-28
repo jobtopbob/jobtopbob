@@ -8,7 +8,8 @@ import { useUpdateJob } from "@/hooks/use-jobs";
 import type { Stage } from "@/hooks/use-stages";
 import { getDotColor } from "./kanban-column";
 import { StageIcon } from "./stage-icons";
-import { formatRelativeDate, formatSalary } from "./job-card";
+import { formatRelativeDate } from "./job-card";
+import { formatSalaryRange } from "@/lib/currency";
 import {
   Select,
   SelectContent,
@@ -118,7 +119,7 @@ interface MobileJobRowProps {
 function MobileJobRow({ job, stages, onClick }: MobileJobRowProps) {
   const updateJob = useUpdateJob();
   const date = formatRelativeDate(job.created_at);
-  const salary = formatSalary(job.salary_min, job.salary_max, job.salary_interval, job.salary_currency);
+  const salary = formatSalaryRange(job.salary_min, job.salary_max, { currency: job.salary_currency, interval: job.salary_interval, compact: true });
 
   const handleStageChange = (newStageId: string | null) => {
     if (!newStageId || newStageId === job.stage_id) return;
