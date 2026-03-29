@@ -8,7 +8,13 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Copy workspace root files needed for install
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/
+COPY apps/docs/package.json apps/docs/
 COPY packages/ packages/
+COPY scrapers/adzuna/package.json scrapers/adzuna/
+COPY scrapers/glassdoor/package.json scrapers/glassdoor/
+COPY scrapers/indeed/package.json scrapers/indeed/
+COPY scrapers/linkedin/package.json scrapers/linkedin/
+COPY scrapers/shared/package.json scrapers/shared/
 
 RUN pnpm install --frozen-lockfile
 
@@ -26,7 +32,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
 # Next.js standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm --filter web build
+RUN pnpm --filter @jobtopbob/web build
 
 # ---------- Stage 3: Runtime ----------
 FROM node:20-alpine AS runner

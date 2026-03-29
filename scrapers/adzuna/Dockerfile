@@ -8,9 +8,15 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy workspace root files
+# Copy workspace root files + all workspace package.json for lockfile resolution
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY scrapers/adzuna/package.json scrapers/adzuna/
+COPY scrapers/shared/package.json scrapers/shared/
+COPY scrapers/indeed/package.json scrapers/indeed/
+COPY scrapers/glassdoor/package.json scrapers/glassdoor/
+COPY scrapers/linkedin/package.json scrapers/linkedin/
+COPY apps/web/package.json apps/web/
+COPY apps/docs/package.json apps/docs/
 COPY packages/ packages/
 
 RUN pnpm install --frozen-lockfile
@@ -26,4 +32,4 @@ USER scraper
 
 EXPOSE 3000
 
-CMD ["node", "scrapers/adzuna/dist/index.js"]
+CMD ["node", "scrapers/adzuna/dist/server.js"]
