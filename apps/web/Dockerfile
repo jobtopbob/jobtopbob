@@ -2,7 +2,7 @@
 FROM node:25.8-alpine AS builder
 WORKDIR /app
 
-RUN npm install -g pnpm@10.32.1
+RUN npm install -g pnpm@10.33.0
 
 # Copy workspace root files needed for install
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./

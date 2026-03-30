@@ -1,7 +1,7 @@
 FROM node:25.8-slim
 WORKDIR /app
 
-RUN npm install -g pnpm@10.32.1
+RUN npm install -g pnpm@10.33.0
 
 # Minimal deps — Adzuna is API-only (no browser needed)
 RUN apt-get update \

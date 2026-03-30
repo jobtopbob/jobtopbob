@@ -1,7 +1,7 @@
 FROM node:25.8-slim
 WORKDIR /app
 
-RUN npm install -g pnpm@10.32.1
+RUN npm install -g pnpm@10.33.0
 
 # Install Playwright system dependencies + Chromium
 RUN apt-get update \
@@ -22,7 +22,8 @@ COPY packages/ packages/
 
 RUN pnpm install --frozen-lockfile
 
-# Copy source
+# Copy source (shared is needed — it exports raw .ts files)
+COPY scrapers/shared/ scrapers/shared/
 COPY scrapers/glassdoor/ scrapers/glassdoor/
 
 RUN pnpm --filter @jobtopbob/scraper-glassdoor build

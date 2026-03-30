@@ -16,8 +16,8 @@
   },
   "devDependencies": {
     "@jobtopbob/config": "workspace:*",
-    "@types/node": "^20",
-    "tsx": "^4.19.0",
-    "typescript": "^5.8.0"
+    "@types/node": "^25",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.0"
   }
 }
