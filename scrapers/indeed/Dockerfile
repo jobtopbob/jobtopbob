@@ -1,7 +1,7 @@
-FROM node:20-slim
+FROM node:25.8-slim
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@10.32.1
 
 # Install Playwright system dependencies + Chromium
 RUN apt-get update \

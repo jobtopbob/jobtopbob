@@ -1,9 +1,8 @@
-# ---------- Stage 1: Install dependencies ----------
-FROM node:20-alpine AS deps
+# ---------- Stage 1: Install + Build ----------
+FROM node:25.8-alpine AS builder
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@10.32.1
 
 # Copy workspace root files needed for install
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -18,24 +17,15 @@ COPY scrapers/shared/package.json scrapers/shared/
 
 RUN pnpm install --frozen-lockfile
 
-# ---------- Stage 2: Build ----------
-FROM node:20-alpine AS builder
-WORKDIR /app
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-COPY --from=deps /app/packages ./packages
+# Copy source and build
 COPY apps/web/ apps/web/
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY turbo.json ./
 
-# Next.js standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @jobtopbob/web build
 
-# ---------- Stage 3: Runtime ----------
-FROM node:20-alpine AS runner
+# ---------- Stage 2: Runtime ----------
+FROM node:25.8-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

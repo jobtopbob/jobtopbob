@@ -1,7 +1,7 @@
-FROM node:20-slim
+FROM node:25.8-slim
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@10.32.1
 
 # Minimal deps — Adzuna is API-only (no browser needed)
 RUN apt-get update \
@@ -21,7 +21,8 @@ COPY packages/ packages/
 
 RUN pnpm install --frozen-lockfile
 
-# Copy source
+# Copy source (shared is needed — it exports raw .ts files)
+COPY scrapers/shared/ scrapers/shared/
 COPY scrapers/adzuna/ scrapers/adzuna/
 
 RUN pnpm --filter @jobtopbob/scraper-adzuna build

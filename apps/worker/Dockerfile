@@ -12,7 +12,8 @@ COPY internal/go.mod internal/go.sum internal/
 
 RUN cd apps/worker && go mod download
 
-# Copy source
+# Copy source (worker imports apps/api/db/generated)
+COPY apps/api/ apps/api/
 COPY apps/worker/ apps/worker/
 COPY internal/ internal/
 
