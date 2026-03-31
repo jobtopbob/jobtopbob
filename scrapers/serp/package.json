@@ -1,11 +1,12 @@
 {
-  "name": "@jobtopbob/scraper-linkedin",
+  "name": "@jobtopbob/scraper-serp",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsc --watch",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
+    "start": "node dist/server.js",
     "lint": "echo 'TODO: eslint .'",
     "check-types": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@jobtopbob/config": "workspace:*",
     "@types/node": "^25",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.0"
   }
 }

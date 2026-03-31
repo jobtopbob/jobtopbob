@@ -10,9 +10,7 @@ COPY apps/web/package.json apps/web/
 COPY apps/docs/package.json apps/docs/
 COPY packages/ packages/
 COPY scrapers/adzuna/package.json scrapers/adzuna/
-COPY scrapers/glassdoor/package.json scrapers/glassdoor/
-COPY scrapers/indeed/package.json scrapers/indeed/
-COPY scrapers/linkedin/package.json scrapers/linkedin/
+COPY scrapers/serp/package.json scrapers/serp/
 COPY scrapers/shared/package.json scrapers/shared/
 
 RUN pnpm install --frozen-lockfile

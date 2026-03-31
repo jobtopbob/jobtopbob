@@ -222,7 +222,7 @@ func RunSearchProfile(asynqClient *asynq.Client) gin.HandlerFunc {
 		}
 
 		// Default sources if not specified
-		sources := []string{"adzuna"}
+		sources := []string{"adzuna", "serp"}
 
 		// Create scrape run record
 		idStr := uuidToString(profile.ID)

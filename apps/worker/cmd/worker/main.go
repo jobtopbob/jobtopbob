@@ -210,6 +210,9 @@ func main() {
 		if cfg.ScraperAdzunaURL != "" {
 			scraperURLs["adzuna"] = cfg.ScraperAdzunaURL
 		}
+		if cfg.ScraperSerpURL != "" {
+			scraperURLs["serp"] = cfg.ScraperSerpURL
+		}
 
 		dispatchDeps := &tasks.ScrapeDispatchDeps{
 			Pool:        pool,

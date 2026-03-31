@@ -258,6 +258,7 @@ services:
       PDL_API_KEY: ${PDL_API_KEY:-}
       SCRAPERS_ENABLED: ${SCRAPERS_ENABLED:-false}
       SCRAPER_ADZUNA_URL: ${SCRAPER_ADZUNA_URL:-http://scraper-adzuna:3000}
+      SCRAPER_SERP_URL: ${SCRAPER_SERP_URL:-http://scraper-serp:3000}
       # AI provider
       AI_PROVIDER: ${AI_PROVIDER:-openai}
       AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
@@ -283,44 +284,15 @@ services:
   # ---------------------------------------------------------------------------
   # Scraper services (opt-in via --profile scrapers)
   # ---------------------------------------------------------------------------
-  scraper-linkedin:
+  scraper-serp:
     build:
       context: .
-      dockerfile: scrapers/linkedin/Dockerfile
+      dockerfile: scrapers/serp/Dockerfile
     restart: unless-stopped
     profiles: [prod]
     environment:
       PORT: "3000"
-      HYPERBROWSER_API_KEY: ${HYPERBROWSER_API_KEY:-}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  scraper-indeed:
-    build:
-      context: .
-      dockerfile: scrapers/indeed/Dockerfile
-    restart: unless-stopped
-    profiles: [prod]
-    environment:
-      PORT: "3000"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  scraper-glassdoor:
-    build:
-      context: .
-      dockerfile: scrapers/glassdoor/Dockerfile
-    restart: unless-stopped
-    profiles: [prod]
-    environment:
-      PORT: "3000"
-      HYPERBROWSER_API_KEY: ${HYPERBROWSER_API_KEY:-}
+      SEARCHAPI_API_KEY: ${SEARCHAPI_API_KEY:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s

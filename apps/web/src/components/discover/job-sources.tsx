@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { GlobeIcon, BriefcaseIcon, LinkedinLogoIcon, BuildingsIcon } from "@phosphor-icons/react";
+import { GlobeIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 
 interface JobSource {
@@ -13,10 +13,8 @@ interface JobSource {
 }
 
 const SOURCES: JobSource[] = [
+  { id: "serp", name: "Google Jobs", status: "active", fallbackIcon: MagnifyingGlassIcon },
   { id: "adzuna", name: "Adzuna", status: "active", fallbackIcon: GlobeIcon },
-  { id: "indeed", name: "Indeed", status: "coming_soon", fallbackIcon: BriefcaseIcon },
-  { id: "linkedin", name: "LinkedIn", status: "coming_soon", fallbackIcon: LinkedinLogoIcon },
-  { id: "glassdoor", name: "Glassdoor", status: "coming_soon", fallbackIcon: BuildingsIcon },
 ];
 
 function SourceIcon({ source }: { source: JobSource }) {
