@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useScrapeRuns } from "@/hooks/use-discover";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,7 +11,12 @@ import {
   SpinnerGapIcon,
   XCircleIcon,
   ClockIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  BriefcaseIcon,
 } from "@phosphor-icons/react";
+
+const PER_PAGE = 6;
 
 function relativeTime(dateStr: string) {
   const now = Date.now();
@@ -26,15 +32,15 @@ function relativeTime(dateStr: string) {
 
 function StatusIcon({ status }: { status: string | null }) {
   if (status === "completed") {
-    return <CheckCircleIcon weight="fill" className="h-4 w-4 text-brand-green" />;
+    return <CheckCircleIcon weight="fill" className="h-3.5 w-3.5 text-brand-green" />;
   }
   if (status === "running" || status === "pending") {
-    return <SpinnerGapIcon weight="bold" className="h-4 w-4 animate-spin text-brand" />;
+    return <SpinnerGapIcon weight="bold" className="h-3.5 w-3.5 animate-spin text-brand" />;
   }
   if (status === "failed") {
-    return <XCircleIcon weight="fill" className="h-4 w-4 text-brand-red" />;
+    return <XCircleIcon weight="fill" className="h-3.5 w-3.5 text-brand-red" />;
   }
-  return <ClockIcon className="h-4 w-4 text-text-muted" />;
+  return <ClockIcon className="h-3.5 w-3.5 text-text-muted" />;
 }
 
 function statusLabel(status: string | null) {
@@ -52,28 +58,24 @@ function statusLabel(status: string | null) {
 }
 
 export function ScrapeRunList() {
-  const { data, isLoading } = useScrapeRuns();
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useScrapeRuns(page, PER_PAGE);
 
   if (isLoading) {
     return (
-      <div className="relative overflow-hidden rounded-2xl">
-        <div className="p-5">
-          <div className="flex gap-3 pb-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className="h-[130px] min-w-[280px] flex-1 rounded-xl"
-              />
-            ))}
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-[88px] rounded-xl" />
+        ))}
       </div>
     );
   }
 
   const runs = data?.data ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / PER_PAGE);
 
-  if (runs.length === 0) {
+  if (runs.length === 0 && page === 1) {
     return (
       <div className="flex items-center justify-center rounded-xl bg-muted/50 p-8">
         <div className="text-center">
@@ -90,74 +92,105 @@ export function ScrapeRunList() {
   }
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none">
-      {runs.map((run) => (
-        <div
-          key={run.id}
-          className="relative flex min-w-[280px] max-w-[320px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-xl border border-border-subtle p-4 transition-shadow duration-200 hover:shadow-md"
-        >
-          <img
-            src="/recent-searches-bg-light.jpg"
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover dark:hidden"
-          />
-          <img
-            src="/recent-searches-bg-dark.jpg"
-            alt=""
-            className="absolute inset-0 hidden h-full w-full object-cover dark:block"
-          />
-          <div className="absolute inset-0 bg-card/88" />
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        {runs.map((run) => (
+          <div
+            key={run.id}
+            className="group relative overflow-hidden rounded-xl border border-border-subtle bg-card p-3.5 transition-all duration-200 hover:border-border hover:shadow-sm"
+          >
+            {/* Background images */}
+            <img
+              src="/recent-searches-bg-light.jpg"
+              alt=""
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40 dark:hidden"
+            />
+            <img
+              src="/recent-searches-bg-dark.jpg"
+              alt=""
+              className="pointer-events-none absolute inset-0 hidden h-full w-full object-cover opacity-40 dark:block"
+            />
+            <div className="absolute inset-0 bg-card/90" />
 
-          {/* Keywords as chips */}
-          <div className="relative z-10">
-            <div className="flex flex-wrap gap-1.5">
-              {run.keywords?.map((kw, i) => (
-                <Badge key={i} variant="outline" className="text-xs">
-                  {kw}
-                </Badge>
-              )) ?? (
-                <Badge variant="outline" className="text-xs">
-                  Search
-                </Badge>
-              )}
-            </div>
+            {/* Content */}
+            <div className="relative z-10 flex min-w-0 flex-col gap-2">
+              {/* Keywords — displayed as text title, not badges */}
+              <p className="text-sm font-medium leading-snug text-text-primary">
+                {run.keywords?.join(", ") || "Search"}
+              </p>
 
-            {/* Source + Location */}
-            <div className="mt-2 flex items-center gap-2 text-xs text-text-muted">
-              {run.sources && (
-                <span className="capitalize">{run.sources.join(", ")}</span>
-              )}
-              {run.location && (
-                <span className="flex items-center gap-0.5">
-                  <MapPinIcon className="h-3 w-3" />
-                  {run.location}
+              {/* Meta row: source, location, jobs found */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
+                {run.sources && (
+                  <Badge variant="outline" className="text-[11px] capitalize">
+                    {run.sources.join(", ")}
+                  </Badge>
+                )}
+                {run.location && (
+                  <span className="flex items-center gap-0.5">
+                    <MapPinIcon className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{run.location}</span>
+                  </span>
+                )}
+                {run.status === "completed" && run.jobs_new != null && (
+                  <span className="flex items-center gap-0.5">
+                    <BriefcaseIcon className="h-3 w-3 shrink-0" />
+                    {run.jobs_new} new
+                  </span>
+                )}
+              </div>
+
+              {/* Status row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <StatusIcon status={run.status} />
+                  <span
+                    className={`text-xs font-medium ${
+                      run.status === "completed"
+                        ? "text-brand-green"
+                        : run.status === "failed"
+                          ? "text-brand-red"
+                          : "text-text-muted"
+                    }`}
+                  >
+                    {statusLabel(run.status)}
+                  </span>
+                </div>
+                <span className="text-xs text-text-muted">
+                  {relativeTime(run.created_at)}
                 </span>
-              )}
+              </div>
             </div>
           </div>
+        ))}
+      </div>
 
-          {/* Status + Time */}
-          <div className="relative z-10 mt-3 flex items-center justify-between border-t border-border-subtle pt-3">
-            <div className="flex items-center gap-1.5">
-              <StatusIcon status={run.status} />
-              <span
-                className={`text-xs font-medium ${
-                  run.status === "completed"
-                    ? "text-brand-green"
-                    : run.status === "failed"
-                      ? "text-brand-red"
-                      : "text-text-muted"
-                }`}
-              >
-                {statusLabel(run.status)}
-              </span>
-            </div>
-            <span className="text-xs text-text-muted">
-              {relativeTime(run.created_at)}
-            </span>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-xs text-text-muted">
+            Page {page} of {totalPages}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-muted hover:text-text-secondary disabled:pointer-events-none disabled:opacity-40"
+            >
+              <CaretLeftIcon className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-muted hover:text-text-secondary disabled:pointer-events-none disabled:opacity-40"
+            >
+              <CaretRightIcon className="h-4 w-4" />
+            </button>
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
 }
