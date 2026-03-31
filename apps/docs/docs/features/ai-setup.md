@@ -12,7 +12,7 @@ JobTopBob's AI features are optional and use a BYOK (Bring Your Own Key) model. 
 |----------|---------------------|-------|
 | OpenAI | `OPENAI_API_KEY` | Direct API access |
 | Anthropic | `ANTHROPIC_API_KEY` | Native SDK (Messages API) |
-| Gemini | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Native SDK (Google Gen AI) |
+| Gemini | `GOOGLE_API_KEY` | Native SDK (Google Gen AI) |
 | OpenRouter | `OPENROUTER_API_KEY` | Access 100+ models via one key |
 | Ollama | `OLLAMA_HOST` | Local, free, offline |
 
@@ -33,7 +33,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 # Google Gemini
 AI_PROVIDER=gemini
-GEMINI_API_KEY=...
+GOOGLE_API_KEY=...
 
 # OpenRouter (access Anthropic, Gemini, Meta, and 100+ other models)
 AI_PROVIDER=openrouter

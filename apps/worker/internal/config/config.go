@@ -71,7 +71,7 @@ func resolveAIKey(provider string) string {
 	case "anthropic":
 		return getEnv("ANTHROPIC_API_KEY", "")
 	case "gemini":
-		return getEnv("GEMINI_API_KEY", getEnv("GOOGLE_API_KEY", ""))
+		return getEnv("GOOGLE_API_KEY", "")
 	case "openrouter":
 		return getEnv("OPENROUTER_API_KEY", "")
 	default:

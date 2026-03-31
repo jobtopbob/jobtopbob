@@ -74,9 +74,9 @@ PUBSUB_TOPIC_NAME=gmail-watch
 # Encryption key for OAuth tokens (generate once, keep secret)
 API_ENCRYPTION_KEY=<run: openssl rand -hex 32>
 
-# AI provider for email classification
-AI_PROVIDER=openai          # or: openrouter, ollama
-AI_API_KEY=your-api-key     # not needed for Ollama
+# AI provider for email classification (supported: openai, anthropic, gemini, openrouter, ollama)
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-...       # set the key matching your AI_PROVIDER
 AI_MODEL=gpt-4o-mini        # cost-effective for classification
 ```
 
@@ -101,7 +101,7 @@ docker compose restart api worker
 | Webhook not receiving notifications | Ensure your endpoint is publicly accessible with a valid HTTPS certificate |
 | "App not verified" warning | Expected during development. Add test users in Google Console, or submit for verification |
 | OAuth redirect error | Verify the redirect URI matches exactly (including protocol and path) |
-| No email events appearing | Check worker logs for AI provider errors. Ensure `AI_API_KEY` is set |
+| No email events appearing | Check worker logs for AI provider errors. Ensure the API key for your `AI_PROVIDER` is set (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`) |
 | Token refresh failures | The refresh token may have been revoked. Ask the user to reconnect |
 
 ## Security Notes

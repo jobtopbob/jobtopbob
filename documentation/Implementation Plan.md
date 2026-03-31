@@ -925,7 +925,7 @@ Prompt templates use Go `text/template` syntax for dynamic values (`{{.Resume}}`
 1. Per-provider environment variable resolved by AI_PROVIDER value:
    - openai    → OPENAI_API_KEY
    - anthropic → ANTHROPIC_API_KEY
-   - gemini    → GEMINI_API_KEY (fallback: GOOGLE_API_KEY)
+   - gemini    → GOOGLE_API_KEY
    - openrouter → OPENROUTER_API_KEY
    - ollama    → no key required
 2. Error → prompt user to set the env var in docker-compose
@@ -1191,8 +1191,7 @@ RESUME_BUILDER_URL=http://localhost:3010
 # AI_BASE_URL=              # Optional: override provider's default endpoint
 # OPENAI_API_KEY=sk-...
 # ANTHROPIC_API_KEY=sk-ant-...
-# GEMINI_API_KEY=...
-# GOOGLE_API_KEY=...        # Alias for GEMINI_API_KEY
+# GOOGLE_API_KEY=...
 # OPENROUTER_API_KEY=sk-or-...
 # OLLAMA_HOST=http://ollama:11434
 
@@ -1459,7 +1458,7 @@ Each prompt in `internal/ai/prompts/` has a golden test file with 5–10 input/o
 
 ### AI provider keys
 
-AI provider keys are configured via environment variables (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` / `GOOGLE_API_KEY`, `OPENROUTER_API_KEY`) and never stored in the database. The `AI_PROVIDER` env var determines which key is resolved by the `resolveAIKey()` config helper. Ollama requires no API key.
+AI provider keys are configured via environment variables (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `OPENROUTER_API_KEY`) and never stored in the database. The `AI_PROVIDER` env var determines which key is resolved by the `resolveAIKey()` config helper. Ollama requires no API key.
 
 ### OAuth token encryption
 

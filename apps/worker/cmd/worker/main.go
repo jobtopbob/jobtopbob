@@ -81,7 +81,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		slog.Warn("no AI API key configured — email classification will be disabled")
+		slog.Warn("no AI API key configured — AI features will be disabled", "provider", cfg.AIProvider, "hint", aiKeyHint(cfg.AIProvider))
 	}
 
 	// Create Asynq Redis connection
@@ -252,4 +252,21 @@ func main() {
 	srv.Shutdown()
 	sched.Shutdown()
 	slog.Info("worker stopped")
+}
+
+func aiKeyHint(provider string) string {
+	switch provider {
+	case "openai":
+		return "set OPENAI_API_KEY"
+	case "anthropic":
+		return "set ANTHROPIC_API_KEY"
+	case "gemini":
+		return "set GOOGLE_API_KEY"
+	case "openrouter":
+		return "set OPENROUTER_API_KEY"
+	case "ollama":
+		return "no key needed"
+	default:
+		return "set the API key for your provider"
+	}
 }
