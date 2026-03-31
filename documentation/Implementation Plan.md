@@ -71,8 +71,11 @@ jobtopbob/
 │   ├── ai/
 │   │   ├── provider.go             # Provider interface + factory
 │   │   ├── providers/
-│   │   │   ├── openai.go           # OpenAI-compatible (covers OpenAI, OpenRouter, Anthropic via OpenRouter)
-│   │   │   └── ollama.go           # Ollama (local models)
+│   │   │   ├── openai.go           # OpenAI-compatible (covers OpenAI, OpenRouter)
+│   │   │   ├── openrouter.go      # OpenRouter (thin wrapper over openai.go with default base URL)
+│   │   │   ├── anthropic.go       # Native Anthropic SDK (Messages API)
+│   │   │   ├── gemini.go          # Native Google Gemini SDK (Gen AI)
+│   │   │   └── ollama.go          # Ollama (local models, wraps openai.go)
 │   │   └── prompts/
 │   │       ├── embed.go            # embed.FS loader for prompt templates
 │   │       ├── suitability.txt     # Suitability scoring prompt
@@ -874,22 +877,26 @@ type Provider interface {
 
 func NewProvider(cfg ProviderConfig) (Provider, error) {
     switch cfg.Provider {
-    case "openai":  return newOpenAIProvider(cfg)  // OpenAI-compatible (covers OpenAI, OpenRouter, Anthropic via OpenRouter)
-    case "ollama":  return newOllamaProvider(cfg)  // local models, also OpenAI-compatible API
+    case "openai":      return NewOpenAI(cfg), nil       // OpenAI-compatible HTTP client
+    case "openrouter":  return NewOpenRouter(cfg), nil   // OpenAI-compatible via OpenRouter
+    case "anthropic":   return NewAnthropic(cfg), nil    // Native Anthropic SDK (Messages API)
+    case "gemini":      return NewGemini(cfg)            // Native Google Gemini SDK (Gen AI)
+    case "ollama":      return NewOllama(cfg), nil       // Local models via OpenAI-compatible API
     default:
         return nil, fmt.Errorf("unknown provider: %s", cfg.Provider)
     }
 }
 ```
 
-### Why only 2 provider implementations
+### Provider implementations
 
-The original plan called for 5 separate provider implementations (OpenAI, Anthropic, OpenRouter, Gemini, Ollama). This is reduced to 2:
+There are 4 provider implementations covering 5 provider types:
 
-- **OpenAI-compatible** — covers OpenAI directly, plus Anthropic, Gemini, and 100+ other models via OpenRouter (which uses the OpenAI API format). Users set a different `base_url` in their API key config to target OpenRouter.
-- **Ollama** — local models with zero API key requirement. Also uses the OpenAI-compatible `/v1/chat/completions` endpoint, so the implementation wraps the OpenAI provider with a different default base URL (`http://ollama:11434`).
-
-This delivers identical model coverage with 60% less implementation work. Native Anthropic/Gemini providers should only be added if users report latency or feature gaps from OpenRouter passthrough.
+- **OpenAI-compatible** (`openai.go`) — raw HTTP client for `/chat/completions`. Used directly for `openai` provider, and wrapped by `openrouter.go` and `ollama.go` with different default base URLs.
+- **OpenRouter** (`openrouter.go`) — thin wrapper over OpenAI-compatible with default base URL `https://openrouter.ai/api/v1`. Gives access to 100+ models (Anthropic, Gemini, Meta, etc.) via a single API key.
+- **Anthropic** (`anthropic.go`) — native SDK (`github.com/anthropics/anthropic-sdk-go`). Uses the Messages API directly for lower latency and full feature support. Default max tokens: 4096 (required by Anthropic API).
+- **Gemini** (`gemini.go`) — native SDK (`google.golang.org/genai`). Uses the Google Gen AI API directly with streaming via Go 1.23+ range-over-func iterators.
+- **Ollama** (`ollama.go`) — wraps OpenAI-compatible with default base URL `http://ollama:11434/v1`. No API key required.
 
 ### Prompts as embedded files
 
@@ -915,11 +922,16 @@ Prompt templates use Go `text/template` syntax for dynamic values (`{{.Resume}}`
 ### Provider resolution order
 
 ```
-1. Per-provider environment variable (OPENAI_API_KEY / ANTHROPIC_API_KEY / OPENROUTER_API_KEY / OLLAMA_HOST)
+1. Per-provider environment variable resolved by AI_PROVIDER value:
+   - openai    → OPENAI_API_KEY
+   - anthropic → ANTHROPIC_API_KEY
+   - gemini    → GEMINI_API_KEY (fallback: GOOGLE_API_KEY)
+   - openrouter → OPENROUTER_API_KEY
+   - ollama    → no key required
 2. Error → prompt user to set the env var in docker-compose
 ```
 
-AI provider keys are configured via environment variables and never stored in the database. The `user_settings.ai_provider` column determines which env var the app reads.
+AI provider keys are configured via environment variables and never stored in the database. The `user_settings.ai_provider` column determines which env var the app reads. The config layer resolves the correct key via a `resolveAIKey(provider)` helper.
 
 ### Task-specific model routing
 
@@ -1173,9 +1185,14 @@ API_ENCRYPTION_KEY=<random 32-char string>
 # Resume builder
 RESUME_BUILDER_URL=http://localhost:3010
 
-# AI provider keys (set the one matching your chosen provider)
+# AI provider (supported: openai, anthropic, gemini, openrouter, ollama)
+# AI_PROVIDER=openai
+# AI_MODEL=gpt-4o-mini
+# AI_BASE_URL=              # Optional: override provider's default endpoint
 # OPENAI_API_KEY=sk-...
 # ANTHROPIC_API_KEY=sk-ant-...
+# GEMINI_API_KEY=...
+# GOOGLE_API_KEY=...        # Alias for GEMINI_API_KEY
 # OPENROUTER_API_KEY=sk-or-...
 # OLLAMA_HOST=http://ollama:11434
 
@@ -1350,7 +1367,7 @@ Goal: add the discovery pipeline, browser extension, and deeper integrations.
 - [ ] SSO via OIDC: configure RxResume custom OAuth provider to use JobTopBob's Better Auth as identity provider
 - [ ] AI resume tailoring via RxResume MCP endpoint (`/mcp`) or REST API JSON Patch
 - [ ] ATS scoring: fetch resume JSON from RxResume, compare against JD keywords
-- [ ] Consider adding native Anthropic/Gemini AI providers if OpenRouter passthrough shows latency issues
+- [x] ~~Consider adding native Anthropic/Gemini AI providers~~ — implemented native SDKs for both (Anthropic Messages API + Google Gen AI)
 - [ ] Evaluate scraper migration to Redis Streams with `XREADGROUP` consumer groups if HTTP timeouts are a problem
 
 **Phase 2 definition of done:** Self-hosted users can upgrade to the discovery pipeline with minimal configuration. Browser extension available for Chrome.
@@ -1442,7 +1459,7 @@ Each prompt in `internal/ai/prompts/` has a golden test file with 5–10 input/o
 
 ### AI provider keys
 
-AI provider keys are configured via environment variables (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `OLLAMA_HOST`) and never stored in the database. The `user_settings.ai_provider` column determines which env var the app reads.
+AI provider keys are configured via environment variables (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` / `GOOGLE_API_KEY`, `OPENROUTER_API_KEY`) and never stored in the database. The `AI_PROVIDER` env var determines which key is resolved by the `resolveAIKey()` config helper. Ollama requires no API key.
 
 ### OAuth token encryption
 

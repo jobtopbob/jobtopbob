@@ -87,9 +87,9 @@ func main() {
 	// Create RxResume client (API-only, per-user API keys stored in user_settings)
 	rxClient := rxresume.NewClient(cfg.ResumeBuilderURL, cfg.ResumeBuilderPublicURL, cfg.ResumePrinterHTTPURL, cfg.ResumeBuilderPrinterURL)
 
-	// Create AI provider (optional — only if an API key is configured)
+	// Create AI provider (optional — only if an API key is configured, or Ollama)
 	var aiProvider ai.Provider
-	if cfg.AIAPIKey != "" {
+	if cfg.AIAPIKey != "" || cfg.AIProvider == "ollama" {
 		aiProvider, err = providers.New(ai.ProviderConfig{
 			Provider: cfg.AIProvider,
 			APIKey:   cfg.AIAPIKey,

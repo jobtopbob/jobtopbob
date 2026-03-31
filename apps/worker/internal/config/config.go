@@ -52,7 +52,7 @@ func Load() *Config {
 		AIProvider:           getEnv("AI_PROVIDER", "openai"),
 		AIModel:              getEnv("AI_MODEL", "gpt-4o-mini"),
 		AIBaseURL:            getEnv("AI_BASE_URL", ""),
-		AIAPIKey:             getEnv("AI_API_KEY", getEnv("OPENAI_API_KEY", getEnv("OPENROUTER_API_KEY", ""))),
+		AIAPIKey:             resolveAIKey(getEnv("AI_PROVIDER", "openai")),
 		PDLAPIKey:            getEnv("PDL_API_KEY", ""),
 		S3Bucket:             getEnv("S3_BUCKET", "jobtopbob"),
 		S3Region:             getEnv("S3_REGION", "us-east-1"),
@@ -61,6 +61,21 @@ func Load() *Config {
 		S3SecretKey:          getEnv("S3_SECRET_KEY", "rustfsadmin"),
 		ScrapersEnabled:      getEnv("SCRAPERS_ENABLED", "false") == "true",
 		ScraperAdzunaURL:     getEnv("SCRAPER_ADZUNA_URL", "http://localhost:3030"),
+	}
+}
+
+func resolveAIKey(provider string) string {
+	switch provider {
+	case "openai":
+		return getEnv("OPENAI_API_KEY", "")
+	case "anthropic":
+		return getEnv("ANTHROPIC_API_KEY", "")
+	case "gemini":
+		return getEnv("GEMINI_API_KEY", getEnv("GOOGLE_API_KEY", ""))
+	case "openrouter":
+		return getEnv("OPENROUTER_API_KEY", "")
+	default:
+		return ""
 	}
 }
 

@@ -67,9 +67,9 @@ func main() {
 		PubSubTopic:  pubSubTopic,
 	})
 
-	// Create AI provider
+	// Create AI provider (optional — only if an API key is configured, or Ollama)
 	var aiProvider ai.Provider
-	if cfg.AIAPIKey != "" {
+	if cfg.AIAPIKey != "" || cfg.AIProvider == "ollama" {
 		aiProvider, err = providers.New(ai.ProviderConfig{
 			Provider: cfg.AIProvider,
 			APIKey:   cfg.AIAPIKey,

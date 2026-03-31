@@ -72,7 +72,7 @@ func Load() *Config {
 		AIProvider:           getEnv("AI_PROVIDER", "openai"),
 		AIModel:              getEnv("AI_MODEL", "gpt-4o-mini"),
 		AIBaseURL:            getEnv("AI_BASE_URL", ""),
-		AIAPIKey:             getEnv("AI_API_KEY", getEnv("OPENAI_API_KEY", getEnv("OPENROUTER_API_KEY", ""))),
+		AIAPIKey:             resolveAIKey(getEnv("AI_PROVIDER", "openai")),
 
 		ScrapersEnabled:      getEnv("SCRAPERS_ENABLED", "false") == "true",
 
@@ -82,6 +82,21 @@ func Load() *Config {
 		GoogleRedirectURI:    getEnv("GOOGLE_REDIRECT_URI", "http://localhost:8080/api/v1/email/oauth/callback"),
 		GoogleCloudProjectID: getEnv("GOOGLE_CLOUD_PROJECT_ID", ""),
 		PubSubTopicName:      getEnv("PUBSUB_TOPIC_NAME", "gmail-watch"),
+	}
+}
+
+func resolveAIKey(provider string) string {
+	switch provider {
+	case "openai":
+		return getEnv("OPENAI_API_KEY", "")
+	case "anthropic":
+		return getEnv("ANTHROPIC_API_KEY", "")
+	case "gemini":
+		return getEnv("GEMINI_API_KEY", getEnv("GOOGLE_API_KEY", ""))
+	case "openrouter":
+		return getEnv("OPENROUTER_API_KEY", "")
+	default:
+		return ""
 	}
 }
 

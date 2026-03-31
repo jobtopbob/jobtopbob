@@ -26,9 +26,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Auth pattern:** Better Auth in Next.js issues JWTs. Go API validates stateless via JWKS endpoint (`GET /api/auth/jwks`). No shared session state.
 
-**AI layer:** Two provider implementations in `internal/ai/` cover all models:
-1. OpenAI-compatible (OpenAI, Anthropic, Gemini via OpenRouter)
-2. Ollama (local, offline)
+**AI layer:** Four provider implementations in `internal/ai/providers/`:
+1. OpenAI-compatible (OpenAI, OpenRouter)
+2. Anthropic (native SDK — `github.com/anthropics/anthropic-sdk-go`)
+3. Gemini (native SDK — `google.golang.org/genai`)
+4. Ollama (local, offline)
 
 Prompts are `.txt` files loaded via Go `embed.FS` in `internal/ai/prompts/`.
 

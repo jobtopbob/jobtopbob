@@ -26,7 +26,7 @@ type Provider interface {
 
 // ProviderConfig holds the configuration for creating a provider.
 type ProviderConfig struct {
-	// Provider type: "openai", "openrouter", or "ollama"
+	// Provider type: "openai", "openrouter", "anthropic", "gemini", or "ollama"
 	Provider string
 	// API key for the provider (not needed for Ollama)
 	APIKey string

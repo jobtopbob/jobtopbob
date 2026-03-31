@@ -11,23 +11,36 @@ JobTopBob's AI features are optional and use a BYOK (Bring Your Own Key) model. 
 | Provider | Environment Variable | Notes |
 |----------|---------------------|-------|
 | OpenAI | `OPENAI_API_KEY` | Direct API access |
-| Anthropic | `OPENROUTER_API_KEY` | Via OpenRouter |
-| Gemini | `OPENROUTER_API_KEY` | Via OpenRouter |
+| Anthropic | `ANTHROPIC_API_KEY` | Native SDK (Messages API) |
+| Gemini | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Native SDK (Google Gen AI) |
+| OpenRouter | `OPENROUTER_API_KEY` | Access 100+ models via one key |
 | Ollama | `OLLAMA_HOST` | Local, free, offline |
 
 ## Configuration
 
-### Cloud providers (OpenAI / OpenRouter)
+### Cloud providers
 
-Set the API key in your `.env` file:
+Set `AI_PROVIDER` and the matching API key in your `.env` file:
 
 ```bash
-# OpenAI direct
+# OpenAI
+AI_PROVIDER=openai
 OPENAI_API_KEY=sk-...
 
-# Anthropic or Gemini via OpenRouter
+# Anthropic
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Google Gemini
+AI_PROVIDER=gemini
+GEMINI_API_KEY=...
+
+# OpenRouter (access Anthropic, Gemini, Meta, and 100+ other models)
+AI_PROVIDER=openrouter
 OPENROUTER_API_KEY=sk-or-...
 ```
+
+Optionally set `AI_MODEL` to override the default model (e.g., `AI_MODEL=gpt-4o`).
 
 Then in the app, go to **Settings > AI Preferences** and select your provider.
 
@@ -38,10 +51,19 @@ Then in the app, go to **Settings > AI Preferences** and select your provider.
 3. Set in `.env`:
 
 ```bash
+AI_PROVIDER=ollama
 OLLAMA_HOST=http://host.docker.internal:11434
 ```
 
 4. In the app, select "Ollama (Local)" as your provider
+
+### Advanced: custom endpoint
+
+Set `AI_BASE_URL` to override any provider's default endpoint (useful for proxies, Azure OpenAI, or self-hosted instances):
+
+```bash
+AI_BASE_URL=https://my-proxy.example.com/v1
+```
 
 ## Model overrides
 
@@ -49,7 +71,9 @@ By default, JobTopBob uses a sensible default model for each provider. You can o
 
 Examples:
 - OpenAI: `gpt-4o`, `gpt-4o-mini`
-- Anthropic (via OpenRouter): `anthropic/claude-sonnet-4-20250514`
+- Anthropic: `claude-sonnet-4-20250514`, `claude-haiku-4-5-20251001`
+- Gemini: `gemini-2.5-flash`, `gemini-2.5-pro`
+- OpenRouter: `anthropic/claude-sonnet-4-20250514`, `google/gemini-2.5-flash`
 - Ollama: `llama3.2`, `mistral`
 
 ## AI features

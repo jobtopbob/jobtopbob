@@ -40,15 +40,31 @@ openssl rand -hex 16   # for API_ENCRYPTION_KEY
 
 ### AI provider (optional)
 
-Set one of:
+Set `AI_PROVIDER` and the matching API key:
 
 ```bash
+# OpenAI
+AI_PROVIDER=openai
 OPENAI_API_KEY=sk-...
-# or
-OPENROUTER_API_KEY=sk-or-...    # for Anthropic/Gemini via OpenRouter
-# or
-OLLAMA_HOST=http://host.docker.internal:11434   # for local Ollama
+
+# Anthropic (native SDK)
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Google Gemini (native SDK)
+AI_PROVIDER=gemini
+GEMINI_API_KEY=...
+
+# OpenRouter (100+ models via one key)
+AI_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-or-...
+
+# Ollama (local, no API key needed)
+AI_PROVIDER=ollama
+OLLAMA_HOST=http://host.docker.internal:11434
 ```
+
+See [AI Setup](/features/ai-setup) for full configuration details.
 
 ### Deployment profiles
 
