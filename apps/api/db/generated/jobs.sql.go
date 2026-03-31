@@ -366,7 +366,8 @@ INSERT INTO jobs (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
     'discovered', $16, $17
-) ON CONFLICT (user_id, dedup_hash) WHERE dedup_hash IS NOT NULL DO NOTHING
+) ON CONFLICT (user_id, dedup_hash) WHERE dedup_hash IS NOT NULL
+DO UPDATE SET dedup_hash = EXCLUDED.dedup_hash
 RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
 `
 

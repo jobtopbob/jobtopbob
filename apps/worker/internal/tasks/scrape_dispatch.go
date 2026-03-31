@@ -39,6 +39,7 @@ func HandleScrapeDispatch(deps *ScrapeDispatchDeps) func(ctx context.Context, t 
 	return func(ctx context.Context, t *asynq.Task) error {
 		var payload ScrapeDispatchPayload
 		if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+			slog.Error("scrape:dispatch unmarshal failed", "error", err, "raw_payload", string(t.Payload()))
 			return fmt.Errorf("unmarshal payload: %w", err)
 		}
 
@@ -52,17 +53,21 @@ func HandleScrapeDispatch(deps *ScrapeDispatchDeps) func(ctx context.Context, t 
 
 		var runUUID pgtype.UUID
 		if err := runUUID.Scan(payload.ScrapeRunID); err != nil {
+			slog.Error("scrape:dispatch UUID parse failed", "scrape_run_id", payload.ScrapeRunID, "error", err)
 			return fmt.Errorf("parse scrape_run_id: %w", err)
 		}
 
 		// Update status to running
+		slog.Debug("scrape:dispatch updating status to running", "scrape_run_id", payload.ScrapeRunID)
 		if err := q.UpdateScrapeRunStatus(ctx, db.UpdateScrapeRunStatusParams{
 			ID:           runUUID,
 			Status:       pgtype.Text{String: "running", Valid: true},
 			ErrorMessage: pgtype.Text{},
 		}); err != nil {
+			slog.Error("scrape:dispatch DB update failed", "scrape_run_id", payload.ScrapeRunID, "error", err)
 			return fmt.Errorf("update scrape run status: %w", err)
 		}
+		slog.Debug("scrape:dispatch status updated to running", "scrape_run_id", payload.ScrapeRunID)
 
 		// SSE: scrape started
 		publishSSE(deps.Redis, payload.UserID, "scrape_started", map[string]interface{}{
@@ -72,14 +77,17 @@ func HandleScrapeDispatch(deps *ScrapeDispatchDeps) func(ctx context.Context, t 
 
 		// Initialize Redis counter for coordination
 		pendingKey := fmt.Sprintf("scrape_run:%s:pending", payload.ScrapeRunID)
-		deps.Redis.Set(ctx, pendingKey, len(payload.Sources), 1*time.Hour)
+		if err := deps.Redis.Set(ctx, pendingKey, len(payload.Sources), 1*time.Hour).Err(); err != nil {
+			slog.Error("scrape:dispatch Redis SET failed", "key", pendingKey, "error", err)
+		}
 
 		// Fan out one sub-task per source
+		slog.Debug("scrape:dispatch fanning out sources", "scrape_run_id", payload.ScrapeRunID, "scraper_urls", deps.ScraperURLs)
 		var dispatched int
 		for _, source := range payload.Sources {
 			scraperURL, ok := deps.ScraperURLs[source]
 			if !ok {
-				slog.Warn("no scraper URL configured for source", "source", source)
+				slog.Warn("no scraper URL configured for source", "source", source, "available_sources", deps.ScraperURLs)
 				// Decrement pending count for unconfigured sources
 				deps.Redis.Decr(ctx, pendingKey)
 				continue
@@ -98,12 +106,15 @@ func HandleScrapeDispatch(deps *ScrapeDispatchDeps) func(ctx context.Context, t 
 
 			task := asynq.NewTask(TypeScrapeSource, subPayload)
 			if _, err := deps.AsynqClient.Enqueue(task); err != nil {
-				slog.Error("failed to enqueue scrape:source", "source", source, "error", err)
+				slog.Error("failed to enqueue scrape:source", "source", source, "scraper_url", scraperURL, "error", err)
 				deps.Redis.Decr(ctx, pendingKey)
 				continue
 			}
+			slog.Debug("scrape:source enqueued", "source", source, "scraper_url", scraperURL)
 			dispatched++
 		}
+
+		slog.Info("scrape:dispatch fan-out complete", "scrape_run_id", payload.ScrapeRunID, "dispatched", dispatched, "total_sources", len(payload.Sources))
 
 		if dispatched == 0 {
 			// No sources could be dispatched

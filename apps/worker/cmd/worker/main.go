@@ -97,6 +97,13 @@ func main() {
 		Queues: map[string]int{
 			"default": 1,
 		},
+		ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
+			slog.Error("asynq task failed",
+				"type", task.Type(),
+				"error", err,
+				"payload", string(task.Payload()),
+			)
+		}),
 	})
 
 	// Register task handlers

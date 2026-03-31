@@ -157,7 +157,8 @@ INSERT INTO jobs (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
     'discovered', $16, $17
-) ON CONFLICT (user_id, dedup_hash) WHERE dedup_hash IS NOT NULL DO NOTHING
+) ON CONFLICT (user_id, dedup_hash) WHERE dedup_hash IS NOT NULL
+DO UPDATE SET dedup_hash = EXCLUDED.dedup_hash
 RETURNING *;
 
 -- name: ListDiscoveredJobs :many

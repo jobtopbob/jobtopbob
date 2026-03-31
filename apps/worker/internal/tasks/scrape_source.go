@@ -84,22 +84,26 @@ func HandleScrapeSource(deps *ScrapeSourceDeps) func(ctx context.Context, t *asy
 			"user_id", payload.UserID,
 			"scrape_run_id", payload.ScrapeRunID,
 			"source", payload.Source,
+			"scraper_url", payload.ScraperURL,
 		)
 
 		q := db.New(deps.Pool)
 
 		var runUUID pgtype.UUID
 		if err := runUUID.Scan(payload.ScrapeRunID); err != nil {
+			slog.Error("scrape:source UUID parse failed", "scrape_run_id", payload.ScrapeRunID, "error", err)
 			return fmt.Errorf("parse scrape_run_id: %w", err)
 		}
 
 		// Call the scraper HTTP service
+		slog.Debug("scrape:source calling scraper", "url", payload.ScraperURL+"/scrape", "keywords", payload.Keywords, "location", payload.Location, "country", payload.Country)
 		rawJobs, err := callScraper(ctx, deps.HTTPClient, payload)
 		if err != nil {
-			slog.Error("scraper call failed", "source", payload.Source, "error", err)
+			slog.Error("scraper call failed", "source", payload.Source, "scraper_url", payload.ScraperURL, "error", err)
 			finalizeScrapeSource(ctx, deps, q, runUUID, payload, 0, 0, err.Error())
 			return nil // Don't retry on scraper failure
 		}
+		slog.Info("scraper call succeeded", "source", payload.Source, "jobs_returned", len(rawJobs))
 
 		// Dedup and insert jobs
 		var jobsFound, jobsNew int
@@ -148,8 +152,8 @@ func HandleScrapeSource(deps *ScrapeSourceDeps) func(ctx context.Context, t *asy
 				slog.Warn("failed to insert scraped job", "title", raw.Title, "error", err)
 				continue
 			}
-			// CreateScrapedJob uses ON CONFLICT DO NOTHING — if ID is zero, it was a duplicate
-			if job.ID.Valid {
+			// Upsert always returns a row — if created_at == updated_at, it's new
+			if job.CreatedAt.Time.Equal(job.UpdatedAt.Time) {
 				jobsNew++
 			}
 		}
@@ -241,9 +245,10 @@ func finalizeScrapeSource(
 	pendingKey := fmt.Sprintf("scrape_run:%s:pending", payload.ScrapeRunID)
 	remaining, err := deps.Redis.Decr(ctx, pendingKey).Result()
 	if err != nil {
-		slog.Error("failed to decrement pending counter", "error", err)
+		slog.Error("failed to decrement pending counter", "key", pendingKey, "error", err)
 		return
 	}
+	slog.Debug("scrape:source pending counter decremented", "scrape_run_id", payload.ScrapeRunID, "remaining", remaining)
 
 	if remaining <= 0 {
 		// We're the last source — finalize the run

@@ -41,7 +41,7 @@ type Config struct {
 // Load reads configuration from environment variables with sensible defaults.
 func Load() *Config {
 	return &Config{
-		DatabaseURL:          getEnv("DATABASE_URL", "postgres://jobtopbob_app:changeme@localhost:5432/jobtopbob?sslmode=disable"),
+		DatabaseURL:          getEnv("WORKER_DATABASE_URL", getEnv("DATABASE_URL", "postgres://jobtopbob_worker:changeme@localhost:5432/jobtopbob?sslmode=disable")),
 		RedisURL:             getEnv("REDIS_URL", "redis://:changeme@localhost:6379/0"),
 		EncryptionKey:        getEnv("API_ENCRYPTION_KEY", ""),
 		GoogleClientID:       getEnv("GOOGLE_CLIENT_ID", ""),
