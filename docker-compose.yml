@@ -172,6 +172,10 @@ services:
       DATABASE_URL: postgres://${POSTGRES_APP_USER:-jobtopbob_app}:${POSTGRES_APP_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-jobtopbob}?sslmode=disable
       MIGRATION_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-jobtopbob}?sslmode=disable
       NEXT_PUBLIC_SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+      RESUME_BUILDER_PUBLIC_URL: ${RESUME_BUILDER_PUBLIC_URL:-http://localhost:3010}
+      RXRESUME_OAUTH_CLIENT_ID: ${RXRESUME_OAUTH_CLIENT_ID:-rxresume}
+      RXRESUME_OAUTH_CLIENT_SECRET: ${RXRESUME_OAUTH_CLIENT_SECRET:-rxresume-secret}
     ports:
       - "${WEB_PORT:-3000}:3000"
     depends_on:
@@ -200,6 +204,23 @@ services:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-rustfsadmin}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
       S3_ENDPOINT: http://rustfs:9000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      RESUME_BUILDER_PUBLIC_URL: ${RESUME_BUILDER_PUBLIC_URL:-http://localhost:3010}
+      SCRAPERS_ENABLED: ${SCRAPERS_ENABLED:-false}
+      # AI provider
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      # Gmail OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:8080/api/v1/email/oauth/callback}
+      GOOGLE_CLOUD_PROJECT_ID: ${GOOGLE_CLOUD_PROJECT_ID:-}
+      PUBSUB_TOPIC_NAME: ${PUBSUB_TOPIC_NAME:-gmail-watch}
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
@@ -233,6 +254,23 @@ services:
       S3_ENDPOINT: http://rustfs:9000
       BACKUP_DIR: /backups
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      PDL_API_KEY: ${PDL_API_KEY:-}
+      SCRAPERS_ENABLED: ${SCRAPERS_ENABLED:-false}
+      SCRAPER_ADZUNA_URL: ${SCRAPER_ADZUNA_URL:-http://scraper-adzuna:3000}
+      # AI provider
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      # Gmail OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:8080/api/v1/email/oauth/callback}
+      GOOGLE_CLOUD_PROJECT_ID: ${GOOGLE_CLOUD_PROJECT_ID:-}
+      PUBSUB_TOPIC_NAME: ${PUBSUB_TOPIC_NAME:-gmail-watch}
     volumes:
       - backups:/backups
     depends_on:
