@@ -359,20 +359,21 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, erro
 
 const createScrapedJob = `-- name: CreateScrapedJob :one
 INSERT INTO jobs (
-    user_id, title, source, source_url, location, location_type,
+    user_id, company_id, title, source, source_url, location, location_type,
     salary_min, salary_max, salary_currency, salary_interval,
     jd_raw, job_type, job_level, application_url, skills,
     status, dedup_hash, scrape_run_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-    'discovered', $16, $17
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+    'discovered', $17, $18
 ) ON CONFLICT (user_id, dedup_hash) WHERE dedup_hash IS NOT NULL
-DO UPDATE SET dedup_hash = EXCLUDED.dedup_hash
+DO UPDATE SET company_id = COALESCE(EXCLUDED.company_id, jobs.company_id)
 RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
 `
 
 type CreateScrapedJobParams struct {
 	UserID         string      `json:"user_id"`
+	CompanyID      pgtype.UUID `json:"company_id"`
 	Title          string      `json:"title"`
 	Source         pgtype.Text `json:"source"`
 	SourceUrl      pgtype.Text `json:"source_url"`
@@ -394,6 +395,7 @@ type CreateScrapedJobParams struct {
 func (q *Queries) CreateScrapedJob(ctx context.Context, arg CreateScrapedJobParams) (Job, error) {
 	row := q.db.QueryRow(ctx, createScrapedJob,
 		arg.UserID,
+		arg.CompanyID,
 		arg.Title,
 		arg.Source,
 		arg.SourceUrl,

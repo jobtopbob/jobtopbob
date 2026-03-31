@@ -27,10 +27,43 @@ interface SSEEmailEvent {
   };
 }
 
+interface SSEScrapeProgressEvent {
+  type: "scrape_progress";
+  data: {
+    scrape_run_id: string;
+    source: string;
+    jobs_found: number;
+    jobs_new: number;
+    error: string | null;
+  };
+}
+
+interface SSEScrapeCompletedEvent {
+  type: "scrape_completed";
+  data: {
+    scrape_run_id: string;
+    status: string;
+  };
+}
+
+interface SSEScrapeStartedEvent {
+  type: "scrape_started";
+  data: {
+    scrape_run_id: string;
+    sources: string[];
+  };
+}
+
+type SSEEvent =
+  | SSEEmailEvent
+  | SSEScrapeStartedEvent
+  | SSEScrapeProgressEvent
+  | SSEScrapeCompletedEvent;
+
 /**
  * useSSE establishes a Server-Sent Events connection to receive real-time
- * notifications (e.g., new email events). It automatically reconnects on
- * disconnect and invalidates relevant queries when events arrive.
+ * notifications (e.g., new email events, scrape progress). It automatically
+ * reconnects on disconnect and invalidates relevant queries when events arrive.
  */
 export function useSSE() {
   const queryClient = useQueryClient();
@@ -52,14 +85,19 @@ export function useSSE() {
       eventSourceRef.current = es;
 
       es.addEventListener("message", (e) => {
-        // Invalidate email queries when a new event arrives
-        queryClient.invalidateQueries({ queryKey: emailKeys.unconfirmed });
-        queryClient.invalidateQueries({ queryKey: emailKeys.unconfirmedCount });
-
-        // Parse the event data and show a toast notification
+        let payload: SSEEvent;
         try {
-          const payload = JSON.parse(e.data) as SSEEmailEvent;
-          if (payload.type === "email_event" && payload.data) {
+          payload = JSON.parse(e.data) as SSEEvent;
+        } catch {
+          return;
+        }
+
+        switch (payload.type) {
+          case "email_event": {
+            queryClient.invalidateQueries({ queryKey: emailKeys.unconfirmed });
+            queryClient.invalidateQueries({
+              queryKey: emailKeys.unconfirmedCount,
+            });
             const { detected_type, company_name } = payload.data;
             const label = intentLabels[detected_type] ?? "Email event";
             const message = company_name
@@ -73,9 +111,37 @@ export function useSSE() {
                 },
               },
             });
+            break;
           }
-        } catch {
-          // Silently ignore unparseable messages
+
+          case "scrape_started": {
+            queryClient.invalidateQueries({ queryKey: ["scrape-runs"] });
+            break;
+          }
+
+          case "scrape_progress": {
+            queryClient.invalidateQueries({ queryKey: ["discovered-jobs"] });
+            queryClient.invalidateQueries({ queryKey: ["scrape-runs"] });
+            const { source, jobs_new } = payload.data;
+            if (jobs_new > 0) {
+              toast.info(
+                `Found ${jobs_new} new job${jobs_new === 1 ? "" : "s"} from ${source}`
+              );
+            }
+            break;
+          }
+
+          case "scrape_completed": {
+            queryClient.invalidateQueries({ queryKey: ["discovered-jobs"] });
+            queryClient.invalidateQueries({ queryKey: ["scrape-runs"] });
+            queryClient.invalidateQueries({ queryKey: ["search-profiles"] });
+            if (payload.data.status === "completed") {
+              toast.success("Job search complete");
+            } else {
+              toast.error("Job search finished with errors");
+            }
+            break;
+          }
         }
       });
 

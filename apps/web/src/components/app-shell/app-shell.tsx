@@ -5,6 +5,7 @@ import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { CommandPalette } from "@/components/command-palette";
 import { Toaster } from "sonner";
+import { useSSE } from "@/hooks/use-sse";
 
 interface AppShellProps {
   userName: string;
@@ -12,6 +13,8 @@ interface AppShellProps {
 }
 
 export function AppShell({ userName, children }: AppShellProps) {
+  useSSE();
+
   return (
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden">

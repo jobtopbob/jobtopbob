@@ -109,6 +109,9 @@ func HandleScrapeSource(deps *ScrapeSourceDeps) func(ctx context.Context, t *asy
 		var jobsFound, jobsNew int
 		jobsFound = len(rawJobs)
 
+		// Cache resolved company IDs to avoid repeated DB lookups within a batch
+		companyCache := make(map[string]pgtype.UUID)
+
 		for _, raw := range rawJobs {
 			if raw.Title == "" || raw.SourceURL == "" {
 				continue
@@ -129,8 +132,15 @@ func HandleScrapeSource(deps *ScrapeSourceDeps) func(ctx context.Context, t *asy
 				skillsJSON, _ = json.Marshal(raw.Skills)
 			}
 
+			// Resolve company: find existing or create a new one
+			var companyID pgtype.UUID
+			if raw.Company != "" {
+				companyID = resolveCompanyID(ctx, q, payload.UserID, raw.Company, companyCache)
+			}
+
 			job, err := q.CreateScrapedJob(ctx, db.CreateScrapedJobParams{
 				UserID:         payload.UserID,
+				CompanyID:      companyID,
 				Title:          raw.Title,
 				Source:         pgtype.Text{String: payload.Source, Valid: true},
 				SourceUrl:      pgtype.Text{String: raw.SourceURL, Valid: true},
@@ -204,6 +214,40 @@ func callScraper(ctx context.Context, client *http.Client, payload ScrapeSourceP
 	}
 
 	return scrapeResp.Jobs, nil
+}
+
+// resolveCompanyID finds an existing company by name (case-insensitive) or creates one.
+// Results are cached in companyCache to avoid repeated DB lookups within a batch.
+func resolveCompanyID(ctx context.Context, q *db.Queries, userID, companyName string, cache map[string]pgtype.UUID) pgtype.UUID {
+	key := strings.ToLower(companyName)
+	if id, ok := cache[key]; ok {
+		return id
+	}
+
+	// Try to find existing company by name (case-insensitive exact match)
+	companies, err := q.FindCompanyByNameFuzzy(ctx, db.FindCompanyByNameFuzzyParams{
+		UserID: userID,
+		Lower:  companyName,
+	})
+	if err == nil && len(companies) > 0 {
+		cache[key] = companies[0].ID
+		return companies[0].ID
+	}
+
+	// Create a minimal company record
+	company, err := q.CreateCompany(ctx, db.CreateCompanyParams{
+		UserID:           userID,
+		Name:             companyName,
+		DataSource:       "scraped",
+		EnrichmentStatus: "none",
+	})
+	if err != nil {
+		slog.Warn("failed to create company for scraped job", "company", companyName, "error", err)
+		return pgtype.UUID{} // Return invalid UUID — job will have NULL company_id
+	}
+
+	cache[key] = company.ID
+	return company.ID
 }
 
 // dedupHash computes a SHA-256 hash of lower(title + company + location) for deduplication.

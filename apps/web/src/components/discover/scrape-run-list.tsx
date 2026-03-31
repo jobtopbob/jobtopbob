@@ -3,7 +3,14 @@
 import { useScrapeRuns } from "@/hooks/use-discover";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MagnifyingGlassIcon, MapPinIcon } from "@phosphor-icons/react";
+import {
+  MagnifyingGlassIcon,
+  MapPinIcon,
+  CheckCircleIcon,
+  SpinnerGapIcon,
+  XCircleIcon,
+  ClockIcon,
+} from "@phosphor-icons/react";
 
 function relativeTime(dateStr: string) {
   const now = Date.now();
@@ -17,22 +24,17 @@ function relativeTime(dateStr: string) {
   return new Date(dateStr).toLocaleDateString();
 }
 
-function StatusDot({ status }: { status: string | null }) {
+function StatusIcon({ status }: { status: string | null }) {
   if (status === "completed") {
-    return <span className="inline-flex h-2 w-2 rounded-full bg-brand-green" />;
+    return <CheckCircleIcon weight="fill" className="h-4 w-4 text-brand-green" />;
   }
   if (status === "running" || status === "pending") {
-    return (
-      <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
-      </span>
-    );
+    return <SpinnerGapIcon weight="bold" className="h-4 w-4 animate-spin text-brand" />;
   }
   if (status === "failed") {
-    return <span className="inline-flex h-2 w-2 rounded-full bg-brand-red" />;
+    return <XCircleIcon weight="fill" className="h-4 w-4 text-brand-red" />;
   }
-  return <span className="inline-flex h-2 w-2 rounded-full bg-text-muted" />;
+  return <ClockIcon className="h-4 w-4 text-text-muted" />;
 }
 
 function statusLabel(status: string | null) {
@@ -54,13 +56,17 @@ export function ScrapeRunList() {
 
   if (isLoading) {
     return (
-      <div className="flex gap-3 pb-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton
-            key={i}
-            className="h-[120px] min-w-[280px] flex-1 rounded-xl"
-          />
-        ))}
+      <div className="relative overflow-hidden rounded-2xl">
+        <div className="p-5">
+          <div className="flex gap-3 pb-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                className="h-[130px] min-w-[280px] flex-1 rounded-xl"
+              />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -88,10 +94,22 @@ export function ScrapeRunList() {
       {runs.map((run) => (
         <div
           key={run.id}
-          className="flex min-w-[280px] max-w-[320px] shrink-0 snap-start flex-col justify-between rounded-xl border border-border-subtle bg-card p-4"
+          className="relative flex min-w-[280px] max-w-[320px] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-xl border border-border-subtle p-4 transition-shadow duration-200 hover:shadow-md"
         >
+          <img
+            src="/recent-searches-bg-light.jpg"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover dark:hidden"
+          />
+          <img
+            src="/recent-searches-bg-dark.jpg"
+            alt=""
+            className="absolute inset-0 hidden h-full w-full object-cover dark:block"
+          />
+          <div className="absolute inset-0 bg-card/88" />
+
           {/* Keywords as chips */}
-          <div>
+          <div className="relative z-10">
             <div className="flex flex-wrap gap-1.5">
               {run.keywords?.map((kw, i) => (
                 <Badge key={i} variant="outline" className="text-xs">
@@ -118,10 +136,10 @@ export function ScrapeRunList() {
             </div>
           </div>
 
-          {/* Status + Results */}
-          <div className="mt-3 flex items-center justify-between border-t border-border-subtle pt-3">
+          {/* Status + Time */}
+          <div className="relative z-10 mt-3 flex items-center justify-between border-t border-border-subtle pt-3">
             <div className="flex items-center gap-1.5">
-              <StatusDot status={run.status} />
+              <StatusIcon status={run.status} />
               <span
                 className={`text-xs font-medium ${
                   run.status === "completed"
@@ -134,14 +152,9 @@ export function ScrapeRunList() {
                 {statusLabel(run.status)}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-text-muted">
-              {run.status === "completed" && (
-                <span>
-                  {run.jobs_new ?? 0} new / {run.jobs_found ?? 0} found
-                </span>
-              )}
-              <span>{relativeTime(run.created_at)}</span>
-            </div>
+            <span className="text-xs text-text-muted">
+              {relativeTime(run.created_at)}
+            </span>
           </div>
         </div>
       ))}

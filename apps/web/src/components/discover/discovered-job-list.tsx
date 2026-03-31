@@ -36,19 +36,31 @@ function JobCard({ job }: { job: DiscoveredJob }) {
   const salary = formatSalaryRange(job.salary_min, job.salary_max, { currency: job.salary_currency });
 
   return (
-    <div className="group relative flex flex-col rounded-xl border border-border-subtle bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border-subtle p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <img
+        src="/discovered-jobs-bg-light.jpg"
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover dark:hidden"
+      />
+      <img
+        src="/discovered-jobs-bg-dark.jpg"
+        alt=""
+        className="absolute inset-0 hidden h-full w-full object-cover dark:block"
+      />
+      <div className="absolute inset-0 bg-card/88" />
+
       {/* Source badge */}
       {job.source && (
         <Badge
           variant="secondary"
-          className="absolute right-3 top-3 text-[10px] capitalize"
+          className="absolute right-3 top-3 z-10 text-[10px] capitalize"
         >
           {job.source}
         </Badge>
       )}
 
       {/* Company + Title */}
-      <div className="flex items-start gap-3">
+      <div className="relative z-10 flex items-start gap-3">
         {/* Company avatar */}
         {job.company_name && (
           <div
@@ -58,11 +70,9 @@ function JobCard({ job }: { job: DiscoveredJob }) {
           </div>
         )}
         <div className="min-w-0 flex-1 pr-16">
-          {job.company_name && (
-            <p className="text-sm font-semibold text-text-primary truncate">
-              {job.company_name}
-            </p>
-          )}
+          <p className="text-sm font-semibold text-text-primary truncate">
+            {job.company_name || "Company"}
+          </p>
           <h3 className="text-xs text-text-secondary leading-tight truncate">
             {job.title}
           </h3>
@@ -71,11 +81,13 @@ function JobCard({ job }: { job: DiscoveredJob }) {
 
       {/* Salary */}
       {salary && (
-        <p className="mt-3 text-sm font-medium text-brand">{salary}</p>
+        <p className="relative z-10 mt-3 text-sm font-medium text-brand">
+          {salary}
+        </p>
       )}
 
       {/* Meta row */}
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
+      <div className="relative z-10 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
         {job.location && (
           <span className="flex items-center gap-1">
             <MapPinIcon className="h-3 w-3" />
@@ -92,12 +104,14 @@ function JobCard({ job }: { job: DiscoveredJob }) {
 
       {/* Description */}
       {job.jd_raw && (
-        <p className="mt-2 text-xs text-text-muted line-clamp-2">{job.jd_raw}</p>
+        <p className="relative z-10 mt-2 text-xs text-text-muted line-clamp-2">
+          {job.jd_raw}
+        </p>
       )}
 
       {/* External link */}
       {job.source_url && (
-        <div className="mt-3 border-t border-border-subtle pt-3">
+        <div className="relative z-10 mt-3 border-t border-border-subtle pt-3">
           <a
             href={job.source_url}
             target="_blank"
@@ -160,8 +174,8 @@ export function DiscoveredJobList() {
               Start discovering
             </p>
             <p className="mt-1 max-w-xs text-xs text-text-muted">
-              Run a search to find jobs across multiple sources. Discovered jobs
-              will appear here.
+              Run a search to find jobs across multiple sources. Discovered
+              jobs will appear here.
             </p>
           </div>
         </div>
