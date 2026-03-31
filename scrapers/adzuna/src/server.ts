@@ -54,7 +54,7 @@ async function searchAdzuna(req: ScrapeRequest): Promise<ScrapeResponse> {
     app_key: ADZUNA_APP_KEY,
     results_per_page: String(resultsPerPage),
     what: keywords,
-    content_type: "application/json",
+    "content-type": "application/json",
     sort_by: "date",
   });
 

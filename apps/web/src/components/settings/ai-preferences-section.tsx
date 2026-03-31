@@ -20,8 +20,8 @@ import { SpinnerIcon } from "@phosphor-icons/react";
 
 const AI_PROVIDERS = [
   { value: "openai", label: "OpenAI" },
-  { value: "anthropic", label: "Anthropic (via OpenRouter)" },
-  { value: "gemini", label: "Gemini (via OpenRouter)" },
+  { value: "anthropic", label: "Anthropic" },
+  { value: "gemini", label: "Google Gemini" },
   { value: "ollama", label: "Ollama (Local)" },
 ];
 

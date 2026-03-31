@@ -37,7 +37,8 @@
       "Bash(go get:*)",
       "Bash(go mod:*)",
       "Bash(find:*)",
-      "Bash(gh search:*)"
+      "Bash(gh search:*)",
+      "WebFetch(domain:developer.adzuna.com)"
     ]
   }
 }

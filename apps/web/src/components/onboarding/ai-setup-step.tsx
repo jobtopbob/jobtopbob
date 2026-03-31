@@ -14,13 +14,29 @@ import {
 } from "@/components/ui/select";
 import { useUpdateUserSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { SpinnerIcon } from "@phosphor-icons/react";
+import { SpinnerIcon, SparkleIcon, InfoIcon } from "@phosphor-icons/react";
 
 const AI_PROVIDERS = [
-  { value: "openai", label: "OpenAI" },
-  { value: "anthropic", label: "Anthropic (via OpenRouter)" },
-  { value: "gemini", label: "Gemini (via OpenRouter)" },
-  { value: "ollama", label: "Ollama (Local)" },
+  {
+    value: "openai",
+    label: "OpenAI",
+    description: "GPT-4o, GPT-4o mini, and other OpenAI models",
+  },
+  {
+    value: "anthropic",
+    label: "Anthropic",
+    description: "Claude Sonnet, Haiku, and other Anthropic models",
+  },
+  {
+    value: "gemini",
+    label: "Google Gemini",
+    description: "Gemini 2.5 Flash, Pro, and other Google models",
+  },
+  {
+    value: "ollama",
+    label: "Ollama (Local)",
+    description: "Free and offline — runs on your own hardware",
+  },
 ];
 
 interface AISetupStepProps {
@@ -59,13 +75,16 @@ export function AISetupStep({ onNext, onBack }: AISetupStepProps) {
     <Card>
       <CardContent className="space-y-6 pt-2">
         <div className="space-y-2">
-          <h2 className="text-xl font-bold text-text-primary">
-            AI Provider Setup
-          </h2>
+          <div className="flex items-center gap-2">
+            <SparkleIcon className="size-5 text-brand" />
+            <h2 className="text-xl font-bold text-text-primary">
+              AI Provider Setup
+            </h2>
+          </div>
           <p className="text-sm text-text-muted">
-            JobTopBob uses AI for suitability scoring, cover letter generation,
-            and more. Select your provider — API keys are configured via
-            environment variables on the server.
+            AI powers suitability scoring, cover letter generation, interview
+            prep, ATS analysis, and email classification. Select the provider
+            your server is configured with.
           </p>
         </div>
 
@@ -79,7 +98,12 @@ export function AISetupStep({ onNext, onBack }: AISetupStepProps) {
               <SelectContent>
                 {AI_PROVIDERS.map((p) => (
                   <SelectItem key={p.value} value={p.value}>
-                    {p.label}
+                    <div className="flex flex-col items-start">
+                      <span>{p.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {p.description}
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -93,13 +117,39 @@ export function AISetupStep({ onNext, onBack }: AISetupStepProps) {
                 id="onboarding-model"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
-                placeholder="e.g. gpt-4o, claude-sonnet-4-20250514"
+                placeholder={
+                  provider === "anthropic"
+                    ? "e.g. claude-sonnet-4-20250514"
+                    : provider === "gemini"
+                      ? "e.g. gemini-2.5-flash"
+                      : provider === "ollama"
+                        ? "e.g. llama3.2, mistral"
+                        : "e.g. gpt-4o, gpt-4o-mini"
+                }
               />
               <p className="text-xs text-text-muted">
-                Leave empty to use the default model for the selected provider.
+                Leave empty to use the server default. You can change this later
+                in Settings.
               </p>
             </div>
           )}
+        </div>
+
+        <div className="flex items-start gap-2 rounded-lg border border-border bg-surface-hover/50 p-3">
+          <InfoIcon className="size-4 shrink-0 text-muted-foreground mt-0.5" />
+          <p className="text-xs text-muted-foreground">
+            API keys are configured by the server admin via environment
+            variables — not entered here. If you&apos;re self-hosting, see the{" "}
+            <a
+              href="https://docs.jobtopbob.com/features/ai-setup"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-text-primary"
+            >
+              AI Setup guide
+            </a>{" "}
+            for configuration details.
+          </p>
         </div>
 
         <div className="flex justify-between">

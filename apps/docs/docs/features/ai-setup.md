@@ -14,9 +14,9 @@ JobTopBob's AI features are optional and use a BYOK (Bring Your Own Key) model. 
 | Anthropic | `ANTHROPIC_API_KEY` | Native SDK (Messages API) |
 | Gemini | `GOOGLE_API_KEY` | Native SDK (Google Gen AI) |
 | OpenRouter | `OPENROUTER_API_KEY` | Access 100+ models via one key |
-| Ollama | `OLLAMA_HOST` | Local, free, offline |
+| Ollama | `OLLAMA_HOST` | Local, free, no API key needed |
 
-## Configuration
+## Server configuration
 
 ### Cloud providers
 
@@ -40,9 +40,7 @@ AI_PROVIDER=openrouter
 OPENROUTER_API_KEY=sk-or-...
 ```
 
-Optionally set `AI_MODEL` to override the default model (e.g., `AI_MODEL=gpt-4o`).
-
-Then in the app, go to **Settings > AI Preferences** and select your provider.
+Optionally set `AI_MODEL` to override the default model (e.g., `AI_MODEL=gpt-4o`). The default is `gpt-4o-mini`.
 
 ### Ollama (local)
 
@@ -55,7 +53,7 @@ AI_PROVIDER=ollama
 OLLAMA_HOST=http://host.docker.internal:11434
 ```
 
-4. In the app, select "Ollama (Local)" as your provider
+No API key is needed. The default model is `llama3.2`.
 
 ### Advanced: custom endpoint
 
@@ -67,7 +65,7 @@ AI_BASE_URL=https://my-proxy.example.com/v1
 
 ## Model overrides
 
-By default, JobTopBob uses a sensible default model for each provider. You can override this per-user in **Settings > AI Preferences > Model Override**.
+By default, JobTopBob uses `gpt-4o-mini` as the global default model (Ollama defaults to `llama3.2`). You can override this per-user in **Settings > AI Preferences > Model Override**.
 
 Examples:
 - OpenAI: `gpt-4o`, `gpt-4o-mini`
@@ -80,13 +78,14 @@ Examples:
 
 Once configured, these features become available:
 
-- **Suitability scoring** — automatic score (1-5) when a job is added
+- **Suitability scoring** — automatic score when a job is added
 - **JD extraction** — structured fields parsed from raw job descriptions
-- **Cover letter generation** — streaming AI-generated cover letters
+- **Cover letter generation** — streaming AI-generated cover letters, influenced by your writing style preference
 - **Interview prep** — practice questions based on the job description
 - **ATS scoring** — keyword match between your resume and the JD
 - **Resume tailoring** — suggestions to improve resume fit
-- **Ghostwriter** — conversational AI for drafting emails and messages
+- **Ghostwriter** — multi-turn conversational AI for drafting emails and messages
+- **Email classification** — automatic detection of job-related emails (requires [Gmail integration](./email-integration))
 
 ## Privacy
 
