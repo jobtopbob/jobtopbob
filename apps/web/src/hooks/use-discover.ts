@@ -198,7 +198,8 @@ export function useSearchFromResume() {
 export function useDiscoveredJobs(
   page = 1,
   perPage = 25,
-  filters?: { search?: string; scrape_run_id?: string }
+  filters?: { search?: string; scrape_run_id?: string },
+  options?: { refetchInterval?: number | false }
 ) {
   return useQuery({
     queryKey: ["discovered-jobs", page, perPage, filters],
@@ -213,5 +214,6 @@ export function useDiscoveredJobs(
         `/api/v1/discover/jobs?${params.toString()}`
       );
     },
+    refetchInterval: options?.refetchInterval,
   });
 }

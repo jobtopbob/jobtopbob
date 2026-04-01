@@ -32,8 +32,13 @@ func Auth(jwksURL string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or invalid authorization header"})
-			return
+			// Fallback: EventSource cannot set headers, so SSE passes token as query param
+			if token := c.Query("token"); token != "" {
+				authHeader = "Bearer " + token
+			} else {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or invalid authorization header"})
+				return
+			}
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")

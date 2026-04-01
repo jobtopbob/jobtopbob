@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { useDiscoveredJobs, type DiscoveredJob } from "@/hooks/use-discover";
+import { useDiscoveredJobs, useScrapeRuns, type DiscoveredJob } from "@/hooks/use-discover";
 import { useDebounce } from "@/hooks/use-debounce";
 import { PaginationControls } from "@/components/kanban/pagination-controls";
 import { formatSalaryRange } from "@/lib/currency";
@@ -132,9 +132,14 @@ export function DiscoveredJobList() {
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 300);
 
+  const { data: runsData } = useScrapeRuns(1, 6);
+  const hasActiveRuns = runsData?.data?.some(
+    (r) => r.status === "pending" || r.status === "running"
+  );
+
   const { data, isLoading } = useDiscoveredJobs(page, 20, {
     search: debouncedSearch || undefined,
-  });
+  }, { refetchInterval: hasActiveRuns ? 5000 : false });
 
   const jobs = data?.data ?? [];
   const total = data?.total ?? 0;
