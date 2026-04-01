@@ -140,6 +140,13 @@ export function ScrapeRunList() {
                 )}
               </div>
 
+              {/* Error message */}
+              {run.status === "failed" && run.error_message && (
+                <p className="truncate text-xs text-brand-red/80">
+                  {run.error_message}
+                </p>
+              )}
+
               {/* Status row */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">

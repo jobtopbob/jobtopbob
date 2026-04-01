@@ -57,8 +57,7 @@ See [Email Integration](../email-integration/) for setup and supported providers
 
 Automated job scraping from:
 
-- Adzuna (REST API)
-- LinkedIn, Indeed, Glassdoor (coming soon)
+- Google Jobs via SerpApi (aggregates LinkedIn, Indeed, Glassdoor, ZipRecruiter, and more)
 
 Configure search profiles with keywords, location, and filters. New jobs are scored automatically.
 

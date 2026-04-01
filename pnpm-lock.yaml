@@ -201,25 +201,6 @@ importers:
         specifier: workspace:*
         version: link:../config
 
-  scrapers/adzuna:
-    dependencies:
-      '@jobtopbob/scraper-shared':
-        specifier: workspace:*
-        version: link:../shared
-    devDependencies:
-      '@jobtopbob/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      '@types/node':
-        specifier: ^25
-        version: 25.5.0
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
-      typescript:
-        specifier: ^6.0.0
-        version: 6.0.2
-
   scrapers/serp:
     dependencies:
       '@jobtopbob/scraper-shared':

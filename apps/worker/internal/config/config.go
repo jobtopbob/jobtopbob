@@ -34,9 +34,8 @@ type Config struct {
 	S3SecretKey string
 
 	// Scrapers
-	ScrapersEnabled  bool
-	ScraperAdzunaURL string
-	ScraperSerpURL   string
+	ScrapersEnabled bool
+	ScraperSerpURL  string
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -60,9 +59,8 @@ func Load() *Config {
 		S3Endpoint:           getEnv("S3_ENDPOINT", "http://localhost:9000"),
 		S3AccessKey:          getEnv("S3_ACCESS_KEY", "rustfsadmin"),
 		S3SecretKey:          getEnv("S3_SECRET_KEY", "rustfsadmin"),
-		ScrapersEnabled:      getEnv("SCRAPERS_ENABLED", "false") == "true",
-		ScraperAdzunaURL:     getEnv("SCRAPER_ADZUNA_URL", "http://localhost:3030"),
-		ScraperSerpURL:       getEnv("SCRAPER_SERP_URL", "http://localhost:3031"),
+		ScrapersEnabled: getEnv("SCRAPERS_ENABLED", "false") == "true",
+		ScraperSerpURL:  getEnv("SCRAPER_SERP_URL", "http://localhost:3031"),
 	}
 }
 

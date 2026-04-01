@@ -23,6 +23,12 @@ export interface RawJob {
   experienceLevel?: string;
   postedAt?: string;
   skills?: string[];
+  via?: string;
+  jobHighlights?: { title: string; items: string[] }[];
+  benefits?: Record<string, boolean>;
+  externalId?: string;
+  applyOptions?: { title: string; link: string }[];
+  thumbnailUrl?: string;
 }
 
 /** ScrapeResponse is the HTTP response from a scraper service. */

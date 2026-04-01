@@ -12,7 +12,6 @@ RUN apt-get update \
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY scrapers/serp/package.json scrapers/serp/
 COPY scrapers/shared/package.json scrapers/shared/
-COPY scrapers/adzuna/package.json scrapers/adzuna/
 COPY apps/web/package.json apps/web/
 COPY apps/docs/package.json apps/docs/
 COPY packages/ packages/

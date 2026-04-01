@@ -207,9 +207,6 @@ func main() {
 		defer asynqClient.Close()
 
 		scraperURLs := make(map[string]string)
-		if cfg.ScraperAdzunaURL != "" {
-			scraperURLs["adzuna"] = cfg.ScraperAdzunaURL
-		}
 		if cfg.ScraperSerpURL != "" {
 			scraperURLs["serp"] = cfg.ScraperSerpURL
 		}

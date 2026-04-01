@@ -165,6 +165,13 @@ type Job struct {
 	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
 	DedupHash         pgtype.Text        `json:"dedup_hash"`
 	ScrapeRunID       pgtype.UUID        `json:"scrape_run_id"`
+	PostedAt          pgtype.Timestamptz `json:"posted_at"`
+	Via               pgtype.Text        `json:"via"`
+	JobHighlights     []byte             `json:"job_highlights"`
+	Benefits          []byte             `json:"benefits"`
+	ExternalID        pgtype.Text        `json:"external_id"`
+	ApplyOptions      []byte             `json:"apply_options"`
+	ThumbnailUrl      pgtype.Text        `json:"thumbnail_url"`
 }
 
 type JobAsset struct {

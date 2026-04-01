@@ -43,6 +43,7 @@ interface SSEScrapeCompletedEvent {
   data: {
     scrape_run_id: string;
     status: string;
+    error?: string;
   };
 }
 
@@ -122,8 +123,10 @@ export function useSSE() {
           case "scrape_progress": {
             queryClient.invalidateQueries({ queryKey: ["discovered-jobs"] });
             queryClient.invalidateQueries({ queryKey: ["scrape-runs"] });
-            const { source, jobs_new } = payload.data;
-            if (jobs_new > 0) {
+            const { source, jobs_new, error } = payload.data;
+            if (error) {
+              toast.error(`${source} scraper failed: ${error}`);
+            } else if (jobs_new > 0) {
               toast.info(
                 `Found ${jobs_new} new job${jobs_new === 1 ? "" : "s"} from ${source}`
               );
@@ -138,7 +141,11 @@ export function useSSE() {
             if (payload.data.status === "completed") {
               toast.success("Job search complete");
             } else {
-              toast.error("Job search finished with errors");
+              toast.error(
+                payload.data.error
+                  ? `Job search failed: ${payload.data.error}`
+                  : "Job search finished with errors"
+              );
             }
             break;
           }

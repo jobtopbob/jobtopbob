@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AI features (BYOK): job extraction, suitability scoring, ATS scoring, cover letter generation, interview prep, resume tailoring, Ghostwriter chat
 - OpenAI-compatible and Ollama AI provider support
 - Gmail email integration with intent classification and tracking inbox
-- Job discovery pipeline with search profiles and Adzuna scraper
+- Job discovery pipeline with search profiles and Google Jobs SERP scraper (SerpApi)
 - Real-time updates via SSE (Redis Pub/Sub bridge)
 - Full JSON and CSV export for jobs, companies, contacts, and offers
 - Tags with polymorphic assignment across entities

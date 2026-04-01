@@ -256,7 +256,7 @@ INSERT INTO jobs (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
     $17, $18, $19, $20, $21, $22, $23, $24, $25
-) RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
+) RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id, posted_at, via, job_highlights, benefits, external_id, apply_options, thumbnail_url
 `
 
 type CreateJobParams struct {
@@ -353,6 +353,13 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, erro
 		&i.ClosedAt,
 		&i.DedupHash,
 		&i.ScrapeRunID,
+		&i.PostedAt,
+		&i.Via,
+		&i.JobHighlights,
+		&i.Benefits,
+		&i.ExternalID,
+		&i.ApplyOptions,
+		&i.ThumbnailUrl,
 	)
 	return i, err
 }
@@ -362,34 +369,43 @@ INSERT INTO jobs (
     user_id, company_id, title, source, source_url, location, location_type,
     salary_min, salary_max, salary_currency, salary_interval,
     jd_raw, job_type, job_level, application_url, skills,
-    status, dedup_hash, scrape_run_id
+    status, dedup_hash, scrape_run_id,
+    posted_at, via, job_highlights, benefits, external_id, apply_options, thumbnail_url
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-    'discovered', $17, $18
+    'discovered', $17, $18,
+    $19, $20, $21, $22, $23, $24, $25
 ) ON CONFLICT (user_id, dedup_hash) WHERE dedup_hash IS NOT NULL
 DO UPDATE SET company_id = COALESCE(EXCLUDED.company_id, jobs.company_id)
-RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
+RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id, posted_at, via, job_highlights, benefits, external_id, apply_options, thumbnail_url
 `
 
 type CreateScrapedJobParams struct {
-	UserID         string      `json:"user_id"`
-	CompanyID      pgtype.UUID `json:"company_id"`
-	Title          string      `json:"title"`
-	Source         pgtype.Text `json:"source"`
-	SourceUrl      pgtype.Text `json:"source_url"`
-	Location       pgtype.Text `json:"location"`
-	LocationType   pgtype.Text `json:"location_type"`
-	SalaryMin      pgtype.Int4 `json:"salary_min"`
-	SalaryMax      pgtype.Int4 `json:"salary_max"`
-	SalaryCurrency pgtype.Text `json:"salary_currency"`
-	SalaryInterval pgtype.Text `json:"salary_interval"`
-	JdRaw          pgtype.Text `json:"jd_raw"`
-	JobType        pgtype.Text `json:"job_type"`
-	JobLevel       pgtype.Text `json:"job_level"`
-	ApplicationUrl pgtype.Text `json:"application_url"`
-	Skills         []byte      `json:"skills"`
-	DedupHash      pgtype.Text `json:"dedup_hash"`
-	ScrapeRunID    pgtype.UUID `json:"scrape_run_id"`
+	UserID         string             `json:"user_id"`
+	CompanyID      pgtype.UUID        `json:"company_id"`
+	Title          string             `json:"title"`
+	Source         pgtype.Text        `json:"source"`
+	SourceUrl      pgtype.Text        `json:"source_url"`
+	Location       pgtype.Text        `json:"location"`
+	LocationType   pgtype.Text        `json:"location_type"`
+	SalaryMin      pgtype.Int4        `json:"salary_min"`
+	SalaryMax      pgtype.Int4        `json:"salary_max"`
+	SalaryCurrency pgtype.Text        `json:"salary_currency"`
+	SalaryInterval pgtype.Text        `json:"salary_interval"`
+	JdRaw          pgtype.Text        `json:"jd_raw"`
+	JobType        pgtype.Text        `json:"job_type"`
+	JobLevel       pgtype.Text        `json:"job_level"`
+	ApplicationUrl pgtype.Text        `json:"application_url"`
+	Skills         []byte             `json:"skills"`
+	DedupHash      pgtype.Text        `json:"dedup_hash"`
+	ScrapeRunID    pgtype.UUID        `json:"scrape_run_id"`
+	PostedAt       pgtype.Timestamptz `json:"posted_at"`
+	Via            pgtype.Text        `json:"via"`
+	JobHighlights  []byte             `json:"job_highlights"`
+	Benefits       []byte             `json:"benefits"`
+	ExternalID     pgtype.Text        `json:"external_id"`
+	ApplyOptions   []byte             `json:"apply_options"`
+	ThumbnailUrl   pgtype.Text        `json:"thumbnail_url"`
 }
 
 func (q *Queries) CreateScrapedJob(ctx context.Context, arg CreateScrapedJobParams) (Job, error) {
@@ -412,6 +428,13 @@ func (q *Queries) CreateScrapedJob(ctx context.Context, arg CreateScrapedJobPara
 		arg.Skills,
 		arg.DedupHash,
 		arg.ScrapeRunID,
+		arg.PostedAt,
+		arg.Via,
+		arg.JobHighlights,
+		arg.Benefits,
+		arg.ExternalID,
+		arg.ApplyOptions,
+		arg.ThumbnailUrl,
 	)
 	var i Job
 	err := row.Scan(
@@ -451,6 +474,13 @@ func (q *Queries) CreateScrapedJob(ctx context.Context, arg CreateScrapedJobPara
 		&i.ClosedAt,
 		&i.DedupHash,
 		&i.ScrapeRunID,
+		&i.PostedAt,
+		&i.Via,
+		&i.JobHighlights,
+		&i.Benefits,
+		&i.ExternalID,
+		&i.ApplyOptions,
+		&i.ThumbnailUrl,
 	)
 	return i, err
 }
@@ -488,7 +518,7 @@ func (q *Queries) FindMostRecentJobByCompany(ctx context.Context, arg FindMostRe
 }
 
 const getJob = `-- name: GetJob :one
-SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.salary_offered, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at, j.dedup_hash, j.scrape_run_id,
+SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.salary_offered, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at, j.dedup_hash, j.scrape_run_id, j.posted_at, j.via, j.job_highlights, j.benefits, j.external_id, j.apply_options, j.thumbnail_url,
        c.name AS company_name,
        c.logo_url AS company_logo_url,
        s.name AS stage_name
@@ -540,6 +570,13 @@ type GetJobRow struct {
 	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
 	DedupHash         pgtype.Text        `json:"dedup_hash"`
 	ScrapeRunID       pgtype.UUID        `json:"scrape_run_id"`
+	PostedAt          pgtype.Timestamptz `json:"posted_at"`
+	Via               pgtype.Text        `json:"via"`
+	JobHighlights     []byte             `json:"job_highlights"`
+	Benefits          []byte             `json:"benefits"`
+	ExternalID        pgtype.Text        `json:"external_id"`
+	ApplyOptions      []byte             `json:"apply_options"`
+	ThumbnailUrl      pgtype.Text        `json:"thumbnail_url"`
 	CompanyName       pgtype.Text        `json:"company_name"`
 	CompanyLogoUrl    pgtype.Text        `json:"company_logo_url"`
 	StageName         pgtype.Text        `json:"stage_name"`
@@ -585,6 +622,13 @@ func (q *Queries) GetJob(ctx context.Context, arg GetJobParams) (GetJobRow, erro
 		&i.ClosedAt,
 		&i.DedupHash,
 		&i.ScrapeRunID,
+		&i.PostedAt,
+		&i.Via,
+		&i.JobHighlights,
+		&i.Benefits,
+		&i.ExternalID,
+		&i.ApplyOptions,
+		&i.ThumbnailUrl,
 		&i.CompanyName,
 		&i.CompanyLogoUrl,
 		&i.StageName,
@@ -627,7 +671,7 @@ func (q *Queries) JobsBySource(ctx context.Context, userID string) ([]JobsBySour
 }
 
 const listDiscoveredJobs = `-- name: ListDiscoveredJobs :many
-SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.salary_offered, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at, j.dedup_hash, j.scrape_run_id,
+SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.salary_offered, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at, j.dedup_hash, j.scrape_run_id, j.posted_at, j.via, j.job_highlights, j.benefits, j.external_id, j.apply_options, j.thumbnail_url,
        c.name AS company_name,
        c.logo_url AS company_logo_url,
        s.name AS stage_name
@@ -690,6 +734,13 @@ type ListDiscoveredJobsRow struct {
 	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
 	DedupHash         pgtype.Text        `json:"dedup_hash"`
 	ScrapeRunID       pgtype.UUID        `json:"scrape_run_id"`
+	PostedAt          pgtype.Timestamptz `json:"posted_at"`
+	Via               pgtype.Text        `json:"via"`
+	JobHighlights     []byte             `json:"job_highlights"`
+	Benefits          []byte             `json:"benefits"`
+	ExternalID        pgtype.Text        `json:"external_id"`
+	ApplyOptions      []byte             `json:"apply_options"`
+	ThumbnailUrl      pgtype.Text        `json:"thumbnail_url"`
 	CompanyName       pgtype.Text        `json:"company_name"`
 	CompanyLogoUrl    pgtype.Text        `json:"company_logo_url"`
 	StageName         pgtype.Text        `json:"stage_name"`
@@ -747,6 +798,13 @@ func (q *Queries) ListDiscoveredJobs(ctx context.Context, arg ListDiscoveredJobs
 			&i.ClosedAt,
 			&i.DedupHash,
 			&i.ScrapeRunID,
+			&i.PostedAt,
+			&i.Via,
+			&i.JobHighlights,
+			&i.Benefits,
+			&i.ExternalID,
+			&i.ApplyOptions,
+			&i.ThumbnailUrl,
 			&i.CompanyName,
 			&i.CompanyLogoUrl,
 			&i.StageName,
@@ -762,7 +820,7 @@ func (q *Queries) ListDiscoveredJobs(ctx context.Context, arg ListDiscoveredJobs
 }
 
 const listJobs = `-- name: ListJobs :many
-SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.salary_offered, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at, j.dedup_hash, j.scrape_run_id,
+SELECT j.id, j.user_id, j.company_id, j.stage_id, j.title, j.status, j.close_reason, j.source, j.source_url, j.location, j.location_type, j.salary_min, j.salary_max, j.salary_market, j.salary_currency, j.salary_offered, j.interest, j.suitability, j.suitability_reason, j.resume_version_id, j.jd_raw, j.jd_snapshot, j.applied_at, j.follow_up_at, j.created_at, j.updated_at, j.deadline, j.job_type, j.job_level, j.salary_interval, j.application_url, j.experience_range, j.skills, j.closed_at, j.dedup_hash, j.scrape_run_id, j.posted_at, j.via, j.job_highlights, j.benefits, j.external_id, j.apply_options, j.thumbnail_url,
        c.name AS company_name,
        c.logo_url AS company_logo_url,
        s.name AS stage_name
@@ -858,6 +916,13 @@ type ListJobsRow struct {
 	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
 	DedupHash         pgtype.Text        `json:"dedup_hash"`
 	ScrapeRunID       pgtype.UUID        `json:"scrape_run_id"`
+	PostedAt          pgtype.Timestamptz `json:"posted_at"`
+	Via               pgtype.Text        `json:"via"`
+	JobHighlights     []byte             `json:"job_highlights"`
+	Benefits          []byte             `json:"benefits"`
+	ExternalID        pgtype.Text        `json:"external_id"`
+	ApplyOptions      []byte             `json:"apply_options"`
+	ThumbnailUrl      pgtype.Text        `json:"thumbnail_url"`
 	CompanyName       pgtype.Text        `json:"company_name"`
 	CompanyLogoUrl    pgtype.Text        `json:"company_logo_url"`
 	StageName         pgtype.Text        `json:"stage_name"`
@@ -925,6 +990,13 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]ListJobsR
 			&i.ClosedAt,
 			&i.DedupHash,
 			&i.ScrapeRunID,
+			&i.PostedAt,
+			&i.Via,
+			&i.JobHighlights,
+			&i.Benefits,
+			&i.ExternalID,
+			&i.ApplyOptions,
+			&i.ThumbnailUrl,
 			&i.CompanyName,
 			&i.CompanyLogoUrl,
 			&i.StageName,
@@ -1056,7 +1128,7 @@ UPDATE jobs SET
     skills = COALESCE($30, skills),
     closed_at = COALESCE($31, closed_at)
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
+RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id, posted_at, via, job_highlights, benefits, external_id, apply_options, thumbnail_url
 `
 
 type UpdateJobParams struct {
@@ -1165,6 +1237,13 @@ func (q *Queries) UpdateJob(ctx context.Context, arg UpdateJobParams) (Job, erro
 		&i.ClosedAt,
 		&i.DedupHash,
 		&i.ScrapeRunID,
+		&i.PostedAt,
+		&i.Via,
+		&i.JobHighlights,
+		&i.Benefits,
+		&i.ExternalID,
+		&i.ApplyOptions,
+		&i.ThumbnailUrl,
 	)
 	return i, err
 }
@@ -1174,7 +1253,7 @@ UPDATE jobs SET
     jd_snapshot = $3,
     skills = $4
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
+RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id, posted_at, via, job_highlights, benefits, external_id, apply_options, thumbnail_url
 `
 
 type UpdateJobJDSnapshotParams struct {
@@ -1229,6 +1308,13 @@ func (q *Queries) UpdateJobJDSnapshot(ctx context.Context, arg UpdateJobJDSnapsh
 		&i.ClosedAt,
 		&i.DedupHash,
 		&i.ScrapeRunID,
+		&i.PostedAt,
+		&i.Via,
+		&i.JobHighlights,
+		&i.Benefits,
+		&i.ExternalID,
+		&i.ApplyOptions,
+		&i.ThumbnailUrl,
 	)
 	return i, err
 }
@@ -1238,7 +1324,7 @@ UPDATE jobs SET
     suitability = $3,
     suitability_reason = $4
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id
+RETURNING id, user_id, company_id, stage_id, title, status, close_reason, source, source_url, location, location_type, salary_min, salary_max, salary_market, salary_currency, salary_offered, interest, suitability, suitability_reason, resume_version_id, jd_raw, jd_snapshot, applied_at, follow_up_at, created_at, updated_at, deadline, job_type, job_level, salary_interval, application_url, experience_range, skills, closed_at, dedup_hash, scrape_run_id, posted_at, via, job_highlights, benefits, external_id, apply_options, thumbnail_url
 `
 
 type UpdateJobSuitabilityParams struct {
@@ -1293,6 +1379,13 @@ func (q *Queries) UpdateJobSuitability(ctx context.Context, arg UpdateJobSuitabi
 		&i.ClosedAt,
 		&i.DedupHash,
 		&i.ScrapeRunID,
+		&i.PostedAt,
+		&i.Via,
+		&i.JobHighlights,
+		&i.Benefits,
+		&i.ExternalID,
+		&i.ApplyOptions,
+		&i.ThumbnailUrl,
 	)
 	return i, err
 }

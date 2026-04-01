@@ -67,7 +67,7 @@ Look for issues labelled **`good-first-issue`** on GitHub. Here are high-impact 
 
 ### Scrapers (TypeScript)
 
-Add support for a new job board. Create `scrapers/<board>/`, implement a `POST /scrape` HTTP endpoint that accepts `ScrapeTask` and returns `RawJob[]`. See `scrapers/adzuna/` for a fetch-based reference or `scrapers/indeed/` for Playwright-based.
+Add support for a new job board. Create `scrapers/<board>/`, implement a `POST /scrape` HTTP endpoint that accepts `ScrapeTask` and returns `RawJob[]`. See `scrapers/serp/` for a fetch-based reference.
 
 Each scraper needs:
 - `src/scraper.ts` — scraping logic

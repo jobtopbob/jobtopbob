@@ -10,4 +10,11 @@ ALTER TABLE jobs
     DROP COLUMN IF EXISTS skills,
     DROP COLUMN IF EXISTS closed_at,
     DROP COLUMN IF EXISTS dedup_hash,
-    DROP COLUMN IF EXISTS scrape_run_id;
+    DROP COLUMN IF EXISTS scrape_run_id,
+    DROP COLUMN IF EXISTS posted_at,
+    DROP COLUMN IF EXISTS via,
+    DROP COLUMN IF EXISTS job_highlights,
+    DROP COLUMN IF EXISTS benefits,
+    DROP COLUMN IF EXISTS external_id,
+    DROP COLUMN IF EXISTS apply_options,
+    DROP COLUMN IF EXISTS thumbnail_url;

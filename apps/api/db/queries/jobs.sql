@@ -153,10 +153,12 @@ INSERT INTO jobs (
     user_id, company_id, title, source, source_url, location, location_type,
     salary_min, salary_max, salary_currency, salary_interval,
     jd_raw, job_type, job_level, application_url, skills,
-    status, dedup_hash, scrape_run_id
+    status, dedup_hash, scrape_run_id,
+    posted_at, via, job_highlights, benefits, external_id, apply_options, thumbnail_url
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-    'discovered', $17, $18
+    'discovered', $17, $18,
+    $19, $20, $21, $22, $23, $24, $25
 ) ON CONFLICT (user_id, dedup_hash) WHERE dedup_hash IS NOT NULL
 DO UPDATE SET company_id = COALESCE(EXCLUDED.company_id, jobs.company_id)
 RETURNING *;

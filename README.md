@@ -142,7 +142,7 @@ Connect your Gmail and JobTopBob automatically detects recruiter replies, interv
 - **Manual JD import** — paste any job description; AI extracts fields and scores fit instantly
 
 ### Job discovery
-- Automated pipeline scraping LinkedIn, Indeed, Glassdoor, Adzuna, and more
+- Automated pipeline scraping LinkedIn, Indeed, Glassdoor, and more via Google Jobs (SerpApi)
 - Configurable minimum suitability score threshold
 - Discovered jobs flow into the tracker pre-scored and pre-tailored
 

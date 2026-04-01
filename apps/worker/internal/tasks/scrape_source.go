@@ -9,7 +9,9 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -56,6 +58,12 @@ type RawJob struct {
 	ExperienceLevel string   `json:"experienceLevel"`
 	PostedAt        string   `json:"postedAt"`
 	Skills          []string `json:"skills"`
+	Via             string   `json:"via"`
+	JobHighlights   json.RawMessage `json:"jobHighlights"`
+	Benefits        json.RawMessage `json:"benefits"`
+	ExternalID      string   `json:"externalId"`
+	ApplyOptions    json.RawMessage `json:"applyOptions"`
+	ThumbnailURL    string   `json:"thumbnailUrl"`
 }
 
 // ScrapeResponse is the response from a scraper service.
@@ -135,7 +143,15 @@ func HandleScrapeSource(deps *ScrapeSourceDeps) func(ctx context.Context, t *asy
 			// Resolve company: find existing or create a new one
 			var companyID pgtype.UUID
 			if raw.Company != "" {
-				companyID = resolveCompanyID(ctx, q, payload.UserID, raw.Company, companyCache)
+				companyID = resolveCompanyID(ctx, q, payload.UserID, raw.Company, raw.ThumbnailURL, companyCache)
+			}
+
+			// Parse relative posted_at string (e.g., "3 days ago") to timestamp
+			var postedAt pgtype.Timestamptz
+			if raw.PostedAt != "" {
+				if t, ok := parseRelativeDate(raw.PostedAt); ok {
+					postedAt = pgtype.Timestamptz{Time: t, Valid: true}
+				}
 			}
 
 			job, err := q.CreateScrapedJob(ctx, db.CreateScrapedJobParams{
@@ -157,6 +173,13 @@ func HandleScrapeSource(deps *ScrapeSourceDeps) func(ctx context.Context, t *asy
 				Skills:         skillsJSON,
 				DedupHash:      pgtype.Text{String: hash, Valid: true},
 				ScrapeRunID:    runUUID,
+				PostedAt:       postedAt,
+				Via:            pgtype.Text{String: raw.Via, Valid: raw.Via != ""},
+				JobHighlights:  raw.JobHighlights,
+				Benefits:       raw.Benefits,
+				ExternalID:     pgtype.Text{String: raw.ExternalID, Valid: raw.ExternalID != ""},
+				ApplyOptions:   raw.ApplyOptions,
+				ThumbnailUrl:   pgtype.Text{String: raw.ThumbnailURL, Valid: raw.ThumbnailURL != ""},
 			})
 			if err != nil {
 				slog.Warn("failed to insert scraped job", "title", raw.Title, "error", err)
@@ -218,7 +241,7 @@ func callScraper(ctx context.Context, client *http.Client, payload ScrapeSourceP
 
 // resolveCompanyID finds an existing company by name (case-insensitive) or creates one.
 // Results are cached in companyCache to avoid repeated DB lookups within a batch.
-func resolveCompanyID(ctx context.Context, q *db.Queries, userID, companyName string, cache map[string]pgtype.UUID) pgtype.UUID {
+func resolveCompanyID(ctx context.Context, q *db.Queries, userID, companyName, thumbnailURL string, cache map[string]pgtype.UUID) pgtype.UUID {
 	key := strings.ToLower(companyName)
 	if id, ok := cache[key]; ok {
 		return id
@@ -234,10 +257,11 @@ func resolveCompanyID(ctx context.Context, q *db.Queries, userID, companyName st
 		return companies[0].ID
 	}
 
-	// Create a minimal company record
+	// Create a minimal company record with logo if available
 	company, err := q.CreateCompany(ctx, db.CreateCompanyParams{
 		UserID:           userID,
 		Name:             companyName,
+		LogoUrl:          pgtype.Text{String: thumbnailURL, Valid: thumbnailURL != ""},
 		DataSource:       "scraped",
 		EnrichmentStatus: "none",
 	})
@@ -248,6 +272,30 @@ func resolveCompanyID(ctx context.Context, q *db.Queries, userID, companyName st
 
 	cache[key] = company.ID
 	return company.ID
+}
+
+// parseRelativeDate converts relative date strings like "3 days ago" to a time.Time.
+var relDateRe = regexp.MustCompile(`(\d+)\s+(hour|day|week|month)s?\s+ago`)
+
+func parseRelativeDate(s string) (time.Time, bool) {
+	now := time.Now()
+	m := relDateRe.FindStringSubmatch(strings.ToLower(s))
+	if m == nil {
+		return time.Time{}, false
+	}
+	n := 0
+	fmt.Sscanf(m[1], "%d", &n)
+	switch m[2] {
+	case "hour":
+		return now.Add(-time.Duration(n) * time.Hour), true
+	case "day":
+		return now.AddDate(0, 0, -n), true
+	case "week":
+		return now.AddDate(0, 0, -7*n), true
+	case "month":
+		return now.AddDate(0, -n, 0), true
+	}
+	return time.Time{}, false
 }
 
 // dedupHash computes a SHA-256 hash of lower(title + company + location) for deduplication.
@@ -277,13 +325,16 @@ func finalizeScrapeSource(
 	}
 
 	// SSE: source progress
-	publishSSE(deps.Redis, payload.UserID, "scrape_progress", map[string]interface{}{
+	progressData := map[string]interface{}{
 		"scrape_run_id": payload.ScrapeRunID,
 		"source":        payload.Source,
 		"jobs_found":    jobsFound,
 		"jobs_new":      jobsNew,
-		"error":         errMsg,
-	})
+	}
+	if errMsg != "" {
+		progressData["error"] = errMsg
+	}
+	publishSSE(deps.Redis, payload.UserID, "scrape_progress", progressData)
 
 	// Decrement pending counter — if we're the last source, finalize
 	pendingKey := fmt.Sprintf("scrape_run:%s:pending", payload.ScrapeRunID)
@@ -299,20 +350,29 @@ func finalizeScrapeSource(
 		deps.Redis.Del(ctx, pendingKey)
 
 		status := "completed"
+		var finalError pgtype.Text
+		if errMsg != "" {
+			status = "failed"
+			finalError = pgtype.Text{String: errMsg, Valid: true}
+		}
 
 		if err := q.UpdateScrapeRunStatus(ctx, db.UpdateScrapeRunStatusParams{
 			ID:           runUUID,
 			Status:       pgtype.Text{String: status, Valid: true},
-			ErrorMessage: pgtype.Text{},
+			ErrorMessage: finalError,
 		}); err != nil {
 			slog.Error("failed to finalize scrape run", "error", err)
 		}
 
 		// SSE: scrape completed
-		publishSSE(deps.Redis, payload.UserID, "scrape_completed", map[string]interface{}{
+		sseData := map[string]interface{}{
 			"scrape_run_id": payload.ScrapeRunID,
 			"status":        status,
-		})
+		}
+		if errMsg != "" {
+			sseData["error"] = errMsg
+		}
+		publishSSE(deps.Redis, payload.UserID, "scrape_completed", sseData)
 
 		slog.Info("scrape run completed",
 			"scrape_run_id", payload.ScrapeRunID,

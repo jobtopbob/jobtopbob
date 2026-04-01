@@ -104,7 +104,7 @@ jobtopbob/
 │   │   ├── src/scraper.ts
 │   │   ├── package.json
 │   │   └── Dockerfile
-│   └── adzuna/                     # TypeScript — fetch() against Adzuna REST API
+│   └── serp/                       # TypeScript — SerpApi Google Jobs scraper
 │       ├── src/scraper.ts
 │       ├── package.json
 │       └── Dockerfile
@@ -196,7 +196,7 @@ If scraper runs exceed HTTP timeouts in production, the architecture can be migr
 
 - **Playwright v1.58 (Node.js):** The primary Playwright API is TypeScript-first. All browser automation — page navigation, element selection, request interception — uses Playwright's browser API.
 - **Anti-bot stealth (hybrid):** Bot-hostile boards (LinkedIn, Glassdoor) use [Hyperbrowser](https://hyperbrowser.ai) cloud browser sessions with built-in stealth, proxy rotation, and CAPTCHA solving. Hyperbrowser sessions are CDP-compatible — Playwright connects via `chromium.connectOverCDP(session.wsEndpoint)`, so scraper logic is unchanged. For self-hosted deployments without a Hyperbrowser API key, scrapers fall back to local Playwright with `playwright-extra` stealth plugin. The browser provider is selected by the presence of `HYPERBROWSER_API_KEY` in the environment.
-- **fetch() for API scrapers:** Boards with official APIs (Adzuna, The Muse) skip Playwright entirely and use the native `fetch()` — no browser dependency.
+- **fetch() for API scrapers:** Boards with official APIs (SerpApi, The Muse) skip Playwright entirely and use the native `fetch()` — no browser dependency.
 - **Turborepo integration:** All scraper packages are part of the Turborepo workspace. They share `packages/config/` for TypeScript and ESLint settings. `turbo run build` builds all scrapers in parallel with caching.
 - **Single container for self-hosted:** For self-hosted deployments, all scrapers are merged into one TypeScript process that dispatches internally by board type. This reduces container count and eliminates duplicate Node.js runtimes. Cloud deployment can split them out later for independent scaling.
 
@@ -211,7 +211,7 @@ export interface ScrapeTask {
 }
 
 export interface RawJob {
-  source: string        // 'linkedin' | 'indeed' | 'glassdoor' | 'adzuna'
+  source: string        // 'linkedin' | 'indeed' | 'glassdoor' | 'google_jobs'
   sourceUrl: string
   title: string
   company: string
@@ -224,25 +224,29 @@ export interface RawJob {
 ```
 
 ```typescript
-// scrapers/adzuna/src/scraper.ts
+// scrapers/serp/src/scraper.ts
 import type { ScrapeTask, RawJob } from '@jobtopbob/scraper-shared'
 
 export async function scrape(task: ScrapeTask): Promise<RawJob[]> {
   const response = await fetch(
-    `https://api.adzuna.com/v1/api/jobs/${task.country}/search/1?` +
-    new URLSearchParams({ what: task.keywords, where: task.location }),
-    { headers: { 'X-Api-Key': process.env.ADZUNA_API_KEY! } }
+    `https://serpapi.com/search.json?` +
+    new URLSearchParams({
+      engine: 'google_jobs',
+      q: task.keywords,
+      location: task.location,
+      api_key: process.env.SERPAPI_API_KEY!,
+    })
   )
   const data = await response.json()
-  return data.results.map((r: any) => ({
-    source: 'adzuna',
-    sourceUrl: r.redirect_url,
+  return (data.jobs_results ?? []).map((r: any) => ({
+    source: 'google_jobs',
+    sourceUrl: r.share_link ?? r.related_links?.[0]?.link ?? '',
     title: r.title,
-    company: r.company.display_name,
-    location: r.location.display_name,
+    company: r.company_name,
+    location: r.location,
     description: r.description,
-    salary: r.salary_min ? `${r.salary_min}–${r.salary_max}` : undefined,
-    postedAt: r.created,
+    salary: r.detected_extensions?.salary ?? undefined,
+    postedAt: r.detected_extensions?.posted_at ?? undefined,
     userId: task.userId,
   }))
 }
@@ -265,7 +269,7 @@ Bot-hostile job boards (LinkedIn, Glassdoor) require stealth browsing, residenti
 |---|---|---|
 | LinkedIn, Glassdoor | Hyperbrowser (cloud) | Bot-hostile; needs stealth + proxies + CAPTCHA |
 | Indeed | Self-hosted Playwright | Less aggressive anti-bot; no cloud dependency needed |
-| Adzuna, The Muse | `fetch()` | Official API; no browser needed |
+| SerpApi (Google Jobs), The Muse | `fetch()` | Official API; no browser needed |
 
 **Browser provider abstraction** (`scrapers/shared/src/browser.ts`):
 
@@ -427,9 +431,9 @@ Phase 2: Deeper integration
 │              Stateless HTTP endpoints                            │
 │                                                                  │
 │  ┌─────────────┐  ┌─────────────┐  ┌──────────────────────────┐ │
-│  │  linkedin/  │  │  indeed/    │  │  adzuna/                 │ │
+│  │  linkedin/  │  │  indeed/    │  │  serp/                   │ │
 │  │  Hyperbrowser│  │  Playwright │  │  fetch() — no browser    │ │
-│  │  or Playwright│ │  (direct)   │  │  (Adzuna REST API)       │ │
+│  │  or Playwright│ │  (direct)   │  │  (SerpApi Google Jobs)   │ │
 │  │  + stealth  │  │             │  │                          │ │
 │  └─────────────┘  └─────────────┘  └──────────────────────────┘ │
 │  Note: linkedin/ and glassdoor/ use Hyperbrowser cloud sessions │
@@ -1108,7 +1112,7 @@ services:
   scraper-linkedin:   # TypeScript — LinkedIn (Playwright + stealth)
   scraper-indeed:     # TypeScript — Indeed (Playwright)
   scraper-glassdoor:  # TypeScript — Glassdoor (Playwright + stealth)
-  scraper-adzuna:     # TypeScript — Adzuna API (fetch)
+  scraper-serp:       # TypeScript — SerpApi Google Jobs (fetch)
 ```
 
 Self-hosters enable only the scrapers they need. The scrapers are opt-in — the core stack runs without them. For simpler deployments, a single combined scraper container dispatches internally by board type.
@@ -1336,7 +1340,7 @@ Goal: add the discovery pipeline, browser extension, and deeper integrations.
 - [ ] `scrapers/linkedin/` — TypeScript scraper using Playwright + `playwright-extra` stealth plugin
 - [ ] `scrapers/indeed/` — TypeScript scraper using Playwright
 - [ ] `scrapers/glassdoor/` — TypeScript scraper using Playwright + stealth
-- [ ] `scrapers/adzuna/` — TypeScript scraper using `fetch()` against Adzuna REST API
+- [ ] `scrapers/serp/` — TypeScript scraper using `fetch()` against SerpApi Google Jobs API
 - [ ] Single combined scraper container option for self-hosted deployments
 - [ ] `docker-compose.yml` full stack (scrapers opt-in via `--profile scrapers`)
 - [ ] Pipeline run UI: source selection, country, keywords, min score threshold, topN
@@ -1754,7 +1758,7 @@ Dev URLs:
 
 Good first issues are labelled `good-first-issue` on GitHub. High-impact contribution areas:
 
-**Scrapers (TypeScript):** Add support for a new job board. Create `scrapers/<board>/`, implement a `POST /scrape` HTTP endpoint that accepts `ScrapeTask` and returns `RawJob[]`. Add `package.json`, `tsconfig.json` extending `@jobtopbob/config/tsconfig.base.json`, and a `Dockerfile`. Register the service in `docker-compose.yml`. See `scrapers/adzuna/` as a reference for fetch-based scrapers or `scrapers/indeed/` for Playwright-based ones.
+**Scrapers (TypeScript):** Add support for a new job board. Create `scrapers/<board>/`, implement a `POST /scrape` HTTP endpoint that accepts `ScrapeTask` and returns `RawJob[]`. Add `package.json`, `tsconfig.json` extending `@jobtopbob/config/tsconfig.base.json`, and a `Dockerfile`. Register the service in `docker-compose.yml`. See `scrapers/serp/` as a reference for fetch-based scrapers or `scrapers/indeed/` for Playwright-based ones.
 
 **Go API / worker:** New endpoints follow the pattern: add to `openapi/jobtopbob.yaml` → run `./scripts/generate-api-client.sh` → implement the generated interface in `internal/handlers/` → add business logic in `internal/services/` → write sqlc queries in `db/queries/` → run `./scripts/sqlc-generate.sh`. Integration tests in `internal/handlers/<feature>_test.go`.
 

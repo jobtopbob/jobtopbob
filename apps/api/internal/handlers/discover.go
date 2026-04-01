@@ -70,7 +70,7 @@ func QuickSearch(asynqClient *asynq.Client) gin.HandlerFunc {
 		// Default sources
 		sources := req.Sources
 		if len(sources) == 0 {
-			sources = []string{"adzuna", "serp"}
+			sources = []string{"serp"}
 		}
 
 		// Create scrape run

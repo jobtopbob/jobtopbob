@@ -1,6 +1,5 @@
 export const SOURCES = [
   { value: "serp", label: "Google Jobs" },
-  { value: "adzuna", label: "Adzuna" },
   { value: "linkedin", label: "LinkedIn" },
   { value: "indeed", label: "Indeed" },
   { value: "glassdoor", label: "Glassdoor" },

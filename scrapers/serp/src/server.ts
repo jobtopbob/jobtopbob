@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { createHash } from "node:crypto";
 
 const PORT = parseInt(process.env.PORT ?? "3030", 10);
-const SEARCHAPI_API_KEY = process.env.SEARCHAPI_API_KEY ?? "";
+const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY ?? "";
 const CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 // ── In-memory cache (TTL-based, cleared on expiry) ──────────────────
@@ -42,14 +42,16 @@ setInterval(() => {
   }
 }, 30 * 60 * 1000).unref();
 
-// ── SearchAPI.io types ──────────────────────────────────────────────
+// ── SerpApi types ──────────────────────────────────────────────────
 
-interface SearchApiJob {
-  position: number;
+interface SerpApiJob {
   title: string;
   company_name: string;
   location: string;
   via: string;
+  share_link?: string;
+  thumbnail?: string;
+  job_id: string;
   description: string;
   extensions?: string[];
   detected_extensions?: {
@@ -57,17 +59,17 @@ interface SearchApiJob {
     schedule_type?: string;
     salary?: string;
     work_from_home?: boolean;
+    paid_time_off?: boolean;
     health_insurance?: boolean;
+    dental_coverage?: boolean;
+    qualifications?: string;
   };
   job_highlights?: { title: string; items: string[] }[];
-  apply_link?: string;
-  apply_links?: { link: string; source: string }[];
-  sharing_link?: string;
+  apply_options?: { title: string; link: string }[];
 }
 
-interface SearchApiResponse {
-  jobs?: SearchApiJob[];
-  pagination?: { next_page_token?: string };
+interface SerpApiResponse {
+  jobs_results?: SerpApiJob[];
   error?: string;
 }
 
@@ -87,42 +89,44 @@ async function fetchPage(
   query: string,
   location: string,
   gl: string,
-  nextPageToken?: string,
-): Promise<SearchApiResponse> {
+  start: number,
+): Promise<SerpApiResponse> {
   const params = new URLSearchParams({
     engine: "google_jobs",
     q: query,
-    api_key: SEARCHAPI_API_KEY,
+    api_key: SERPAPI_API_KEY,
   });
 
   if (location) params.set("location", location);
   if (gl) params.set("gl", gl);
-  if (nextPageToken) params.set("next_page_token", nextPageToken);
+  if (start > 0) params.set("start", String(start));
 
-  const url = `https://www.searchapi.io/api/v1/search?${params.toString()}`;
+  const url = `https://serpapi.com/search.json?${params.toString()}`;
   const response = await fetch(url);
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`SearchAPI.io error ${response.status}: ${text}`);
+    throw new Error(`SerpApi error ${response.status}: ${text}`);
   }
 
-  return (await response.json()) as SearchApiResponse;
+  return (await response.json()) as SerpApiResponse;
 }
 
-function mapJob(job: SearchApiJob, gl: string): RawJob {
+function mapJob(job: SerpApiJob): RawJob {
   const ext = job.detected_extensions;
 
   // Parse salary from extensions (e.g., "$80K–$120K a year")
   const salaryInfo = parseSalary(job.extensions, ext?.salary);
 
-  // Best application URL: prefer direct apply link, fall back to sharing link
-  const applicationUrl =
-    job.apply_link ??
-    job.apply_links?.[0]?.link ??
-    undefined;
+  // Best application URL: first apply option link
+  const applicationUrl = job.apply_options?.[0]?.link;
+  const sourceUrl = job.share_link ?? applicationUrl ?? "";
 
-  const sourceUrl = applicationUrl ?? job.sharing_link ?? "";
+  // Extract benefit flags from detected_extensions
+  const benefits: Record<string, boolean> = {};
+  if (ext?.paid_time_off) benefits.paid_time_off = true;
+  if (ext?.health_insurance) benefits.health_insurance = true;
+  if (ext?.dental_coverage) benefits.dental_coverage = true;
 
   return {
     title: job.title,
@@ -135,6 +139,12 @@ function mapJob(job: SearchApiJob, gl: string): RawJob {
     jobType: mapScheduleType(ext?.schedule_type),
     postedAt: ext?.posted_at,
     ...salaryInfo,
+    via: job.via,
+    jobHighlights: job.job_highlights,
+    benefits: Object.keys(benefits).length > 0 ? benefits : undefined,
+    externalId: job.job_id,
+    applyOptions: job.apply_options,
+    thumbnailUrl: job.thumbnail,
   };
 }
 
@@ -187,8 +197,8 @@ function parseSalary(
 }
 
 async function searchGoogleJobs(req: ScrapeRequest): Promise<ScrapeResponse> {
-  if (!SEARCHAPI_API_KEY) {
-    return { jobs: [], error: "SEARCHAPI_API_KEY is required" };
+  if (!SERPAPI_API_KEY) {
+    return { jobs: [], error: "SERPAPI_API_KEY is required" };
   }
 
   const query = req.keywords.join(" ");
@@ -201,13 +211,11 @@ async function searchGoogleJobs(req: ScrapeRequest): Promise<ScrapeResponse> {
   if (cached) return cached;
 
   const maxResults = req.maxResults || 20;
-  const maxPages = Math.ceil(maxResults / 10);
   const allJobs: RawJob[] = [];
-  let nextPageToken: string | undefined;
 
-  for (let page = 0; page < maxPages; page++) {
+  for (let start = 0; start < maxResults; start += 10) {
     try {
-      const data = await fetchPage(query, location, gl, nextPageToken);
+      const data = await fetchPage(query, location, gl, start);
 
       if (data.error) {
         if (allJobs.length === 0) {
@@ -216,14 +224,15 @@ async function searchGoogleJobs(req: ScrapeRequest): Promise<ScrapeResponse> {
         break;
       }
 
-      const jobs = data.jobs ?? [];
+      const jobs = data.jobs_results ?? [];
+      if (jobs.length === 0) break;
+
       for (const job of jobs) {
-        allJobs.push(mapJob(job, gl));
+        allJobs.push(mapJob(job));
         if (allJobs.length >= maxResults) break;
       }
 
-      nextPageToken = data.pagination?.next_page_token;
-      if (!nextPageToken || allJobs.length >= maxResults) break;
+      if (allJobs.length >= maxResults) break;
     } catch (err) {
       if (allJobs.length === 0) {
         return { jobs: [], error: String(err) };
@@ -274,5 +283,5 @@ const httpServer = createServer(async (req, res) => {
 });
 
 httpServer.listen(PORT, () => {
-  console.log(`SERP scraper (SearchAPI.io) listening on port ${PORT}`);
+  console.log(`SERP scraper (SerpApi) listening on port ${PORT}`);
 });

@@ -257,7 +257,6 @@ services:
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
       PDL_API_KEY: ${PDL_API_KEY:-}
       SCRAPERS_ENABLED: ${SCRAPERS_ENABLED:-false}
-      SCRAPER_ADZUNA_URL: ${SCRAPER_ADZUNA_URL:-http://scraper-adzuna:3000}
       SCRAPER_SERP_URL: ${SCRAPER_SERP_URL:-http://scraper-serp:3000}
       # AI provider
       AI_PROVIDER: ${AI_PROVIDER:-openai}
@@ -292,23 +291,7 @@ services:
     profiles: [prod]
     environment:
       PORT: "3000"
-      SEARCHAPI_API_KEY: ${SEARCHAPI_API_KEY:-}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  scraper-adzuna:
-    build:
-      context: .
-      dockerfile: scrapers/adzuna/Dockerfile
-    restart: unless-stopped
-    profiles: [prod]
-    environment:
-      PORT: "3000"
-      ADZUNA_APP_ID: ${ADZUNA_APP_ID:-}
-      ADZUNA_APP_KEY: ${ADZUNA_APP_KEY:-}
+      SERPAPI_API_KEY: ${SERPAPI_API_KEY:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
