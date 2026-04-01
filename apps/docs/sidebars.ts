@@ -10,7 +10,14 @@ const sidebars: SidebarsConfig = {
       items: [
         'features/index',
         'features/ai-setup',
-        'features/email-integration',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Email Integration',
+      items: [
+        'email-integration/index',
+        'email-integration/gmail',
       ],
     },
     'api-reference',

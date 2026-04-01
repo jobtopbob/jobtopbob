@@ -122,7 +122,7 @@ function mapJob(job: SearchApiJob, gl: string): RawJob {
     job.apply_links?.[0]?.link ??
     undefined;
 
-  const sourceUrl = job.sharing_link ?? applicationUrl ?? "";
+  const sourceUrl = applicationUrl ?? job.sharing_link ?? "";
 
   return {
     title: job.title,

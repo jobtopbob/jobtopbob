@@ -49,14 +49,9 @@ See [AI Setup](./ai-setup) for configuration.
 
 ## Email Integration
 
-Connect Gmail to auto-detect:
+Connect your email to auto-detect interview invitations, rejections, offers, and follow-up responses.
 
-- Interview invitations
-- Rejections
-- Offers
-- Follow-up responses
-
-See [Email Integration](./email-integration) for setup.
+See [Email Integration](../email-integration/) for setup and supported providers.
 
 ## Discovery Pipeline
 

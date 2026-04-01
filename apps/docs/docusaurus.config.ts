@@ -47,6 +47,11 @@ const config: Config = {
     },
     navbar: {
       title: 'JobTopBob',
+      logo: {
+        alt: 'JobTopBob Logo',
+        src: 'img/logo-light.png',
+        srcDark: 'img/logo-dark.png',
+      },
       items: [
         {
           type: 'docSidebar',
