@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
+import { friendlyScrapeError } from "@/lib/friendly-error";
 import { emailKeys } from "./use-email";
 import { toast } from "sonner";
 
@@ -125,7 +126,7 @@ export function useSSE() {
             queryClient.invalidateQueries({ queryKey: ["scrape-runs"] });
             const { source, jobs_new, error } = payload.data;
             if (error) {
-              toast.error(`${source} scraper failed: ${error}`);
+              toast.error(friendlyScrapeError(error));
             } else if (jobs_new > 0) {
               toast.info(
                 `Found ${jobs_new} new job${jobs_new === 1 ? "" : "s"} from ${source}`
@@ -143,7 +144,7 @@ export function useSSE() {
             } else {
               toast.error(
                 payload.data.error
-                  ? `Job search failed: ${payload.data.error}`
+                  ? friendlyScrapeError(payload.data.error)
                   : "Job search finished with errors"
               );
             }

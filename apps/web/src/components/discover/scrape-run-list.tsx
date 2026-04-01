@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useScrapeRuns, useContinueScrapeRun } from "@/hooks/use-discover";
+import { friendlyScrapeError } from "@/lib/friendly-error";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   MagnifyingGlassIcon,
@@ -139,8 +140,8 @@ export function ScrapeRunList() {
 
               {/* Error message */}
               {run.status === "failed" && run.error_message && (
-                <p className="truncate text-xs text-brand-red/80">
-                  {run.error_message}
+                <p className="text-xs leading-snug text-brand-red/80">
+                  {friendlyScrapeError(run.error_message)}
                 </p>
               )}
 
@@ -168,7 +169,7 @@ export function ScrapeRunList() {
                         e.stopPropagation();
                         continueScrapeRun.mutate(run.id, {
                           onSuccess: () => toast.success("Loading more results..."),
-                          onError: (err) => toast.error(err.message),
+                          onError: (err) => toast.error(friendlyScrapeError(err.message)),
                         });
                       }}
                       disabled={continueScrapeRun.isPending}

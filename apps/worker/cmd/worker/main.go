@@ -142,7 +142,7 @@ func main() {
 
 	// Build enrichment provider registry (priority order: PDL > favicon > webscrape)
 	var enrichProviders []enrichment.Provider
-	httpClient := &http.Client{Timeout: 15 * time.Second}
+	httpClient := &http.Client{Timeout: 90 * time.Second}
 
 	if cfg.PDLAPIKey != "" {
 		enrichProviders = append(enrichProviders, &enrichment.PDL{

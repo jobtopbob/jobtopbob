@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useDiscoveredJobs, useScrapeRuns, useContinueScrapeRun, type DiscoveredJob } from "@/hooks/use-discover";
+import { friendlyScrapeError } from "@/lib/friendly-error";
 import { useDebounce } from "@/hooks/use-debounce";
 import { PaginationControls } from "@/components/kanban/pagination-controls";
 import { formatSalaryRange } from "@/lib/currency";
@@ -40,7 +41,7 @@ function JobCard({ job }: { job: DiscoveredJob }) {
   const salary = formatSalaryRange(job.salary_min, job.salary_max, { currency: job.salary_currency });
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border-subtle p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border-subtle p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <img
         src="/discovered-jobs-bg-light.jpg"
         alt=""
@@ -65,14 +66,11 @@ function JobCard({ job }: { job: DiscoveredJob }) {
 
       {/* Company + Title */}
       <div className="relative z-10 flex items-start gap-3">
-        {/* Company avatar */}
-        {job.company_name && (
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${companyInitialColor(job.company_name)}`}
-          >
-            {job.company_name.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${companyInitialColor(job.company_name || "?")}`}
+        >
+          {(job.company_name || "?").charAt(0).toUpperCase()}
+        </div>
         <div className="min-w-0 flex-1 pr-16">
           <p className="text-sm font-semibold text-text-primary truncate">
             {job.company_name || "Company"}
@@ -83,20 +81,20 @@ function JobCard({ job }: { job: DiscoveredJob }) {
         </div>
       </div>
 
-      {/* Salary */}
-      {salary && (
-        <p className="relative z-10 mt-3 text-sm font-medium text-brand">
-          {salary}
-        </p>
-      )}
+      {/* Salary — always rendered to maintain spacing; invisible placeholder when empty */}
+      <p className={`relative z-10 mt-3 text-sm font-medium ${salary ? "text-brand" : "text-transparent select-none"}`}>
+        {salary || "\u00A0"}
+      </p>
 
-      {/* Meta row */}
+      {/* Meta row — always rendered */}
       <div className="relative z-10 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
-        {job.location && (
+        {job.location ? (
           <span className="flex items-center gap-1">
             <MapPinIcon className="h-3 w-3" />
             {job.location}
           </span>
+        ) : (
+          <span className="invisible">placeholder</span>
         )}
         {job.job_type && (
           <span className="flex items-center gap-1">
@@ -106,16 +104,14 @@ function JobCard({ job }: { job: DiscoveredJob }) {
         )}
       </div>
 
-      {/* Description */}
-      {job.jd_raw && (
-        <p className="relative z-10 mt-2 text-xs text-text-muted line-clamp-2">
-          {job.jd_raw}
-        </p>
-      )}
+      {/* Description — fixed 2-line height */}
+      <p className="relative z-10 mt-2 h-[3rem] text-xs leading-4 text-text-muted line-clamp-3">
+        {job.jd_raw || "\u00A0"}
+      </p>
 
-      {/* External link */}
-      {(job.application_url || job.source_url) && (
-        <div className="relative z-10 mt-3 border-t border-border-subtle pt-3">
+      {/* External link — pinned to bottom */}
+      <div className="relative z-10 mt-auto border-t border-border-subtle pt-3">
+        {(job.application_url || job.source_url) ? (
           <a
             href={job.application_url || job.source_url!}
             target="_blank"
@@ -125,8 +121,10 @@ function JobCard({ job }: { job: DiscoveredJob }) {
             View listing
             <ArrowSquareOutIcon className="h-3 w-3" />
           </a>
-        </div>
-      )}
+        ) : (
+          <span className="text-xs text-text-muted">No link available</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -221,7 +219,7 @@ export function DiscoveredJobList() {
                       toast.success("Loading more results...");
                     },
                     onError: (err) => {
-                      toast.error(err.message);
+                      toast.error(friendlyScrapeError(err.message));
                     },
                   });
                 }}

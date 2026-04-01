@@ -1,13 +1,82 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MagnifyingGlassIcon, MapPinIcon, SpinnerIcon, GlobeIcon } from "@phosphor-icons/react";
+import { useState, useEffect, useRef } from "react";
+import { MagnifyingGlassIcon, MapPinIcon, SpinnerIcon, CaretDownIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ResumeSearchDialog } from "@/components/discover/resume-search-dialog";
 import { useQuickSearch } from "@/hooks/use-discover";
-import { detectLocale, SUPPORTED_COUNTRIES } from "@/lib/locale";
+import { detectCountry, detectLanguage, SUPPORTED_COUNTRIES } from "@/lib/locale";
 import { toast } from "sonner";
+
+/** Emoji flags from country code (works via regional indicator symbols). */
+function countryFlag(code: string): string {
+  return [...code.toUpperCase()]
+    .map((c) => String.fromCodePoint(0x1f1e6 - 65 + c.charCodeAt(0)))
+    .join("");
+}
+
+function CountrySelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-0.5 rounded-md px-1.5 py-1 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-hover"
+        title={SUPPORTED_COUNTRIES[value] ?? value}
+      >
+        <span className="text-sm leading-none">{countryFlag(value)}</span>
+        <span>{value}</span>
+        <CaretDownIcon className="h-3 w-3 text-text-muted" />
+      </button>
+      {open && (
+        <div className="fixed z-[100] mt-1 max-h-64 w-56 overflow-y-auto rounded-xl border border-border-subtle bg-card p-1 shadow-xl" style={{
+          top: ref.current ? ref.current.getBoundingClientRect().bottom + window.scrollY + 4 : 0,
+          left: ref.current ? ref.current.getBoundingClientRect().left : 0,
+        }}>
+          {Object.entries(SUPPORTED_COUNTRIES).map(([code, name]) => (
+            <button
+              key={code}
+              type="button"
+              onClick={() => {
+                onChange(code);
+                setOpen(false);
+              }}
+              className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-surface-hover ${
+                code === value
+                  ? "bg-surface-hover font-medium text-text-primary"
+                  : "text-text-secondary"
+              }`}
+            >
+              <span className="text-base leading-none">{countryFlag(code)}</span>
+              <span className="truncate">{name}</span>
+              <span className="ml-auto text-xs text-text-muted">{code}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function HeroSearch() {
   const [keywords, setKeywords] = useState("");
@@ -17,9 +86,8 @@ export function HeroSearch() {
   const quickSearch = useQuickSearch();
 
   useEffect(() => {
-    const detected = detectLocale();
-    setCountry(detected.country);
-    setLanguage(detected.language);
+    setLanguage(detectLanguage());
+    detectCountry().then(setCountry);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -105,30 +173,19 @@ export function HeroSearch() {
                 />
               </div>
               <div className="hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
-              <div className="flex items-center gap-2 rounded-lg bg-surface-hover px-3 sm:w-48 sm:rounded-none sm:bg-transparent">
-                <MapPinIcon className="h-4 w-4 shrink-0 text-text-muted" />
-                <input
-                  type="text"
-                  placeholder="Location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="h-10 w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
-                />
-              </div>
-              <div className="hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
-              <div className="flex items-center gap-2 rounded-lg bg-surface-hover px-2 sm:rounded-none sm:bg-transparent">
-                <GlobeIcon className="h-4 w-4 shrink-0 text-text-muted" />
-                <select
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  className="h-10 w-full min-w-0 appearance-none bg-transparent text-sm text-text-primary outline-none sm:w-20"
-                >
-                  {Object.entries(SUPPORTED_COUNTRIES).map(([code, name]) => (
-                    <option key={code} value={code}>
-                      {code}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex items-center gap-1 rounded-lg bg-surface-hover px-1.5 sm:rounded-none sm:bg-transparent">
+                <CountrySelect value={country} onChange={setCountry} />
+                <div className="h-5 w-px shrink-0 bg-border-subtle" />
+                <div className="flex flex-1 items-center gap-1.5 px-1.5">
+                  <MapPinIcon className="h-4 w-4 shrink-0 text-text-muted" />
+                  <input
+                    type="text"
+                    placeholder="City or region"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="h-10 w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted sm:w-36"
+                  />
+                </div>
               </div>
               <Button
                 type="submit"
