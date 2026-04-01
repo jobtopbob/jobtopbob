@@ -19,9 +19,9 @@ WHERE sr.id = $1 AND sr.user_id = $2;
 
 -- name: CreateScrapeRun :one
 INSERT INTO scrape_runs (
-    user_id, search_profile_id, status, sources, keywords, location, country, started_at
+    user_id, search_profile_id, status, sources, keywords, location, country, language, parent_run_id, started_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 ) RETURNING *;
 
 -- name: UpdateScrapeRunStatus :exec
@@ -36,3 +36,6 @@ UPDATE scrape_runs SET
     jobs_found = COALESCE(jobs_found, 0) + $2,
     jobs_new = COALESCE(jobs_new, 0) + $3
 WHERE id = $1;
+
+-- name: UpdateScrapeRunNextPageToken :exec
+UPDATE scrape_runs SET next_page_token = $2 WHERE id = $1;

@@ -70,6 +70,7 @@ interface SerpApiJob {
 
 interface SerpApiResponse {
   jobs_results?: SerpApiJob[];
+  serpapi_pagination?: { next_page_token?: string };
   error?: string;
 }
 
@@ -89,7 +90,8 @@ async function fetchPage(
   query: string,
   location: string,
   gl: string,
-  start: number,
+  hl?: string,
+  nextPageToken?: string,
 ): Promise<SerpApiResponse> {
   const params = new URLSearchParams({
     engine: "google_jobs",
@@ -99,7 +101,8 @@ async function fetchPage(
 
   if (location) params.set("location", location);
   if (gl) params.set("gl", gl);
-  if (start > 0) params.set("start", String(start));
+  if (hl) params.set("hl", hl);
+  if (nextPageToken) params.set("next_page_token", nextPageToken);
 
   const url = `https://serpapi.com/search.json?${params.toString()}`;
   const response = await fetch(url);
@@ -203,19 +206,23 @@ async function searchGoogleJobs(req: ScrapeRequest): Promise<ScrapeResponse> {
 
   const query = req.keywords.join(" ");
   const gl = COUNTRY_MAP[req.country?.toUpperCase() ?? "US"] ?? "us";
+  const hl = req.language || undefined;
   const location = req.location ?? "";
 
-  // Check cache
-  const key = cacheKey(query, location, gl);
+  // Include starting token in cache key to avoid collisions between initial and continuation searches
+  const key = cacheKey(query, location, `${gl}:${hl ?? ""}:${req.nextPageToken ?? ""}`);
   const cached = getCached(key);
   if (cached) return cached;
 
   const maxResults = req.maxResults || 20;
   const allJobs: RawJob[] = [];
+  let cursor: string | undefined = req.nextPageToken || undefined;
+  let lastNextPageToken: string | undefined;
 
-  for (let start = 0; start < maxResults; start += 10) {
+  // Fetch pages using next_page_token cursor pagination
+  while (allJobs.length < maxResults) {
     try {
-      const data = await fetchPage(query, location, gl, start);
+      const data = await fetchPage(query, location, gl, hl, cursor);
 
       if (data.error) {
         if (allJobs.length === 0) {
@@ -232,7 +239,15 @@ async function searchGoogleJobs(req: ScrapeRequest): Promise<ScrapeResponse> {
         if (allJobs.length >= maxResults) break;
       }
 
-      if (allJobs.length >= maxResults) break;
+      // Track the next page token for continuation
+      const nextToken = data.serpapi_pagination?.next_page_token;
+      if (!nextToken) {
+        lastNextPageToken = undefined;
+        break; // No more pages
+      }
+
+      lastNextPageToken = nextToken;
+      cursor = nextToken;
     } catch (err) {
       if (allJobs.length === 0) {
         return { jobs: [], error: String(err) };
@@ -241,7 +256,10 @@ async function searchGoogleJobs(req: ScrapeRequest): Promise<ScrapeResponse> {
     }
   }
 
-  const result: ScrapeResponse = { jobs: allJobs };
+  const result: ScrapeResponse = {
+    jobs: allJobs,
+    nextPageToken: lastNextPageToken,
+  };
 
   // Cache successful results
   if (allJobs.length > 0) {

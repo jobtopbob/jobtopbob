@@ -24,10 +24,10 @@ func (q *Queries) CountScrapeRuns(ctx context.Context, userID string) (int64, er
 
 const createScrapeRun = `-- name: CreateScrapeRun :one
 INSERT INTO scrape_runs (
-    user_id, search_profile_id, status, sources, keywords, location, country, started_at
+    user_id, search_profile_id, status, sources, keywords, location, country, language, parent_run_id, started_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, user_id, search_profile_id, status, sources, keywords, location, country, jobs_found, jobs_new, error_message, started_at, completed_at, created_at, updated_at
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+) RETURNING id, user_id, search_profile_id, status, sources, keywords, location, country, jobs_found, jobs_new, language, next_page_token, parent_run_id, error_message, started_at, completed_at, created_at, updated_at
 `
 
 type CreateScrapeRunParams struct {
@@ -38,6 +38,8 @@ type CreateScrapeRunParams struct {
 	Keywords        []string           `json:"keywords"`
 	Location        pgtype.Text        `json:"location"`
 	Country         pgtype.Text        `json:"country"`
+	Language        pgtype.Text        `json:"language"`
+	ParentRunID     pgtype.UUID        `json:"parent_run_id"`
 	StartedAt       pgtype.Timestamptz `json:"started_at"`
 }
 
@@ -50,6 +52,8 @@ func (q *Queries) CreateScrapeRun(ctx context.Context, arg CreateScrapeRunParams
 		arg.Keywords,
 		arg.Location,
 		arg.Country,
+		arg.Language,
+		arg.ParentRunID,
 		arg.StartedAt,
 	)
 	var i ScrapeRun
@@ -64,6 +68,9 @@ func (q *Queries) CreateScrapeRun(ctx context.Context, arg CreateScrapeRunParams
 		&i.Country,
 		&i.JobsFound,
 		&i.JobsNew,
+		&i.Language,
+		&i.NextPageToken,
+		&i.ParentRunID,
 		&i.ErrorMessage,
 		&i.StartedAt,
 		&i.CompletedAt,
@@ -74,7 +81,7 @@ func (q *Queries) CreateScrapeRun(ctx context.Context, arg CreateScrapeRunParams
 }
 
 const getScrapeRun = `-- name: GetScrapeRun :one
-SELECT sr.id, sr.user_id, sr.search_profile_id, sr.status, sr.sources, sr.keywords, sr.location, sr.country, sr.jobs_found, sr.jobs_new, sr.error_message, sr.started_at, sr.completed_at, sr.created_at, sr.updated_at,
+SELECT sr.id, sr.user_id, sr.search_profile_id, sr.status, sr.sources, sr.keywords, sr.location, sr.country, sr.jobs_found, sr.jobs_new, sr.language, sr.next_page_token, sr.parent_run_id, sr.error_message, sr.started_at, sr.completed_at, sr.created_at, sr.updated_at,
        sp.name AS search_profile_name
 FROM scrape_runs sr
 LEFT JOIN search_profiles sp ON sp.id = sr.search_profile_id
@@ -97,6 +104,9 @@ type GetScrapeRunRow struct {
 	Country           pgtype.Text        `json:"country"`
 	JobsFound         pgtype.Int4        `json:"jobs_found"`
 	JobsNew           pgtype.Int4        `json:"jobs_new"`
+	Language          pgtype.Text        `json:"language"`
+	NextPageToken     pgtype.Text        `json:"next_page_token"`
+	ParentRunID       pgtype.UUID        `json:"parent_run_id"`
 	ErrorMessage      pgtype.Text        `json:"error_message"`
 	StartedAt         pgtype.Timestamptz `json:"started_at"`
 	CompletedAt       pgtype.Timestamptz `json:"completed_at"`
@@ -119,6 +129,9 @@ func (q *Queries) GetScrapeRun(ctx context.Context, arg GetScrapeRunParams) (Get
 		&i.Country,
 		&i.JobsFound,
 		&i.JobsNew,
+		&i.Language,
+		&i.NextPageToken,
+		&i.ParentRunID,
 		&i.ErrorMessage,
 		&i.StartedAt,
 		&i.CompletedAt,
@@ -148,7 +161,7 @@ func (q *Queries) IncrementScrapeRunCounts(ctx context.Context, arg IncrementScr
 }
 
 const listScrapeRuns = `-- name: ListScrapeRuns :many
-SELECT sr.id, sr.user_id, sr.search_profile_id, sr.status, sr.sources, sr.keywords, sr.location, sr.country, sr.jobs_found, sr.jobs_new, sr.error_message, sr.started_at, sr.completed_at, sr.created_at, sr.updated_at,
+SELECT sr.id, sr.user_id, sr.search_profile_id, sr.status, sr.sources, sr.keywords, sr.location, sr.country, sr.jobs_found, sr.jobs_new, sr.language, sr.next_page_token, sr.parent_run_id, sr.error_message, sr.started_at, sr.completed_at, sr.created_at, sr.updated_at,
        sp.name AS search_profile_name
 FROM scrape_runs sr
 LEFT JOIN search_profiles sp ON sp.id = sr.search_profile_id
@@ -174,6 +187,9 @@ type ListScrapeRunsRow struct {
 	Country           pgtype.Text        `json:"country"`
 	JobsFound         pgtype.Int4        `json:"jobs_found"`
 	JobsNew           pgtype.Int4        `json:"jobs_new"`
+	Language          pgtype.Text        `json:"language"`
+	NextPageToken     pgtype.Text        `json:"next_page_token"`
+	ParentRunID       pgtype.UUID        `json:"parent_run_id"`
 	ErrorMessage      pgtype.Text        `json:"error_message"`
 	StartedAt         pgtype.Timestamptz `json:"started_at"`
 	CompletedAt       pgtype.Timestamptz `json:"completed_at"`
@@ -202,6 +218,9 @@ func (q *Queries) ListScrapeRuns(ctx context.Context, arg ListScrapeRunsParams) 
 			&i.Country,
 			&i.JobsFound,
 			&i.JobsNew,
+			&i.Language,
+			&i.NextPageToken,
+			&i.ParentRunID,
 			&i.ErrorMessage,
 			&i.StartedAt,
 			&i.CompletedAt,
@@ -217,6 +236,20 @@ func (q *Queries) ListScrapeRuns(ctx context.Context, arg ListScrapeRunsParams) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateScrapeRunNextPageToken = `-- name: UpdateScrapeRunNextPageToken :exec
+UPDATE scrape_runs SET next_page_token = $2 WHERE id = $1
+`
+
+type UpdateScrapeRunNextPageTokenParams struct {
+	ID            pgtype.UUID `json:"id"`
+	NextPageToken pgtype.Text `json:"next_page_token"`
+}
+
+func (q *Queries) UpdateScrapeRunNextPageToken(ctx context.Context, arg UpdateScrapeRunNextPageTokenParams) error {
+	_, err := q.db.Exec(ctx, updateScrapeRunNextPageToken, arg.ID, arg.NextPageToken)
+	return err
 }
 
 const updateScrapeRunStatus = `-- name: UpdateScrapeRunStatus :exec

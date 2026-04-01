@@ -23,6 +23,8 @@ type ScrapeDispatchPayload struct {
 	Keywords        []string `json:"keywords"`
 	Location        string   `json:"location"`
 	Country         string   `json:"country"`
+	Language        string   `json:"language"`
+	NextPageToken   string   `json:"next_page_token"`
 	Sources         []string `json:"sources"`
 }
 
@@ -94,14 +96,16 @@ func HandleScrapeDispatch(deps *ScrapeDispatchDeps) func(ctx context.Context, t 
 			}
 
 			subPayload, _ := json.Marshal(ScrapeSourcePayload{
-				UserID:      payload.UserID,
-				ScrapeRunID: payload.ScrapeRunID,
-				Source:      source,
-				ScraperURL:  scraperURL,
-				Keywords:    payload.Keywords,
-				Location:    payload.Location,
-				Country:     payload.Country,
-				MaxResults:  50,
+				UserID:        payload.UserID,
+				ScrapeRunID:   payload.ScrapeRunID,
+				Source:         source,
+				ScraperURL:    scraperURL,
+				Keywords:      payload.Keywords,
+				Location:      payload.Location,
+				Country:       payload.Country,
+				Language:      payload.Language,
+				NextPageToken: payload.NextPageToken,
+				MaxResults:    50,
 			})
 
 			task := asynq.NewTask(TypeScrapeSource, subPayload)

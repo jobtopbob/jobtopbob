@@ -40,8 +40,11 @@ export interface ScrapeRun {
   keywords: string[] | null;
   location: string | null;
   country: string | null;
+  language: string | null;
   jobs_found: number | null;
   jobs_new: number | null;
+  next_page_token: string | null;
+  parent_run_id: string | null;
   error_message: string | null;
   started_at: string | null;
   completed_at: string | null;
@@ -81,6 +84,7 @@ interface QuickSearchRequest {
   keywords: string[];
   location?: string;
   country?: string;
+  language?: string;
   job_type?: string;
   experience_level?: string;
   remote_only?: boolean;
@@ -173,6 +177,23 @@ export function useScrapeRuns(page = 1, perPage = 10) {
         (r) => r.status === "pending" || r.status === "running"
       );
       return hasActive ? 5000 : false;
+    },
+  });
+}
+
+// -- Continue Scrape Run (Load More) --
+
+export function useContinueScrapeRun() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (runId: string) =>
+      apiFetch<{ scrape_run_id: string; parent_run_id: string; status: string }>(
+        `/api/v1/scrape-runs/${runId}/continue`,
+        { method: "POST" }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scrape-runs"] });
+      queryClient.invalidateQueries({ queryKey: ["discovered-jobs"] });
     },
   });
 }

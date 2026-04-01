@@ -81,6 +81,7 @@ type CreateSearchProfileParams struct {
 	Keywords        []string
 	Location        string
 	Country         string
+	Language        string
 	JobType         string
 	ExperienceLevel string
 	RemoteOnly      bool
@@ -117,6 +118,7 @@ func CreateSearchProfile(ctx context.Context, q *db.Queries, userID string, p Cr
 		Keywords:        p.Keywords,
 		Location:        pgtype.Text{String: p.Location, Valid: p.Location != ""},
 		Country:         pgtype.Text{String: country, Valid: true},
+		Language:        pgtype.Text{String: p.Language, Valid: p.Language != ""},
 		JobType:         pgtype.Text{String: p.JobType, Valid: p.JobType != ""},
 		ExperienceLevel: pgtype.Text{String: p.ExperienceLevel, Valid: p.ExperienceLevel != ""},
 		RemoteOnly:      pgtype.Bool{Bool: p.RemoteOnly, Valid: true},

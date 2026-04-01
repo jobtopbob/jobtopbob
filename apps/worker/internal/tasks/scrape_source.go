@@ -23,22 +23,26 @@ import (
 
 // ScrapeSourcePayload is the payload for the scrape:source task.
 type ScrapeSourcePayload struct {
-	UserID      string   `json:"user_id"`
-	ScrapeRunID string   `json:"scrape_run_id"`
-	Source      string   `json:"source"`
-	ScraperURL  string   `json:"scraper_url"`
-	Keywords    []string `json:"keywords"`
-	Location    string   `json:"location"`
-	Country     string   `json:"country"`
-	MaxResults  int      `json:"max_results"`
+	UserID        string   `json:"user_id"`
+	ScrapeRunID   string   `json:"scrape_run_id"`
+	Source        string   `json:"source"`
+	ScraperURL    string   `json:"scraper_url"`
+	Keywords      []string `json:"keywords"`
+	Location      string   `json:"location"`
+	Country       string   `json:"country"`
+	Language      string   `json:"language"`
+	NextPageToken string   `json:"next_page_token"`
+	MaxResults    int      `json:"max_results"`
 }
 
 // ScrapeRequest is sent to the scraper HTTP service.
 type ScrapeRequest struct {
-	Keywords   []string `json:"keywords"`
-	Location   string   `json:"location"`
-	Country    string   `json:"country"`
-	MaxResults int      `json:"maxResults"`
+	Keywords      []string `json:"keywords"`
+	Location      string   `json:"location"`
+	Country       string   `json:"country"`
+	Language      string   `json:"language,omitempty"`
+	MaxResults    int      `json:"maxResults"`
+	NextPageToken string   `json:"nextPageToken,omitempty"`
 }
 
 // RawJob represents a job returned by a scraper service.
@@ -70,6 +74,7 @@ type RawJob struct {
 type ScrapeResponse struct {
 	Jobs           []RawJob `json:"jobs"`
 	TotalEstimated *int     `json:"totalEstimated"`
+	NextPageToken  string   `json:"nextPageToken"`
 	Error          string   `json:"error"`
 }
 
@@ -105,12 +110,13 @@ func HandleScrapeSource(deps *ScrapeSourceDeps) func(ctx context.Context, t *asy
 
 		// Call the scraper HTTP service
 		slog.Debug("scrape:source calling scraper", "url", payload.ScraperURL+"/scrape", "keywords", payload.Keywords, "location", payload.Location, "country", payload.Country)
-		rawJobs, err := callScraper(ctx, deps.HTTPClient, payload)
+		scrapeResp, err := callScraper(ctx, deps.HTTPClient, payload)
 		if err != nil {
 			slog.Error("scraper call failed", "source", payload.Source, "scraper_url", payload.ScraperURL, "error", err)
-			finalizeScrapeSource(ctx, deps, q, runUUID, payload, 0, 0, err.Error())
+			finalizeScrapeSource(ctx, deps, q, runUUID, payload, 0, 0, "", err.Error())
 			return nil // Don't retry on scraper failure
 		}
+		rawJobs := scrapeResp.Jobs
 		slog.Info("scraper call succeeded", "source", payload.Source, "jobs_returned", len(rawJobs))
 
 		// Dedup and insert jobs
@@ -191,18 +197,20 @@ func HandleScrapeSource(deps *ScrapeSourceDeps) func(ctx context.Context, t *asy
 			}
 		}
 
-		finalizeScrapeSource(ctx, deps, q, runUUID, payload, jobsFound, jobsNew, "")
+		finalizeScrapeSource(ctx, deps, q, runUUID, payload, jobsFound, jobsNew, scrapeResp.NextPageToken, "")
 		return nil
 	}
 }
 
-// callScraper sends a POST /scrape request to the scraper service and returns raw jobs.
-func callScraper(ctx context.Context, client *http.Client, payload ScrapeSourcePayload) ([]RawJob, error) {
+// callScraper sends a POST /scrape request to the scraper service and returns the full response.
+func callScraper(ctx context.Context, client *http.Client, payload ScrapeSourcePayload) (*ScrapeResponse, error) {
 	reqBody, _ := json.Marshal(ScrapeRequest{
-		Keywords:   payload.Keywords,
-		Location:   payload.Location,
-		Country:    payload.Country,
-		MaxResults: payload.MaxResults,
+		Keywords:      payload.Keywords,
+		Location:      payload.Location,
+		Country:       payload.Country,
+		Language:      payload.Language,
+		MaxResults:    payload.MaxResults,
+		NextPageToken: payload.NextPageToken,
 	})
 
 	url := strings.TrimRight(payload.ScraperURL, "/") + "/scrape"
@@ -236,7 +244,7 @@ func callScraper(ctx context.Context, client *http.Client, payload ScrapeSourceP
 		return nil, fmt.Errorf("scraper error: %s", scrapeResp.Error)
 	}
 
-	return scrapeResp.Jobs, nil
+	return &scrapeResp, nil
 }
 
 // resolveCompanyID finds an existing company by name (case-insensitive) or creates one.
@@ -313,15 +321,26 @@ func finalizeScrapeSource(
 	runUUID pgtype.UUID,
 	payload ScrapeSourcePayload,
 	jobsFound, jobsNew int,
+	nextPageToken string,
 	errMsg string,
 ) {
 	// Increment counts on the scrape run
 	if err := q.IncrementScrapeRunCounts(ctx, db.IncrementScrapeRunCountsParams{
-		ID:      runUUID,
+		ID:        runUUID,
 		JobsFound: pgtype.Int4{Int32: int32(jobsFound), Valid: true},
 		JobsNew:   pgtype.Int4{Int32: int32(jobsNew), Valid: true},
 	}); err != nil {
 		slog.Error("failed to increment scrape run counts", "error", err)
+	}
+
+	// Store the next page token for "Load More" functionality
+	if nextPageToken != "" {
+		if err := q.UpdateScrapeRunNextPageToken(ctx, db.UpdateScrapeRunNextPageTokenParams{
+			ID:            runUUID,
+			NextPageToken: pgtype.Text{String: nextPageToken, Valid: true},
+		}); err != nil {
+			slog.Error("failed to store next page token", "error", err)
+		}
 	}
 
 	// SSE: source progress
@@ -368,6 +387,7 @@ func finalizeScrapeSource(
 		sseData := map[string]interface{}{
 			"scrape_run_id": payload.ScrapeRunID,
 			"status":        status,
+			"has_more":      nextPageToken != "",
 		}
 		if errMsg != "" {
 			sseData["error"] = errMsg
@@ -377,6 +397,7 @@ func finalizeScrapeSource(
 		slog.Info("scrape run completed",
 			"scrape_run_id", payload.ScrapeRunID,
 			"status", status,
+			"has_more", nextPageToken != "",
 		)
 	}
 }

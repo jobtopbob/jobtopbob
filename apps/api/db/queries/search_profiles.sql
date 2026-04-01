@@ -15,11 +15,11 @@ SELECT * FROM search_profiles WHERE id = $1 AND user_id = $2;
 
 -- name: CreateSearchProfile :one
 INSERT INTO search_profiles (
-    user_id, name, source, resume_id, keywords, location, country,
+    user_id, name, source, resume_id, keywords, location, country, language,
     job_type, experience_level, remote_only, salary_min, salary_max,
     skills, target_roles
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
 ) RETURNING *;
 
 -- name: UpdateSearchProfile :one
@@ -28,6 +28,7 @@ UPDATE search_profiles SET
     keywords = COALESCE(sqlc.narg('keywords'), keywords),
     location = COALESCE(sqlc.narg('location'), location),
     country = COALESCE(sqlc.narg('country'), country),
+    language = COALESCE(sqlc.narg('language'), language),
     job_type = COALESCE(sqlc.narg('job_type'), job_type),
     experience_level = COALESCE(sqlc.narg('experience_level'), experience_level),
     remote_only = COALESCE(sqlc.narg('remote_only'), remote_only),

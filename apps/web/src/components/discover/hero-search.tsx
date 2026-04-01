@@ -1,17 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { MagnifyingGlassIcon, MapPinIcon, SpinnerIcon } from "@phosphor-icons/react";
+import { useState, useEffect } from "react";
+import { MagnifyingGlassIcon, MapPinIcon, SpinnerIcon, GlobeIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ResumeSearchDialog } from "@/components/discover/resume-search-dialog";
 import { useQuickSearch } from "@/hooks/use-discover";
+import { detectLocale, SUPPORTED_COUNTRIES } from "@/lib/locale";
 import { toast } from "sonner";
 
 export function HeroSearch() {
   const [keywords, setKeywords] = useState("");
   const [location, setLocation] = useState("");
+  const [country, setCountry] = useState("US");
+  const [language, setLanguage] = useState("en");
   const quickSearch = useQuickSearch();
+
+  useEffect(() => {
+    const detected = detectLocale();
+    setCountry(detected.country);
+    setLanguage(detected.language);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +35,12 @@ export function HeroSearch() {
     }
 
     quickSearch.mutate(
-      { keywords: keywordList, location: location || undefined },
+      {
+        keywords: keywordList,
+        location: location || undefined,
+        country,
+        language,
+      },
       {
         onSuccess: () => {
           toast.success("Search started! Results will appear below.");
@@ -100,6 +114,21 @@ export function HeroSearch() {
                   onChange={(e) => setLocation(e.target.value)}
                   className="h-10 w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
                 />
+              </div>
+              <div className="hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
+              <div className="flex items-center gap-2 rounded-lg bg-surface-hover px-2 sm:rounded-none sm:bg-transparent">
+                <GlobeIcon className="h-4 w-4 shrink-0 text-text-muted" />
+                <select
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="h-10 w-full min-w-0 appearance-none bg-transparent text-sm text-text-primary outline-none sm:w-20"
+                >
+                  {Object.entries(SUPPORTED_COUNTRIES).map(([code, name]) => (
+                    <option key={code} value={code}>
+                      {code}
+                    </option>
+                  ))}
+                </select>
               </div>
               <Button
                 type="submit"

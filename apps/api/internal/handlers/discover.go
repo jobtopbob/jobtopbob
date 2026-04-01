@@ -21,6 +21,7 @@ type quickSearchRequest struct {
 	Keywords        []string `json:"keywords" binding:"required"`
 	Location        string   `json:"location"`
 	Country         string   `json:"country"`
+	Language        string   `json:"language"`
 	JobType         string   `json:"job_type"`
 	ExperienceLevel string   `json:"experience_level"`
 	RemoteOnly      bool     `json:"remote_only"`
@@ -58,6 +59,7 @@ func QuickSearch(asynqClient *asynq.Client) gin.HandlerFunc {
 			Keywords:        req.Keywords,
 			Location:        req.Location,
 			Country:         req.Country,
+			Language:        req.Language,
 			JobType:         req.JobType,
 			ExperienceLevel: req.ExperienceLevel,
 			RemoteOnly:      req.RemoteOnly,
@@ -82,6 +84,8 @@ func QuickSearch(asynqClient *asynq.Client) gin.HandlerFunc {
 			Keywords:        req.Keywords,
 			Location:        profile.Location,
 			Country:         profile.Country,
+			Language:        profile.Language,
+			ParentRunID:     pgtype.UUID{},
 			StartedAt:       pgtype.Timestamptz{},
 		})
 		if err != nil {
@@ -97,6 +101,7 @@ func QuickSearch(asynqClient *asynq.Client) gin.HandlerFunc {
 			"keywords":          req.Keywords,
 			"location":          req.Location,
 			"country":           req.Country,
+			"language":          req.Language,
 			"sources":           sources,
 		})
 		task := asynq.NewTask("scrape:dispatch", payload)
@@ -248,6 +253,104 @@ func SearchFromExistingResume(asynqClient *asynq.Client) gin.HandlerFunc {
 		c.JSON(http.StatusAccepted, gin.H{
 			"search_profile_id": uuidToString(profile.ID),
 			"status":            "analyzing",
+		})
+	}
+}
+
+// ContinueScrapeRun handles POST /api/v1/scrape-runs/:id/continue
+// Creates a new scrape run that continues fetching results using the stored next_page_token.
+func ContinueScrapeRun(asynqClient *asynq.Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, ok := parsePathUUID(c, "id")
+		if !ok {
+			return
+		}
+
+		if asynqClient == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "scraping not available"})
+			return
+		}
+
+		q := db.New(getTx(c))
+		userID := getUserID(c)
+
+		// Load the original run
+		origRun, err := services.GetScrapeRun(c.Request.Context(), q, userID, id)
+		if errors.Is(err, services.ErrNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "scrape run not found"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get scrape run"})
+			return
+		}
+
+		if !origRun.NextPageToken.Valid || origRun.NextPageToken.String == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "no more results available"})
+			return
+		}
+
+		// Determine sources from original run
+		sources := origRun.Sources
+		if len(sources) == 0 {
+			sources = []string{"serp"}
+		}
+
+		// Create a new continuation scrape run
+		run, err := q.CreateScrapeRun(c.Request.Context(), db.CreateScrapeRunParams{
+			UserID:          userID,
+			SearchProfileID: origRun.SearchProfileID,
+			Status:          pgtype.Text{String: "pending", Valid: true},
+			Sources:         sources,
+			Keywords:        origRun.Keywords,
+			Location:        origRun.Location,
+			Country:         origRun.Country,
+			Language:        origRun.Language,
+			ParentRunID:     origRun.ID,
+			StartedAt:       pgtype.Timestamptz{},
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create continuation scrape run"})
+			return
+		}
+
+		// Extract location and country strings for the dispatch payload
+		location := ""
+		if origRun.Location.Valid {
+			location = origRun.Location.String
+		}
+		country := ""
+		if origRun.Country.Valid {
+			country = origRun.Country.String
+		}
+		language := ""
+		if origRun.Language.Valid {
+			language = origRun.Language.String
+		}
+
+		// Enqueue scrape dispatch with the continuation token
+		payload, _ := json.Marshal(map[string]interface{}{
+			"user_id":           userID,
+			"scrape_run_id":     uuidToString(run.ID),
+			"search_profile_id": uuidToString(origRun.SearchProfileID),
+			"keywords":          origRun.Keywords,
+			"location":          location,
+			"country":           country,
+			"language":          language,
+			"next_page_token":   origRun.NextPageToken.String,
+			"sources":           sources,
+		})
+		task := asynq.NewTask("scrape:dispatch", payload)
+		if _, err := asynqClient.Enqueue(task); err != nil {
+			slog.Error("failed to enqueue continuation scrape dispatch", "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to enqueue continuation"})
+			return
+		}
+
+		c.JSON(http.StatusAccepted, gin.H{
+			"scrape_run_id":    uuidToString(run.ID),
+			"parent_run_id":    uuidToString(origRun.ID),
+			"status":           "pending",
 		})
 	}
 }

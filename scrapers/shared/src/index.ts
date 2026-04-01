@@ -3,7 +3,9 @@ export interface ScrapeRequest {
   keywords: string[];
   location: string;
   country: string;
+  language?: string;
   maxResults: number;
+  nextPageToken?: string;
 }
 
 /** RawJob represents a single job listing returned by a scraper. */
@@ -35,5 +37,6 @@ export interface RawJob {
 export interface ScrapeResponse {
   jobs: RawJob[];
   totalEstimated?: number;
+  nextPageToken?: string;
   error?: string;
 }

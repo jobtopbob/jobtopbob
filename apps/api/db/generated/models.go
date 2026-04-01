@@ -294,6 +294,9 @@ type ScrapeRun struct {
 	Country         pgtype.Text        `json:"country"`
 	JobsFound       pgtype.Int4        `json:"jobs_found"`
 	JobsNew         pgtype.Int4        `json:"jobs_new"`
+	Language        pgtype.Text        `json:"language"`
+	NextPageToken   pgtype.Text        `json:"next_page_token"`
+	ParentRunID     pgtype.UUID        `json:"parent_run_id"`
 	ErrorMessage    pgtype.Text        `json:"error_message"`
 	StartedAt       pgtype.Timestamptz `json:"started_at"`
 	CompletedAt     pgtype.Timestamptz `json:"completed_at"`
@@ -310,6 +313,7 @@ type SearchProfile struct {
 	Keywords        []string           `json:"keywords"`
 	Location        pgtype.Text        `json:"location"`
 	Country         pgtype.Text        `json:"country"`
+	Language        pgtype.Text        `json:"language"`
 	JobType         pgtype.Text        `json:"job_type"`
 	ExperienceLevel pgtype.Text        `json:"experience_level"`
 	RemoteOnly      pgtype.Bool        `json:"remote_only"`

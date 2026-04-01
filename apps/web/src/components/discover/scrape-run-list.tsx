@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useScrapeRuns } from "@/hooks/use-discover";
+import { useScrapeRuns, useContinueScrapeRun } from "@/hooks/use-discover";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   MagnifyingGlassIcon,
@@ -13,7 +13,9 @@ import {
   CaretLeftIcon,
   CaretRightIcon,
   BriefcaseIcon,
+  ArrowDownIcon,
 } from "@phosphor-icons/react";
+import { toast } from "sonner";
 
 const PER_PAGE = 6;
 
@@ -59,6 +61,7 @@ function statusLabel(status: string | null) {
 export function ScrapeRunList() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useScrapeRuns(page, PER_PAGE);
+  const continueScrapeRun = useContinueScrapeRun();
 
   if (isLoading) {
     return (
@@ -157,9 +160,28 @@ export function ScrapeRunList() {
                     {statusLabel(run.status)}
                   </span>
                 </div>
-                <span className="text-xs text-text-muted">
-                  {relativeTime(run.created_at)}
-                </span>
+                <div className="flex items-center gap-2">
+                  {run.status === "completed" && run.next_page_token && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        continueScrapeRun.mutate(run.id, {
+                          onSuccess: () => toast.success("Loading more results..."),
+                          onError: (err) => toast.error(err.message),
+                        });
+                      }}
+                      disabled={continueScrapeRun.isPending}
+                      className="flex items-center gap-0.5 text-xs font-medium text-brand transition-colors hover:text-brand/80 disabled:opacity-50"
+                    >
+                      <ArrowDownIcon className="h-3 w-3" />
+                      More
+                    </button>
+                  )}
+                  <span className="text-xs text-text-muted">
+                    {relativeTime(run.created_at)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

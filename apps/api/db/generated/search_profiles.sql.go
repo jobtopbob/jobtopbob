@@ -25,12 +25,12 @@ func (q *Queries) CountSearchProfiles(ctx context.Context, userID string) (int64
 
 const createSearchProfile = `-- name: CreateSearchProfile :one
 INSERT INTO search_profiles (
-    user_id, name, source, resume_id, keywords, location, country,
+    user_id, name, source, resume_id, keywords, location, country, language,
     job_type, experience_level, remote_only, salary_min, salary_max,
     skills, target_roles
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-) RETURNING id, user_id, name, source, resume_id, keywords, location, country, job_type, experience_level, remote_only, salary_min, salary_max, skills, target_roles, is_active, last_run_at, created_at, updated_at
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+) RETURNING id, user_id, name, source, resume_id, keywords, location, country, language, job_type, experience_level, remote_only, salary_min, salary_max, skills, target_roles, is_active, last_run_at, created_at, updated_at
 `
 
 type CreateSearchProfileParams struct {
@@ -41,6 +41,7 @@ type CreateSearchProfileParams struct {
 	Keywords        []string    `json:"keywords"`
 	Location        pgtype.Text `json:"location"`
 	Country         pgtype.Text `json:"country"`
+	Language        pgtype.Text `json:"language"`
 	JobType         pgtype.Text `json:"job_type"`
 	ExperienceLevel pgtype.Text `json:"experience_level"`
 	RemoteOnly      pgtype.Bool `json:"remote_only"`
@@ -59,6 +60,7 @@ func (q *Queries) CreateSearchProfile(ctx context.Context, arg CreateSearchProfi
 		arg.Keywords,
 		arg.Location,
 		arg.Country,
+		arg.Language,
 		arg.JobType,
 		arg.ExperienceLevel,
 		arg.RemoteOnly,
@@ -77,6 +79,7 @@ func (q *Queries) CreateSearchProfile(ctx context.Context, arg CreateSearchProfi
 		&i.Keywords,
 		&i.Location,
 		&i.Country,
+		&i.Language,
 		&i.JobType,
 		&i.ExperienceLevel,
 		&i.RemoteOnly,
@@ -106,7 +109,7 @@ func (q *Queries) DeleteSearchProfile(ctx context.Context, arg DeleteSearchProfi
 }
 
 const getSearchProfile = `-- name: GetSearchProfile :one
-SELECT id, user_id, name, source, resume_id, keywords, location, country, job_type, experience_level, remote_only, salary_min, salary_max, skills, target_roles, is_active, last_run_at, created_at, updated_at FROM search_profiles WHERE id = $1 AND user_id = $2
+SELECT id, user_id, name, source, resume_id, keywords, location, country, language, job_type, experience_level, remote_only, salary_min, salary_max, skills, target_roles, is_active, last_run_at, created_at, updated_at FROM search_profiles WHERE id = $1 AND user_id = $2
 `
 
 type GetSearchProfileParams struct {
@@ -126,6 +129,7 @@ func (q *Queries) GetSearchProfile(ctx context.Context, arg GetSearchProfilePara
 		&i.Keywords,
 		&i.Location,
 		&i.Country,
+		&i.Language,
 		&i.JobType,
 		&i.ExperienceLevel,
 		&i.RemoteOnly,
@@ -142,7 +146,7 @@ func (q *Queries) GetSearchProfile(ctx context.Context, arg GetSearchProfilePara
 }
 
 const listSearchProfiles = `-- name: ListSearchProfiles :many
-SELECT sp.id, sp.user_id, sp.name, sp.source, sp.resume_id, sp.keywords, sp.location, sp.country, sp.job_type, sp.experience_level, sp.remote_only, sp.salary_min, sp.salary_max, sp.skills, sp.target_roles, sp.is_active, sp.last_run_at, sp.created_at, sp.updated_at,
+SELECT sp.id, sp.user_id, sp.name, sp.source, sp.resume_id, sp.keywords, sp.location, sp.country, sp.language, sp.job_type, sp.experience_level, sp.remote_only, sp.salary_min, sp.salary_max, sp.skills, sp.target_roles, sp.is_active, sp.last_run_at, sp.created_at, sp.updated_at,
        (SELECT count(*) FROM scrape_runs sr WHERE sr.search_profile_id = sp.id)::int AS run_count,
        (SELECT max(sr.completed_at) FROM scrape_runs sr WHERE sr.search_profile_id = sp.id) AS last_completed_at
 FROM search_profiles sp
@@ -166,6 +170,7 @@ type ListSearchProfilesRow struct {
 	Keywords        []string           `json:"keywords"`
 	Location        pgtype.Text        `json:"location"`
 	Country         pgtype.Text        `json:"country"`
+	Language        pgtype.Text        `json:"language"`
 	JobType         pgtype.Text        `json:"job_type"`
 	ExperienceLevel pgtype.Text        `json:"experience_level"`
 	RemoteOnly      pgtype.Bool        `json:"remote_only"`
@@ -199,6 +204,7 @@ func (q *Queries) ListSearchProfiles(ctx context.Context, arg ListSearchProfiles
 			&i.Keywords,
 			&i.Location,
 			&i.Country,
+			&i.Language,
 			&i.JobType,
 			&i.ExperienceLevel,
 			&i.RemoteOnly,
@@ -229,16 +235,17 @@ UPDATE search_profiles SET
     keywords = COALESCE($4, keywords),
     location = COALESCE($5, location),
     country = COALESCE($6, country),
-    job_type = COALESCE($7, job_type),
-    experience_level = COALESCE($8, experience_level),
-    remote_only = COALESCE($9, remote_only),
-    salary_min = COALESCE($10, salary_min),
-    salary_max = COALESCE($11, salary_max),
-    skills = COALESCE($12, skills),
-    target_roles = COALESCE($13, target_roles),
-    is_active = COALESCE($14, is_active)
+    language = COALESCE($7, language),
+    job_type = COALESCE($8, job_type),
+    experience_level = COALESCE($9, experience_level),
+    remote_only = COALESCE($10, remote_only),
+    salary_min = COALESCE($11, salary_min),
+    salary_max = COALESCE($12, salary_max),
+    skills = COALESCE($13, skills),
+    target_roles = COALESCE($14, target_roles),
+    is_active = COALESCE($15, is_active)
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, name, source, resume_id, keywords, location, country, job_type, experience_level, remote_only, salary_min, salary_max, skills, target_roles, is_active, last_run_at, created_at, updated_at
+RETURNING id, user_id, name, source, resume_id, keywords, location, country, language, job_type, experience_level, remote_only, salary_min, salary_max, skills, target_roles, is_active, last_run_at, created_at, updated_at
 `
 
 type UpdateSearchProfileParams struct {
@@ -248,6 +255,7 @@ type UpdateSearchProfileParams struct {
 	Keywords        []string    `json:"keywords"`
 	Location        pgtype.Text `json:"location"`
 	Country         pgtype.Text `json:"country"`
+	Language        pgtype.Text `json:"language"`
 	JobType         pgtype.Text `json:"job_type"`
 	ExperienceLevel pgtype.Text `json:"experience_level"`
 	RemoteOnly      pgtype.Bool `json:"remote_only"`
@@ -266,6 +274,7 @@ func (q *Queries) UpdateSearchProfile(ctx context.Context, arg UpdateSearchProfi
 		arg.Keywords,
 		arg.Location,
 		arg.Country,
+		arg.Language,
 		arg.JobType,
 		arg.ExperienceLevel,
 		arg.RemoteOnly,
@@ -285,6 +294,7 @@ func (q *Queries) UpdateSearchProfile(ctx context.Context, arg UpdateSearchProfi
 		&i.Keywords,
 		&i.Location,
 		&i.Country,
+		&i.Language,
 		&i.JobType,
 		&i.ExperienceLevel,
 		&i.RemoteOnly,

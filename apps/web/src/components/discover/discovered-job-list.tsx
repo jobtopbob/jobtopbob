@@ -7,14 +7,18 @@ import {
   BriefcaseIcon,
   MagnifyingGlassIcon,
   CompassIcon,
+  SpinnerIcon,
+  ArrowDownIcon,
 } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { useDiscoveredJobs, useScrapeRuns, type DiscoveredJob } from "@/hooks/use-discover";
+import { Button } from "@/components/ui/button";
+import { useDiscoveredJobs, useScrapeRuns, useContinueScrapeRun, type DiscoveredJob } from "@/hooks/use-discover";
 import { useDebounce } from "@/hooks/use-debounce";
 import { PaginationControls } from "@/components/kanban/pagination-controls";
 import { formatSalaryRange } from "@/lib/currency";
+import { toast } from "sonner";
 
 function companyInitialColor(name: string) {
   let hash = 0;
@@ -131,10 +135,16 @@ export function DiscoveredJobList() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 300);
+  const continueScrapeRun = useContinueScrapeRun();
 
   const { data: runsData } = useScrapeRuns(1, 6);
   const hasActiveRuns = runsData?.data?.some(
     (r) => r.status === "pending" || r.status === "running"
+  );
+
+  // Find the most recent completed run that has a next_page_token
+  const latestContinuableRun = runsData?.data?.find(
+    (r) => r.status === "completed" && r.next_page_token
   );
 
   const { data, isLoading } = useDiscoveredJobs(page, 20, {
@@ -198,6 +208,34 @@ export function DiscoveredJobList() {
               total={total}
               onPageChange={setPage}
             />
+          )}
+
+          {/* Load More button when more results are available from SerpApi */}
+          {latestContinuableRun && !hasActiveRuns && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  continueScrapeRun.mutate(latestContinuableRun.id, {
+                    onSuccess: () => {
+                      toast.success("Loading more results...");
+                    },
+                    onError: (err) => {
+                      toast.error(err.message);
+                    },
+                  });
+                }}
+                disabled={continueScrapeRun.isPending}
+                className="gap-2"
+              >
+                {continueScrapeRun.isPending ? (
+                  <SpinnerIcon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowDownIcon className="h-4 w-4" />
+                )}
+                Load more results
+              </Button>
+            </div>
           )}
         </>
       )}

@@ -220,6 +220,7 @@ func New(cfg Config) *gin.Engine {
 			// Scrape Runs
 			v1.GET("/scrape-runs", handlers.ListScrapeRuns())
 			v1.GET("/scrape-runs/:id", handlers.GetScrapeRun())
+			v1.POST("/scrape-runs/:id/continue", handlers.ContinueScrapeRun(cfg.AsynqClient))
 		}
 
 		// AI Features
