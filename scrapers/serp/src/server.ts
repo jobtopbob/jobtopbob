@@ -225,6 +225,10 @@ async function searchGoogleJobs(req: ScrapeRequest): Promise<ScrapeResponse> {
       const data = await fetchPage(query, location, gl, hl, cursor);
 
       if (data.error) {
+        // "No results" is a valid search outcome, not an error
+        if (data.error.toLowerCase().includes("hasn't returned any results")) {
+          break;
+        }
         if (allJobs.length === 0) {
           return { jobs: [], error: data.error };
         }

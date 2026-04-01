@@ -16,5 +16,8 @@ export function friendlyScrapeError(raw: string): string {
   if (lower.includes("no more results")) {
     return "No more results available for this search.";
   }
+  if (lower.includes("hasn't returned any results") || lower.includes("no results")) {
+    return "No jobs found for this search. Try different keywords or a broader location.";
+  }
   return "Something went wrong with the search. Please try again.";
 }
