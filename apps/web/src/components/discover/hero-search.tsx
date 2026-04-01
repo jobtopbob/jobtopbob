@@ -5,7 +5,6 @@ import { MagnifyingGlassIcon, MapPinIcon, SpinnerIcon } from "@phosphor-icons/re
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ResumeSearchDialog } from "@/components/discover/resume-search-dialog";
-import { JobSourcesStrip } from "@/components/discover/job-sources";
 import { useQuickSearch } from "@/hooks/use-discover";
 import { toast } from "sonner";
 
@@ -121,7 +120,6 @@ export function HeroSearch() {
         {/* Quick actions + sources */}
         <div className="mt-4 flex flex-col items-center gap-3">
           <ResumeSearchDialog />
-          <JobSourcesStrip />
         </div>
       </div>
     </div>

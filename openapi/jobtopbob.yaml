@@ -71,6 +71,10 @@ components:
         source_url:
           type: string
           nullable: true
+        via:
+          type: string
+          nullable: true
+          description: Platform where the job is posted (e.g., LinkedIn, Indeed)
         location:
           type: string
           nullable: true

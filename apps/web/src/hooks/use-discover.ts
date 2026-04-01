@@ -64,6 +64,7 @@ export interface DiscoveredJob {
   job_type: string | null;
   job_level: string | null;
   application_url: string | null;
+  via: string | null;
   company_name: string | null;
   company_logo_url: string | null;
   created_at: string;

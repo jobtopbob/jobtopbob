@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useScrapeRuns } from "@/hooks/use-discover";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   MagnifyingGlassIcon,
@@ -121,11 +120,6 @@ export function ScrapeRunList() {
 
               {/* Meta row: source, location, jobs found */}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
-                {run.sources && (
-                  <Badge variant="outline" className="text-[11px] capitalize">
-                    {run.sources.join(", ")}
-                  </Badge>
-                )}
                 {run.location && (
                   <span className="flex items-center gap-0.5">
                     <MapPinIcon className="h-3 w-3 shrink-0" />

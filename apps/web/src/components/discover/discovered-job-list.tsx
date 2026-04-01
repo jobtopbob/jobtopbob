@@ -50,12 +50,12 @@ function JobCard({ job }: { job: DiscoveredJob }) {
       <div className="absolute inset-0 bg-card/88" />
 
       {/* Source badge */}
-      {job.source && (
+      {job.via && (
         <Badge
           variant="secondary"
           className="absolute right-3 top-3 z-10 text-[10px] capitalize"
         >
-          {job.source}
+          {job.via.replace(/^via\s+/i, "")}
         </Badge>
       )}
 
@@ -110,10 +110,10 @@ function JobCard({ job }: { job: DiscoveredJob }) {
       )}
 
       {/* External link */}
-      {job.source_url && (
+      {(job.application_url || job.source_url) && (
         <div className="relative z-10 mt-3 border-t border-border-subtle pt-3">
           <a
-            href={job.source_url}
+            href={job.application_url || job.source_url!}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs font-medium text-text-secondary transition-colors hover:text-text-primary"
